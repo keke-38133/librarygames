@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书间游戏 - 碧道图书馆游戏合集</title>
+    <style>
+        /* ============================================
+           书间游戏 - 图书馆游戏合集首页
+           风格：温暖文艺、图书馆氛围、移动端优先
+           配色：#2D9B83 绿色系 + #8B6914 暖色系
+        ============================================ */
+
+        /* ---- 基础重置 ---- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ---- 字体设置 ---- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            background: linear-gradient(180deg, #f5f0e8 0%, #fff9f0 50%, #f0ebe3 100%);
+            min-height: 100vh;
+            color: #4a4a4a;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ============================================
+           装饰元素 - 书页飘落
+        ============================================ */
+        .decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .leaf {
+            position: absolute;
+            opacity: 0.15;
+            animation: fall linear infinite;
+        }
+
+        .leaf::before {
+            content: "📖";
+            font-size: 24px;
+        }
+
+        .leaf:nth-child(1) { left: 5%; animation-duration: 25s; animation-delay: 0s; }
+        .leaf:nth-child(2) { left: 15%; animation-duration: 30s; animation-delay: 3s; font-size: 20px; }
+        .leaf:nth-child(3) { left: 25%; animation-duration: 28s; animation-delay: 6s; }
+        .leaf:nth-child(4) { left: 35%; animation-duration: 32s; animation-delay: 2s; font-size: 18px; }
+        .leaf:nth-child(5) { left: 45%; animation-duration: 26s; animation-delay: 8s; }
+        .leaf:nth-child(6) { left: 55%; animation-duration: 29s; animation-delay: 4s; font-size: 22px; }
+        .leaf:nth-child(7) { left: 65%; animation-duration: 31s; animation-delay: 1s; }
+        .leaf:nth-child(8) { left: 75%; animation-duration: 27s; animation-delay: 5s; font-size: 20px; }
+        .leaf:nth-child(9) { left: 85%; animation-duration: 33s; animation-delay: 7s; }
+        .leaf:nth-child(10) { left: 95%; animation-duration: 24s; animation-delay: 9s; font-size: 18px; }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.15;
+            }
+            90% {
+                opacity: 0.15;
+            }
+            100% {
+                transform: translateY(110vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* ============================================
+           页面主容器
+        ============================================ */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+
+        /* ============================================
+           头部区域
+        ============================================ */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2D9B83 0%, #3db89d 50%, #8B6914 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 8px;
+            margin-bottom: 12px;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            color: #8B6914;
+            letter-spacing: 4px;
+            opacity: 0.9;
+        }
+
+        .header .intro {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+            line-height: 1.8;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ============================================
+           游戏卡片区域
+        ============================================ */
+        .games-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 游戏卡片基础样式 */
+        .game-card {
+            background: linear-gradient(145deg, #ffffff 0%, #faf8f5 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 
+                0 4px 20px rgba(45, 155, 131, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(45, 155, 131, 0.1);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardAppear 0.6s ease-out forwards;
+        }
+
+        /* 卡片依次出现动画 */
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+        .game-card:nth-child(4) { animation-delay: 0.4s; }
+        .game-card:nth-child(5) { animation-delay: 0.5s; }
+        .game-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes cardAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 卡片悬停效果 */
+        .game-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 12px 40px rgba(45, 155, 131, 0.18),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 卡片点击反馈 */
+        .game-card:active {
+            transform: scale(0.98);
+            transition: transform 0.1s;
+        }
+
+        /* 已上线卡片的悬停高亮 */
+        .game-card.status-online:hover {
+            border-color: #2D9B83;
+        }
+
+        /* 即将上线卡片的样式 */
+        .game-card.status-upcoming {
+            opacity: 0.85;
+        }
+
+        .game-card.status-upcoming::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(139, 105, 20, 0.03) 10px,
+                rgba(139, 105, 20, 0.03) 20px
+            );
+            pointer-events: none;
+        }
+
+        .game-card.status-upcoming:hover {
+            cursor: not-allowed;
+        }
+
+        /* 点击即将上线卡片的抖动效果 */
+        .game-card.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px) rotate(-1deg); }
+            40% { transform: translateX(8px) rotate(1deg); }
+            60% { transform: translateX(-6px) rotate(-0.5deg); }
+            80% { transform: translateX(6px) rotate(0.5deg); }
+        }
+
+        /* 卡片左侧装饰条 */
+        .game-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #2D9B83 0%, #3db89d 100%);
+            border-radius: 20px 0 0 20px;
+            transition: width 0.3s ease;
+        }
+
+        .game-card.status-upcoming::before {
+            background: linear-gradient(180deg, #c9b896 0%, #d4c9a8 100%);
+        }
+
+        .game-card:hover::before {
+            width: 6px;
+        }
+
+        /* 卡片内部布局 */
+        .card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: #777;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        /* 标签区域 */
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-type {
+            background: rgba(45, 155, 131, 0.1);
+            color: #2D9B83;
+        }
+
+        .tag-upcoming {
+            background: rgba(139, 105, 20, 0.1);
+            color: #8B6914;
+        }
+
+        .tag-online {
+            background: rgba(45, 155, 131, 0.2);
+            color: #1e7a65;
+        }
+
+        /* 状态指示器 */
+        .card-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 60px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2D9B83;
+            box-shadow: 0 0 8px rgba(45, 155, 131, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .status-upcoming .status-dot {
+            background: #c9b896;
+            box-shadow: 0 0 8px rgba(139, 105, 20, 0.3);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .status-text {
+            font-size: 11px;
+            color: #2D9B83;
+            font-weight: 500;
+        }
+
+        .status-upcoming .status-text {
+            color: #a89060;
+        }
+
+        /* 箭头指示（已上线卡片） */
+        .card-arrow {
+            font-size: 20px;
+            color: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .game-card.status-online:hover .card-arrow {
+            color: #2D9B83;
+            transform: translateX(4px);
+        }
+
+        /* 链接维护中的卡片箭头样式 */
+        .card-arrow-warning {
+            color: #d4a574 !important;
+            font-size: 18px;
+        }
+
+        .game-card[data-no-link]:hover .card-arrow-warning {
+            transform: rotate(15deg);
+        }
+
+        /* ============================================
+           底部文案
+        ============================================ */
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px 0;
+            animation: fadeIn 1s ease-out 0.8s backwards;
+        }
+
+        .footer-quote {
+            font-size: 16px;
+            color: #8B6914;
+            font-style: italic;
+            position: relative;
+            display: inline-block;
+            padding: 0 30px;
+        }
+
+        .footer-quote::before,
+        .footer-quote::after {
+            content: "📚";
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            opacity: 0.6;
+        }
+
+        .footer-quote::before {
+            left: 0;
+        }
+
+        .footer-quote::after {
+            right: 0;
+        }
+
+        .footer-brand {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #bbb;
+        }
+
+        /* 新窗口打开提示 */
+        .new-window-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, rgba(45, 155, 131, 0.1) 0%, rgba(139, 105, 20, 0.08) 100%);
+            border-radius: 30px;
+            margin-bottom: 24px;
+            border: 1px dashed rgba(45, 155, 131, 0.3);
+        }
+
+        .hint-icon {
+            font-size: 18px;
+        }
+
+        .hint-text {
+            font-size: 13px;
+            color: #5a8a7a;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .new-window-hint {
+                padding: 10px 16px;
+                gap: 6px;
+            }
+            .hint-text {
+                font-size: 12px;
+            }
+        }
+
+        /* ============================================
+           动画定义
+        ============================================ */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ============================================
+           响应式适配
+        ============================================ */
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 16px 50px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+                letter-spacing: 4px;
+            }
+
+            .header .subtitle {
+                font-size: 14px;
+                letter-spacing: 2px;
+            }
+
+            .game-card {
+                padding: 20px;
+            }
+
+            .card-icon {
+                font-size: 30px;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+
+            .card-desc {
+                font-size: 13px;
+            }
+        }
+
+        /* 桌面端大屏幕优化 */
+        @media (min-width: 768px) {
+            .container {
+                padding: 60px 20px 80px;
+            }
+
+            .header h1 {
+                font-size: 52px;
+            }
+
+            .games-grid {
+                gap: 28px;
+            }
+
+            .game-card {
+                padding: 28px 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 装饰元素：飘落的书页 -->
+    <div class="decoration">
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+        <div class="leaf"></div>
+    </div>
+
+    <div class="container">
+        <!-- 头部区域 -->
+        <header class="header">
+            <span class="header-icon">🏛️</span>
+            <h1>书间游戏</h1>
+            <p class="subtitle">碧道图书馆 · 游戏合集</p>
+            <p class="intro">
+                在书页的缝隙里，藏着无尽的惊喜。<br>
+                来一场说走就走的心灵冒险吧！
+            </p>
+        </header>
+
+        <!-- 游戏卡片列表 -->
+        <main class="games-grid">
+            <!-- 游戏1：碧道喵游记 - 已上线 -->
+            <article class="game-card status-online" data-url="https://nvgx6r9pst.coze.site">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">🐱</span>
+                        <h2 class="card-title">碧道喵游记</h2>
+                        <p class="card-desc">跟随一只好奇的小猫，踏上图书馆的奇妙冒险之旅。互动闯关，解锁隐藏的书香秘密。</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">互动闯关</span>
+                            <span class="tag tag-online">已上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">可玩</span>
+                    </div>
+                    <span class="card-arrow">→</span>
+                </div>
+            </article>
+
+            <!-- 游戏2：中图法大冒险 - 已上线 -->
+            <article class="game-card status-online" data-url="https://www.coze.cn/s/Yew5tY9B680/">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">📚</span>
+                        <h2 class="card-title">中图法大冒险</h2>
+                        <p class="card-desc">穿梭于A到Z的知识丛林，学习中图法22大类的趣味闯关游戏。成为图书分类小达人的必经之路！</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">知识问答闯关</span>
+                            <span class="tag tag-online">已上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">可玩</span>
+                    </div>
+                    <span class="card-arrow">→</span>
+                </div>
+            </article>
+
+            <!-- 游戏3：夏日终曲 - 已上线（链接待确认） -->
+            <article class="game-card status-online" data-no-link="true">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">🌻</span>
+                        <h2 class="card-title">夏日终曲</h2>
+                        <p class="card-desc">一段关于夏天的故事，点击式解谜与密室逃脱的交织。在图书馆的角落，聆听夏日最后的乐章。</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">剧情解谜</span>
+                            <span class="tag tag-online">已上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">链接维护中</span>
+                    </div>
+                    <span class="card-arrow card-arrow-warning">🔧</span>
+                </div>
+            </article>
+
+            <!-- 游戏4：图书馆版SBTI - 即将上线 -->
+            <article class="game-card status-upcoming">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">✨</span>
+                        <h2 class="card-title">图书馆版SBTI</h2>
+                        <p class="card-desc">你是哪种图书馆人格？通过情境测试，发现属于你的阅读灵魂，找到命定的书籍类型。</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">情境测试</span>
+                            <span class="tag tag-upcoming">即将上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status status-upcoming">
+                        <span class="status-dot"></span>
+                        <span class="status-text">敬请期待</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 游戏5：书名猜猜乐 - 即将上线 -->
+            <article class="game-card status-upcoming">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">🤔</span>
+                        <h2 class="card-title">书名猜猜乐</h2>
+                        <p class="card-desc">根据线索猜出书名，是智慧的考验，也是文学的乐趣。准备好接受挑战了吗？</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">谜语挑战</span>
+                            <span class="tag tag-upcoming">即将上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status status-upcoming">
+                        <span class="status-dot"></span>
+                        <span class="status-text">敬请期待</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 游戏6：索书号寻宝 - 即将上线 -->
+            <article class="game-card status-upcoming">
+                <div class="card-content">
+                    <div class="card-info">
+                        <span class="card-icon">🗺️</span>
+                        <h2 class="card-title">索书号寻宝</h2>
+                        <p class="card-desc">穿梭于书架之间，根据索书号的指引找到宝藏图书。地图探索，等你来挑战！</p>
+                        <div class="card-tags">
+                            <span class="tag tag-type">地图探索</span>
+                            <span class="tag tag-upcoming">即将上线</span>
+                        </div>
+                    </div>
+                    <div class="card-status status-upcoming">
+                        <span class="status-dot"></span>
+                        <span class="status-text">敬请期待</span>
+                    </div>
+                </div>
+            </article>
+        </main>
+
+        <!-- 底部文案 -->
+        <footer class="footer">
+            <!-- 新窗口打开提示 -->
+            <div class="new-window-hint">
+                <span class="hint-icon">💡</span>
+                <span class="hint-text">点击游戏将在新窗口打开，本页面保持不变</span>
+            </div>
+            <p class="footer-quote">在书页之间，藏着一个游戏厅</p>
+            <p class="footer-brand">碧道图书馆 · 让阅读更有趣</p>
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * 书间游戏 - 交互脚本
+         * 功能：
+         * 1. 已上线游戏点击在新标签页打开
+         * 2. 即将上线游戏点击抖动反馈
+         * 3. 链接维护中的游戏点击显示提示
+         */
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有游戏卡片
+            const cards = document.querySelectorAll('.game-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // 检查是否有特殊标记：链接维护中
+                    if (this.dataset.noLink) {
+                        // 链接维护中：显示提示并抖动
+                        showToast('链接维护中，请稍后再试~');
+                        this.classList.add('shake');
+                        setTimeout(() => {
+                            this.classList.remove('shake');
+                        }, 500);
+                        return;
+                    }
+                    
+                    // 检查是否为已上线游戏（有跳转链接）
+                    if (this.classList.contains('status-online')) {
+                        const url = this.dataset.url;
+                        if (url) {
+                            // 有链接：在新标签页打开
+                            window.open(url, '_blank');
+                        }
+                    } else {
+                        // 即将上线：抖动反馈
+                        this.classList.add('shake');
+                        setTimeout(() => {
+                            this.classList.remove('shake');
+                        }, 500);
+                    }
+                });
+            });
+
+            // 提示函数（移动端友好）
+            function showToast(message) {
+                // 移除已有提示
+                const existingToast = document.querySelector('.toast-message');
+                if (existingToast) existingToast.remove();
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast-message';
+                toast.textContent = message;
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(45, 45, 45, 0.9);
+                    color: #fff;
+                    padding: 16px 28px;
+                    border-radius: 12px;
+                    font-size: 15px;
+                    z-index: 10000;
+                    animation: toastFadeIn 0.3s ease;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                `;
+                document.body.appendChild(toast);
+                
+                // 添加动画样式
+                if (!document.querySelector('#toast-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'toast-style';
+                    style.textContent = `
+                        @keyframes toastFadeIn {
+                            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+                            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                // 2秒后自动消失
+                setTimeout(() => {
+                    toast.style.animation = 'toastFadeIn 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2000);
+            }
+
+            // 添加卡片进入视口时的动画（增强效果）
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.animationPlayState = 'running';
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                cards.forEach(card => {
+                    observer.observe(card);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
