@@ -1982,16 +1982,19 @@
       const nextSibling = sortDraggedItem.nextElementSibling;
       const prevSibling = sortDraggedItem.previousElementSibling;
       
-      if (clientY < sortDragStartY && nextSibling) {
-        const nextRect = nextSibling.getBoundingClientRect();
-        if (clientY < nextRect.top + nextRect.height / 2) {
-          sortDraggedItem.parentNode.insertBefore(sortDraggedItem, nextSibling);
+      // 往上拖：检查上一个兄弟
+      if (clientY < sortDragStartY && prevSibling) {
+        const prevRect = prevSibling.getBoundingClientRect();
+        if (clientY < prevRect.bottom) {
+          sortDraggedItem.parentNode.insertBefore(sortDraggedItem, prevSibling);
           sortDragStartY = clientY;
         }
-      } else if (clientY > sortDragStartY && prevSibling) {
-        const prevRect = prevSibling.getBoundingClientRect();
-        if (clientY > prevRect.top + prevRect.height / 2) {
-          sortDraggedItem.parentNode.insertBefore(prevSibling, sortDraggedItem);
+      }
+      // 往下拖：检查下一个兄弟
+      else if (clientY > sortDragStartY && nextSibling) {
+        const nextRect = nextSibling.getBoundingClientRect();
+        if (clientY > nextRect.top) {
+          sortDraggedItem.parentNode.insertBefore(nextSibling, sortDraggedItem);
           sortDragStartY = clientY;
         }
       }
