@@ -611,19 +611,48 @@
       font-size: 1.5rem;
     }
 
-    /* 连线游戏 */
+    /* 连线游戏 - 左右布局 */
     .line-game {
       position: relative;
-      padding: 20px 0;
-      min-height: 280px;
-    }
-
-    .line-row {
       display: flex;
       justify-content: space-between;
+      align-items: stretch;
+      padding: 20px 10px;
+      min-height: 320px;
+    }
+
+    .line-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
       align-items: center;
-      margin-bottom: 30px;
-      position: relative;
+      flex: 1;
+      max-width: 45%;
+      z-index: 2;
+    }
+
+    .line-column.left {
+      align-items: flex-end;
+      padding-right: 20px;
+    }
+
+    .line-column.right {
+      align-items: flex-start;
+      padding-left: 20px;
+    }
+
+    .line-node-wrapper {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+    }
+
+    .line-column.left .line-node-wrapper {
+      flex-direction: row-reverse;
+    }
+
+    .line-column.right .line-node-wrapper {
+      flex-direction: row;
     }
 
     .line-node {
@@ -638,7 +667,7 @@
       align-items: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      z-index: 2;
+      flex-shrink: 0;
     }
 
     .line-node .icon {
@@ -674,6 +703,35 @@
       height: 100%;
       pointer-events: none;
       z-index: 1;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 400px) {
+      .line-game {
+        min-height: 280px;
+        padding: 15px 5px;
+      }
+      
+      .line-node {
+        width: 56px;
+        height: 56px;
+      }
+      
+      .line-node .icon {
+        font-size: 1.2rem;
+      }
+      
+      .line-node .label {
+        font-size: 0.55rem;
+      }
+      
+      .line-column.left {
+        padding-right: 10px;
+      }
+      
+      .line-column.right {
+        padding-left: 10px;
+      }
     }
 
     .line-hint {
@@ -2045,25 +2103,49 @@
       const canvas = document.getElementById('lineCanvas');
       
       gameEl.innerHTML = '';
-      gameEl.appendChild(canvas);
       
+      // 创建左列容器
+      const leftColumn = document.createElement('div');
+      leftColumn.className = 'line-column left';
+      
+      // 创建右列容器
+      const rightColumn = document.createElement('div');
+      rightColumn.className = 'line-column right';
+      
+      // 创建左侧节点
       lineLeftNodes.forEach((node, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'line-node-wrapper';
+        
         const el = document.createElement('div');
         el.className = 'line-node';
         el.id = node.id;
         el.innerHTML = `<span class="icon">${node.icon}</span><span class="label">${node.label}</span>`;
         el.onclick = () => selectLineNode(node.id);
-        gameEl.appendChild(el);
+        
+        wrapper.appendChild(el);
+        leftColumn.appendChild(wrapper);
       });
       
+      // 创建右侧节点
       lineRightNodes.forEach((node, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'line-node-wrapper';
+        
         const el = document.createElement('div');
         el.className = 'line-node';
         el.id = node.id;
         el.innerHTML = `<span class="icon">${node.icon}</span><span class="label">${node.label}</span>`;
         el.onclick = () => selectLineNode(node.id);
-        gameEl.appendChild(el);
+        
+        wrapper.appendChild(el);
+        rightColumn.appendChild(wrapper);
       });
+      
+      // 添加到游戏区域（canvas在中间）
+      gameEl.appendChild(canvas);
+      gameEl.appendChild(leftColumn);
+      gameEl.appendChild(rightColumn);
       
       setTimeout(() => {
         canvas.width = gameEl.offsetWidth;
