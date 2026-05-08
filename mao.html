@@ -1,2954 +1,2300 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>碧道喵游记 - 一只流浪猫的阅读冒险</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-:root {
-  --primary: #2D9B83;
-  --primary-dark: #1E7A63;
-  --secondary: #8B6914;
-  --accent: #E67E22;
-  --bg: #FFF8F0;
-  --card: #FFFFFF;
-  --text: #5D4037;
-  --text-light: #8D6E63;
-  --gold: #F4C430;
-  --shadow: 0 4px 15px rgba(0,0,0,0.1);
-  --radius: 16px;
-}
-html, body {
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-.container {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  position: relative;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>碧道喵游记</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-/* 页面动画 */
-.page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
-.page.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
+    :root {
+      --primary: #2D9B83;
+      --primary-light: #3DB89D;
+      --secondary: #8B6914;
+      --secondary-light: #B8922D;
+      --bg: #FFF8F0;
+      --card: #FFFFFF;
+      --text: #333333;
+      --text-light: #666666;
+    }
 
-/* 头部 */
-.header {
-  text-align: center;
-  padding: 15px 0;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-  border-radius: 0 0 var(--radius) var(--radius);
-  margin-bottom: 20px;
-  position: relative;
-}
-.header h1 { font-size: 1.4rem; margin-bottom: 5px; }
-.header p { font-size: 0.85rem; opacity: 0.9; }
-.back-btn {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #E8F6F3 0%, var(--bg) 50%, #FDF6E3 100%);
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+    }
 
-/* 卡片 */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
-  margin-bottom: 15px;
-}
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 16px;
+      position: relative;
+    }
 
-/* 按钮 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 25px;
-  border: none;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-decoration: none;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
-}
-.btn-primary:active { transform: scale(0.98); }
-.btn-secondary {
-  background: var(--secondary);
-  color: white;
-}
-.btn-outline {
-  background: transparent;
-  border: 2px solid var(--primary);
-  color: var(--primary);
-}
-.btn-gold {
-  background: linear-gradient(135deg, var(--gold), #E6B800);
-  color: var(--secondary);
-}
-.btn-block { width: 100%; }
+    .page {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
 
-/* 选项按钮 */
-.option-btn {
-  display: block;
-  width: 100%;
-  padding: 15px 20px;
-  margin: 10px 0;
-  background: #F5F5F5;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
-  font-size: 1rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.option-btn:hover { border-color: var(--primary); background: #E8F5E9; }
-.option-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
-.option-btn.correct { border-color: #4CAF50; background: #4CAF50; color: white; }
-.option-btn.wrong { border-color: #F44336; background: #F44336; color: white; }
+    .page.active {
+      display: block;
+    }
 
-/* 印章 */
-.stamp {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  position: relative;
-  margin: 5px;
-}
-.stamp-gold { background: linear-gradient(135deg, #FFD700, #FFA500); }
-.stamp-blue { background: linear-gradient(135deg, #4FC3F7, #0288D1); }
-.stamp-orange { background: linear-gradient(135deg, #FFB74D, #F57C00); }
-.stamp-purple { background: linear-gradient(135deg, #BA68C8, #7B1FA2); }
-.stamp-green { background: linear-gradient(135deg, #81C784, #388E3C); }
-.stamp-red { background: linear-gradient(135deg, #E57373, #C62828); }
-.stamp-gray { background: #E0E0E0; color: #9E9E9E; }
-.stamp::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 2px dashed rgba(255,255,255,0.5);
-  border-radius: 50%;
-}
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-/* 开始页 */
-#start-page {
-  text-align: center;
-  padding-top: 40px;
-  background: linear-gradient(180deg, var(--primary) 0%, var(--bg) 50%);
-  min-height: 100vh;
-}
-#start-page .logo {
-  font-size: 4rem;
-  margin-bottom: 10px;
-  animation: bounce 2s infinite;
-}
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
-}
-#start-page h1 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 5px;
-}
-#start-page .subtitle {
-  color: rgba(255,255,255,0.9);
-  font-size: 1rem;
-  margin-bottom: 30px;
-}
-#start-page .intro {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 25px;
-  margin: 20px;
-  text-align: left;
-  box-shadow: var(--shadow);
-}
-#start-page .intro h3 {
-  color: var(--primary);
-  margin-bottom: 10px;
-}
-#start-page .intro p {
-  color: var(--text-light);
-  line-height: 1.6;
-  margin-bottom: 15px;
-}
-.cat-avatar {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, #FFE0B2, #FFCC80);
-  border-radius: 50%;
-  margin: 20px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
 
-/* 章节选择 */
-.chapter-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-.chapter-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 20px 15px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  transition: transform 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.chapter-card:active { transform: scale(0.98); }
-.chapter-card.locked { opacity: 0.6; }
-.chapter-card .icon { font-size: 2.5rem; margin-bottom: 10px; }
-.chapter-card h3 { font-size: 0.95rem; color: var(--text); margin-bottom: 5px; }
-.chapter-card p { font-size: 0.75rem; color: var(--text-light); }
-.chapter-card .progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 4px;
-  background: var(--primary);
-  transition: width 0.3s;
-}
-.chapter-card.prologue { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
-.chapter-card.ch1 { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
-.chapter-card.ch2 { background: linear-gradient(135deg, #FFF8E1, #FFECB3); }
-.chapter-card.ch3 { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
-.chapter-card.ch4 { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
-.chapter-card.ch5 { background: linear-gradient(135deg, #FCE4EC, #F8BBD9); }
-.chapter-card.ch6 { background: linear-gradient(135deg, #FFEBEE, #FFCDD2); }
-.chapter-card.ch7 { background: linear-gradient(135deg, #E0F7FA, #B2EBF2); }
+    @keyframes shake {
+      0%, 100% { transform: rotate(0); }
+      25% { transform: rotate(-5deg); }
+      75% { transform: rotate(5deg); }
+    }
 
-/* 关卡列表 */
-.level-list { display: flex; flex-direction: column; gap: 12px; }
-.level-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: var(--card);
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.level-item:active { transform: scale(0.98); }
-.level-item.completed { border-left: 4px solid var(--primary); }
-.level-item .level-num {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-.level-item.completed .level-num { background: var(--gold); }
-.level-item .level-info { flex: 1; }
-.level-item h4 { font-size: 1rem; margin-bottom: 3px; }
-.level-item p { font-size: 0.8rem; color: var(--text-light); }
-.level-item .stamp-icon { font-size: 1.5rem; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
 
-/* 关卡内容页 */
-.level-content { padding-bottom: 80px; }
-.level-content .story-box {
-  background: linear-gradient(135deg, #FFF8E1, #FFECB3);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  position: relative;
-}
-.level-content .story-box::before {
-  content: '💬';
-  position: absolute;
-  top: -10px;
-  left: 15px;
-  font-size: 1.5rem;
-}
-.level-content .story-text { font-size: 0.95rem; line-height: 1.7; }
-.level-content .task-box {
-  background: var(--card);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--shadow);
-}
-.level-content .task-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--primary);
-}
+    @keyframes stamp {
+      0% { transform: scale(3) rotate(-15deg); opacity: 0; }
+      50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
 
-/* 涂色画布 */
-.coloring-area {
-  width: 100%;
-  aspect-ratio: 1;
-  background: #FAFAFA;
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 15px;
-}
-.coloring-area canvas {
-  width: 100%;
-  height: 100%;
-}
-.color-palette {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
-}
-.color-btn {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.color-btn:active { transform: scale(1.1); }
-.color-btn.selected { border-color: var(--text); transform: scale(1.15); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
 
-/* 拖拽区域 - 修复版 */
-.drop-zone {
-  min-height: 150px;
-  background: #F5F5F5;
-  border: 3px dashed #BDBDBD;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 15px;
-  transition: all 0.3s;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-}
-.drop-zone.over { border-color: var(--primary); background: #E8F5E9; }
-.drag-item {
-  width: 60px;
-  height: 60px;
-  background: var(--card);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-  transition: all 0.2s;
-  position: relative;
-  z-index: 1;
-}
-.drag-item:active, .drag-item.dragging {
-  cursor: grabbing;
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(45, 155, 131, 0.4);
-  z-index: 100;
-  opacity: 0.9;
-}
-.drag-item.placed {
-  opacity: 0.4;
-  pointer-events: none;
-}
-.drag-item.hidden {
-  display: none;
-}
-.drag-item.selected {
-  border: 3px solid var(--primary);
-  background: #E8F5E9 !important;
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(45, 155, 131, 0.4);
-}
+    @keyframes bookOpen {
+      0% { transform: rotateY(0) scale(1); }
+      50% { transform: rotateY(-30deg) scale(1.1); }
+      100% { transform: rotateY(0) scale(1); }
+    }
 
-/* 游戏区域 */
-.game-area {
-  width: 100%;
-  height: 300px;
-  background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 50%, #90EE90 100%);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 15px;
-  touch-action: none;
-}
-.player { position: absolute; font-size: 2.5rem; transition: left 0.1s; }
-.obstacle { position: absolute; font-size: 2rem; animation: fall linear infinite; }
-@keyframes fall { from { top: -50px; } to { top: 350px; } }
-.collectible {
-  position: absolute;
-  font-size: 1.8rem;
-  animation: float 2s ease-in-out infinite;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(-10px) rotate(5deg); }
-}
+    @keyframes coffeeSteam {
+      0% { opacity: 0; transform: translateY(0) scaleX(1); }
+      50% { opacity: 1; transform: translateY(-15px) scaleX(1.2); }
+      100% { opacity: 0; transform: translateY(-30px) scaleX(0.8); }
+    }
 
-/* 计时器 */
-.timer-display {
-  font-size: 3rem;
-  font-weight: bold;
-  color: var(--primary);
-  text-align: center;
-  margin: 20px 0;
-  font-variant-nacing: tabular-nums;
-}
+    @keyframes coffeeAppear {
+      0% { transform: scale(0) translateY(20px); opacity: 0; }
+      60% { transform: scale(1.2) translateY(-5px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
 
-/* 进度条 */
-.progress-bar {
-  height: 8px;
-  background: #E0E0E0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 10px 0;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  transition: width 0.3s;
-  border-radius: 4px;
-}
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(45, 155, 131, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(45, 155, 131, 0.6); }
+    }
 
-/* 弹窗 */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.modal.active { display: flex; }
-.modal-content {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 30px;
-  max-width: 360px;
-  width: 100%;
-  text-align: center;
-  animation: modalIn 0.3s ease;
-}
-@keyframes modalIn {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-.modal-content h2 {
-  font-size: 1.5rem;
-  color: var(--primary);
-  margin-bottom: 10px;
-}
-.modal-content .stamp-big {
-  width: 100px;
-  height: 100px;
-  margin: 20px auto;
-  font-size: 3rem;
-}
-.modal-content p { color: var(--text-light); margin-bottom: 20px; line-height: 1.6; }
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
 
-/* 印章墙 */
-.stamp-wall {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 15px;
-}
-.stamp-wall .stamp {
-  width: 100%;
-  aspect-ratio: 1;
-  margin: 0;
-  font-size: 1.5rem;
-}
-.stamp-wall .stamp .stamp-name {
-  position: absolute;
-  bottom: -18px;
-  font-size: 0.6rem;
-  white-space: nowrap;
-  color: var(--text-light);
-}
+    /* 首页样式 */
+    .home-page {
+      text-align: center;
+      padding-top: 40px;
+    }
 
-/* 底部导航 */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: white;
-  border-radius: 12px 12px 0 0;
-  padding: 10px 0;
-  display: flex;
-  justify-content: space-around;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-  z-index: 100;
-}
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 5px 15px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--text-light);
-  font-size: 0.75rem;
-}
-.nav-item.active { color: var(--primary); }
-.nav-item .nav-icon { font-size: 1.5rem; }
+    .game-title {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(45, 155, 131, 0.2);
+    }
 
-/* 翻页书 */
-.book-container {
-  perspective: 1000px;
-  margin: 20px 0;
-}
-.book {
-  width: 100%;
-  height: 200px;
-  position: relative;
-  transform-style: preserve-3d;
-}
-.book-page {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: #FFFEF0;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  page-break-after: always;
-}
-.book-page .page-num {
-  position: absolute;
-  bottom: 10px;
-  right: 15px;
-  font-size: 0.8rem;
-  color: var(--text-light);
-}
-.page-nav {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-}
+    .game-subtitle {
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
 
-/* 地图探索 */
-.map-container {
-  width: 100%;
-  height: 350px;
-  background: linear-gradient(180deg, #E3F2FD 0%, #C8E6C9 100%);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-}
-.map-point {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  background: var(--card);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  cursor: pointer;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
-  50% { box-shadow: 0 3px 20px rgba(45,155,131,0.5); }
-}
-.map-point.visited { background: var(--primary); }
-.map-point.visited::after {
-  content: '✓';
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  background: var(--gold);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    .cat-avatar {
+      font-size: 5rem;
+      margin: 20px 0;
+      animation: float 3s ease-in-out infinite;
+    }
 
-/* 跑酷游戏 */
-.road-game {
-  width: 100%;
-  height: 400px;
-  background: linear-gradient(180deg, #1A237E 0%, #3949AB 30%, #5C6BC0 60%, #8D6E63 80%, #4E342E 100%);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-}
-.road-line {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: repeating-linear-gradient(90deg, #FDD835 0px, #FDD835 40px, transparent 40px, transparent 80px);
-  animation: roadMove 0.5s linear infinite;
-}
-@keyframes roadMove {
-  from { background-position: 0 0; }
-  to { background-position: 80px 0; }
-}
-.player-road {
-  position: absolute;
-  bottom: 50px;
-  font-size: 3rem;
-  transition: left 0.15s;
-}
+    .intro-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: 0 8px 32px rgba(45, 155, 131, 0.15);
+      text-align: left;
+    }
 
-/* 换装游戏 */
-.dressup-area {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-.dressup-preview {
-  width: 150px;
-  height: 200px;
-  background: linear-gradient(180deg, #E1F5FE, #B3E5FC);
-  border-radius: 12px;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 10px;
-}
-.dressup-item {
-  position: absolute;
-  font-size: 3rem;
-  cursor: pointer;
-}
-.dressup-options {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dressup-option {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.dressup-option span {
-  padding: 8px 12px;
-  background: #F5F5F5;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.5rem;
-  transition: all 0.2s;
-}
-.dressup-option span:hover { background: #E0E0E0; }
-.dressup-option span.selected { background: var(--primary); }
+    .intro-card h3 {
+      color: var(--secondary);
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
 
-/* 完成页面 */
-#complete-page { text-align: center; padding-top: 30px; }
-.certificate {
-  background: linear-gradient(135deg, #FFF9C4, #FFECB3);
-  border: 4px solid var(--gold);
-  border-radius: var(--radius);
-  padding: 30px 20px;
-  margin: 20px;
-}
-.certificate h2 {
-  color: var(--secondary);
-  font-size: 1.3rem;
-  margin-bottom: 15px;
-}
-.certificate .title {
-  font-size: 1.8rem;
-  color: var(--primary);
-  font-weight: bold;
-  margin: 15px 0;
-}
-.certificate .seal {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #F44336, #C62828);
-  border-radius: 50%;
-  margin: 20px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.share-card {
-  background: var(--card);
-  border-radius: 12px;
-  padding: 20px;
-  margin: 15px;
-  box-shadow: var(--shadow);
-}
-.share-card h3 { margin-bottom: 10px; }
+    .intro-card p {
+      color: var(--text-light);
+      line-height: 1.8;
+      font-size: 0.95rem;
+    }
 
-/* 浮动装饰 */
-.float-decor {
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.1;
-  font-size: 5rem;
-  animation: floatDecor 10s ease-in-out infinite;
-}
-@keyframes floatDecor {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(10deg); }
-}
+    .intro-features {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-/* 提示文字 */
-.hint {
-  font-size: 0.85rem;
-  color: var(--text-light);
-  text-align: center;
-  margin-top: 10px;
-}
+    .feature-item {
+      text-align: center;
+      padding: 8px 12px;
+    }
 
-/* 确认框 */
-.confirm-btns {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-}
+    .feature-icon {
+      font-size: 1.8rem;
+    }
 
-/* 书籍选项 */
-.book-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  margin: 15px 0;
-}
-.book-option {
-  background: #F5F5F5;
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 3px solid transparent;
-}
-.book-option:hover { background: #E8F5E9; }
-.book-option.selected { border-color: var(--primary); background: #E8F5E9; }
-.book-option .book-icon { font-size: 3rem; margin-bottom: 8px; }
-.book-option .book-title { font-size: 0.9rem; font-weight: 600; }
+    .feature-text {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
 
-/* 种植游戏 */
-.garden-area {
-  width: 100%;
-  height: 250px;
-  background: linear-gradient(180deg, #81D4FA 0%, #A5D6A7 50%, #8D6E63 100%);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-}
-.seed-slot {
-  position: absolute;
-  bottom: 60px;
-  width: 60px;
-  height: 60px;
-  background: rgba(139,69,19,0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.seed-slot:hover { transform: scale(1.1); }
-.seed-slot.growing::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: var(--grow-height, 0);
-  background: #4CAF50;
-  transition: height 0.5s;
-}
-.plant-stage {
-  position: absolute;
-  bottom: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2.5rem;
-  animation: grow 0.5s ease-out;
-}
-@keyframes grow {
-  from { transform: translateX(-50%) scale(0); }
-  to { transform: translateX(-50%) scale(1); }
-}
+    .start-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 16px 48px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 24px;
+      box-shadow: 0 6px 20px rgba(45, 155, 131, 0.4);
+      transition: all 0.3s ease;
+    }
 
-/* 交换摊位 */
-.booth-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 0;
-}
-.booth {
-  width: 45%;
-  background: #F5F5F5;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-}
-.booth h4 { margin-bottom: 10px; }
-.booth-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  min-height: 60px;
-}
-.booth-item {
-  font-size: 2rem;
-  cursor: grab;
-  transition: transform 0.2s;
-}
-.booth-item:active { transform: scale(1.2); }
-.swap-arrow {
-  font-size: 2rem;
-  color: var(--primary);
-}
+    .start-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 3px 10px rgba(45, 155, 131, 0.4);
+    }
 
-/* 隐藏关卡 */
-.secret-level {
-  background: linear-gradient(135deg, #FFD700, #FFA500) !important;
-  position: relative;
-}
-.secret-level::before {
-  content: '🔒';
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 1rem;
-}
-.secret-level.unlocked::before {
-  content: '🔓';
-}
-</style>
+    /* 关卡通用样式 */
+    .level-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+
+    .level-title {
+      font-size: 1.5rem;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .level-date {
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+
+    .scene-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .scene-emoji {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .scene-desc {
+      color: var(--text-light);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    /* 序章探索区域 */
+    .explore-areas {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .explore-btn {
+      background: linear-gradient(135deg, #F8F4EF 0%, #FDF6E3 100%);
+      border: 2px solid var(--secondary-light);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .explore-btn:active {
+      transform: scale(0.98);
+      background: #FFF;
+    }
+
+    .explore-btn.discovered {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, #E8F6F3 0%, #D4EDDA 100%);
+    }
+
+    .explore-btn.discovered::after {
+      content: '✓';
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: var(--primary);
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .explore-btn .icon {
+      font-size: 2rem;
+    }
+
+    .explore-btn .text {
+      flex: 1;
+      text-align: left;
+    }
+
+    .explore-btn .title {
+      font-weight: bold;
+      color: var(--secondary);
+      margin-bottom: 4px;
+    }
+
+    .explore-btn .hint {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    /* 弹窗 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-emoji {
+      font-size: 4rem;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-text {
+      color: var(--text-light);
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .modal-close {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+      display: block;
+      width: 100%;
+    }
+
+    /* 印章 */
+    .stamp-modal {
+      text-align: center;
+    }
+
+    .stamp-badge {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto 20px;
+      animation: stamp 0.6s ease forwards;
+      box-shadow: 0 8px 24px rgba(45, 155, 131, 0.4);
+    }
+
+    .stamp-badge .icon {
+      font-size: 2.5rem;
+    }
+
+    .stamp-badge .name {
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    /* 选择题 */
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .quiz-option {
+      background: #F8F4EF;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .quiz-option:active {
+      transform: scale(0.98);
+    }
+
+    .quiz-option.selected {
+      border-color: var(--primary);
+      background: #E8F6F3;
+    }
+
+    .quiz-option.correct {
+      border-color: var(--primary);
+      background: #D4EDDA;
+    }
+
+    .quiz-option.wrong {
+      border-color: #DC3545;
+      background: #F8D7DA;
+    }
+
+    .quiz-feedback {
+      text-align: center;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .quiz-feedback.correct {
+      background: #D4EDDA;
+      color: #155724;
+    }
+
+    .quiz-feedback.wrong {
+      background: #F8D7DA;
+      color: #721C24;
+    }
+
+    .quiz-progress {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .quiz-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #DDD;
+    }
+
+    .quiz-dot.active {
+      background: var(--primary);
+    }
+
+    .quiz-dot.done {
+      background: var(--secondary);
+    }
+
+    /* 翻牌游戏 */
+    .memory-game {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 16px 0;
+    }
+
+    .memory-card {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      perspective: 600px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .memory-card .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+    }
+
+    .memory-card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .memory-card .card-back,
+    .memory-card .card-front {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backface-visibility: hidden;
+      font-size: 2rem;
+    }
+
+    .memory-card .card-back {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+    }
+
+    .memory-card .card-front {
+      background: #FFFFFF;
+      transform: rotateY(180deg);
+    }
+
+    .memory-card:hover .card-inner {
+      transform: scale(1.05);
+    }
+
+    .memory-card.flipped:hover .card-inner {
+      transform: rotateY(180deg) scale(1.05);
+    }
+
+    .memory-card.matched .card-inner {
+      transform: rotateY(180deg) scale(0.95);
+    }
+
+    .memory-card.matched {
+      pointer-events: none;
+    }
+
+    .memory-card.matched .card-front {
+      background: #E8F5E9;
+    }
+
+    .memory-score {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    /* 拖拽排序 */
+    .sort-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .sort-item {
+      background: var(--card);
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .sort-item.dragging {
+      opacity: 0.5;
+      border-style: dashed;
+      box-shadow: 0 4px 12px rgba(45, 155, 131, 0.3);
+      transform: scale(1.02);
+    }
+
+    .sort-item .drag-handle {
+      font-size: 1.2rem;
+      color: var(--text-light);
+    }
+
+    .sort-item .item-content {
+      flex: 1;
+    }
+
+    .sort-item .item-title {
+      font-weight: bold;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .sort-item .item-date {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    .sort-item .item-icon {
+      font-size: 1.5rem;
+    }
+
+    /* 连线游戏 */
+    .line-game {
+      position: relative;
+      padding: 20px 0;
+      min-height: 280px;
+    }
+
+    .line-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .line-node {
+      background: var(--card);
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    .line-node .icon {
+      font-size: 1.5rem;
+    }
+
+    .line-node .label {
+      font-size: 0.65rem;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .line-node.selected {
+      background: var(--primary);
+      border-color: var(--primary-light);
+      animation: glow 1s ease infinite;
+    }
+
+    .line-node.selected .label {
+      color: white;
+    }
+
+    .line-node.connected {
+      background: #D4EDDA;
+      border-color: var(--primary);
+    }
+
+    .line-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .line-hint {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    /* 进度条 */
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #DDD;
+    }
+
+    .progress-dot.completed {
+      background: var(--secondary);
+    }
+
+    .progress-dot.current {
+      background: var(--primary);
+      animation: bounce 1s infinite;
+    }
+
+    /* 完成按钮 */
+    .complete-btn {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 6px 20px rgba(139, 105, 20, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .complete-btn:active {
+      transform: scale(0.95);
+    }
+
+    .complete-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* 结算页 */
+    .result-page {
+      text-align: center;
+      padding-top: 30px;
+    }
+
+    .result-title {
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .result-subtitle {
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    .stamps-collection {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .stamp-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stamp-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 12px rgba(45, 155, 131, 0.3);
+    }
+
+    .stamp-name {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-align: center;
+    }
+
+    .title-badge {
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: inline-block;
+      margin: 20px 0;
+      box-shadow: 0 6px 20px rgba(255, 165, 0, 0.4);
+    }
+
+    .share-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .share-text {
+      color: var(--text-light);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .restart-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      border: none;
+      padding: 16px 48px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 16px;
+      box-shadow: 0 6px 20px rgba(45, 155, 131, 0.4);
+    }
+
+    /* 返回按钮 */
+    .back-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: none;
+    }
+
+    .back-btn.visible {
+      display: block;
+    }
+
+    /* 浮动装饰 */
+    .floating-deco {
+      position: fixed;
+      font-size: 2rem;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .deco-1 { top: 10%; left: 5%; animation: float 4s ease-in-out infinite; }
+    .deco-2 { top: 30%; right: 5%; animation: float 5s ease-in-out infinite 1s; }
+    .deco-3 { bottom: 20%; left: 8%; animation: float 4.5s ease-in-out infinite 0.5s; }
+    .deco-4 { bottom: 35%; right: 3%; animation: float 5.5s ease-in-out infinite 1.5s; }
+
+    /* 底部安全区 */
+    .safe-bottom {
+      height: 40px;
+    }
+
+    /* ========== 第一关：选书借阅互动样式 ========== */
+    
+    /* 书籍展示区 */
+    .book-display-area {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .book-item {
+      background: linear-gradient(135deg, #FDF6E3 0%, #FFF8F0 100%);
+      border: 2px solid var(--secondary-light);
+      border-radius: 16px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .book-item:active {
+      transform: scale(0.95);
+    }
+
+    .book-item.selected {
+      border-color: var(--primary);
+      border-width: 3px;
+      background: linear-gradient(135deg, #E8F6F3 0%, #D4EDDA 100%);
+      animation: pulse 0.5s ease;
+    }
+
+    .book-item.reading {
+      animation: bookOpen 0.6s ease forwards;
+    }
+
+    .book-item .book-emoji {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .book-item .book-title {
+      font-weight: bold;
+      color: var(--secondary);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .book-item .book-desc {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      line-height: 1.4;
+    }
+
+    .book-item .book-quote {
+      display: none;
+      font-style: italic;
+      color: var(--primary);
+      font-size: 0.85rem;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--primary);
+    }
+
+    .book-item.reading .book-quote {
+      display: block;
+      animation: fadeIn 0.5s ease 0.3s both;
+    }
+
+    /* 借阅台 */
+    .borrow-desk {
+      background: linear-gradient(135deg, #8B6914 0%, #A67C00 100%);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 16px;
+      text-align: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .borrow-desk:hover {
+      transform: scale(1.02);
+    }
+
+    .borrow-desk.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .borrow-desk .desk-icon {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+
+    .borrow-desk .desk-text {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .borrow-desk .desk-hint {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    /* 咖啡领取动画 */
+    .coffee-reward {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #FFF8F0 0%, #FFF 100%);
+      border-radius: 16px;
+      margin-top: 16px;
+      border: 2px dashed var(--secondary);
+    }
+
+    .coffee-reward.show {
+      display: flex;
+      animation: coffeeAppear 0.6s ease forwards;
+    }
+
+    .coffee-cup {
+      font-size: 4rem;
+      position: relative;
+    }
+
+    .coffee-steam {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .steam {
+      display: inline-block;
+      font-size: 1rem;
+      animation: coffeeSteam 1.5s ease infinite;
+      margin: 0 2px;
+    }
+
+    .steam:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+
+    .steam:nth-child(3) {
+      animation-delay: 1s;
+    }
+
+    .coffee-text {
+      margin-top: 12px;
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .coffee-subtext {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+
+    /* 交互步骤提示 */
+    .interaction-steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .step-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #DDD;
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: var(--primary);
+      transform: scale(1.2);
+    }
+
+    .step-dot.done {
+      background: var(--secondary);
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <!-- 开始页 -->
-  <div id="start-page" class="page active">
-    <div class="logo">🐱</div>
-    <h1>碧道喵游记</h1>
-    <p class="subtitle">一只流浪猫的阅读冒险</p>
-    <div class="cat-avatar">🐱</div>
-    <div class="intro">
-      <h3>📖 回忆册导言</h3>
-      <p>翻开碧碧的回忆册，一起回顾<strong>龙岗区图书馆龙岗河碧道分馆（别名：曲水书院·碧道馆）</strong>在<strong>2024年</strong>举办过的精彩活动吧！</p>
-      <p>跟随碧碧这只热爱阅读的小猫，重温那些美好的阅读时光~</p>
-    </div>
-    <button class="btn btn-primary btn-block" onclick="startGame()" style="margin: 0 20px;">
-      📖 翻开回忆册
-    </button>
-    <p class="hint" style="margin: 20px;">共21关，回顾27场精彩活动</p>
-  </div>
+  <button class="back-btn" id="backBtn">←</button>
 
-  <!-- 章节选择页 -->
-  <div id="chapter-page" class="page">
-    <div class="header">
-      <h1>📖 回忆章节目录</h1>
-      <p>碧碧的时光之旅</p>
-    </div>
-    <div class="chapter-grid" id="chapter-grid">
-      <!-- 动态生成 -->
-    </div>
-    <button class="btn btn-outline btn-block" onclick="showPage('stamp-wall-page')" style="margin-top: 20px;">
-      🏆 印章收藏墙
-    </button>
-    <div class="bottom-nav">
-      <button class="nav-item" onclick="showPage('chapter-page')">
-        <span class="nav-icon">📖</span>
-        <span>回忆</span>
-      </button>
-      <button class="nav-item" onclick="showPage('stamp-wall-page')">
-        <span class="nav-icon">🏆</span>
-        <span>印章</span>
-      </button>
-    </div>
-  </div>
+  <div class="floating-deco deco-1">🌿</div>
+  <div class="floating-deco deco-2">📚</div>
+  <div class="floating-deco deco-3">🐱</div>
+  <div class="floating-deco deco-4">✨</div>
 
-  <!-- 关卡选择页 -->
-  <div id="level-select-page" class="page">
-    <div class="header">
-      <button class="back-btn" onclick="showPage('chapter-page')">←</button>
-      <h1 id="chapter-title">第一章</h1>
-      <p id="chapter-desc">夏日阅章</p>
-    </div>
-    <p style="text-align: center; color: var(--text-light); font-size: 0.85rem; margin-bottom: 10px;">2024年碧道分馆精彩活动回顾</p>
-    <div class="level-list" id="level-list">
-      <!-- 动态生成 -->
-    </div>
-    <div class="bottom-nav">
-      <button class="nav-item" onclick="showPage('chapter-page')">
-        <span class="nav-icon">📖</span>
-        <span>回忆</span>
-      </button>
-      <button class="nav-item" onclick="showPage('stamp-wall-page')">
-        <span class="nav-icon">🏆</span>
-        <span>印章</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- 关卡内容页 -->
-  <div id="level-page" class="page">
-    <div class="header">
-      <button class="back-btn" onclick="showPage('chapter-page')">←</button>
-      <h1 id="level-title">关卡名称</h1>
-      <p id="level-subtitle">活动名称</p>
-    </div>
-    <div class="level-content" id="level-content">
-      <!-- 动态内容 -->
-    </div>
-    <div style="position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; padding: 0 20px;">
-      <button class="btn btn-primary btn-block" id="complete-btn" onclick="completeCurrentLevel()" style="display: none;">
-        🎉 收录这段回忆
-      </button>
-    </div>
-    <div class="bottom-nav">
-      <button class="nav-item" onclick="showPage('chapter-page')">
-        <span class="nav-icon">📖</span>
-        <span>回忆</span>
-      </button>
-      <button class="nav-item" onclick="showPage('stamp-wall-page')">
-        <span class="nav-icon">🏆</span>
-        <span>印章</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- 印章墙页 -->
-  <div id="stamp-wall-page" class="page">
-    <div class="header">
-      <h1>🏆 印章收藏墙</h1>
-      <p id="stamp-count">已收集 0/27 枚印章</p>
-    </div>
-    <div class="card">
-      <p style="text-align: center; color: var(--text-light); margin-bottom: 15px;">碧碧在2024年收集的美好回忆</p>
-      <div class="stamp-wall" id="stamp-wall">
-        <!-- 动态生成 -->
-      </div>
-    </div>
-    <div style="text-align: center; margin-top: 20px;">
-      <button class="btn btn-gold" onclick="showCertificate()">
-        📜 领取阅读达人证书
-      </button>
-    </div>
-    <div class="bottom-nav">
-      <button class="nav-item" onclick="showPage('chapter-page')">
-        <span class="nav-icon">📚</span>
-        <span>章节</span>
-      </button>
-      <button class="nav-item" onclick="showPage('stamp-wall-page')">
-        <span class="nav-icon">🏆</span>
-        <span>印章</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- 完成页 -->
-  <div id="complete-page" class="page">
-    <div style="text-align: center; padding: 40px 20px;">
-      <div style="font-size: 5rem; margin-bottom: 20px;">🎊</div>
-      <h1 style="color: var(--primary); font-size: 1.8rem;">回忆册已翻完！</h1>
-      <p id="complete-desc" style="color: var(--text-light); margin: 15px 0 25px; line-height: 1.6;"></p>
-      <div style="margin: 20px 0;">
-        <span style="font-size: 4rem;">🐱</span>
-      </div>
-    </div>
-    <div style="text-align: center; padding: 0 20px;">
-      <button class="btn btn-gold btn-block" onclick="showPage('stamp-wall-page')">
-        🏆 查看我的印章收藏
-      </button>
-      <button class="btn btn-outline btn-block" onclick="showPage('chapter-page')" style="margin-top: 15px;">
-        📖 重温回忆册
-      </button>
-    </div>
-  </div>
-
-  <!-- 证书页 -->
-  <div id="certificate-page" class="page">
-    <div class="header">
-      <button class="back-btn" onclick="showPage('stamp-wall-page')">←</button>
-      <h1>📜 阅读达人证书</h1>
-    </div>
-    <div class="certificate">
-      <h2>龙岗区图书馆龙岗河碧道分馆</h2>
-      <div class="title">授予：阅读达人</div>
-      <p id="cert-stamps">您已收集 <strong>0</strong> 枚印章</p>
-      <p id="cert-date"></p>
-      <div class="seal">🐱</div>
-    </div>
-    <div class="share-card">
-      <h3>🎴 分享你的成就</h3>
-      <p style="color: var(--text-light); font-size: 0.9rem;">长按下方图片保存或分享</p>
-      <canvas id="share-canvas" width="320" height="400" style="background: white; border-radius: 12px; margin-top: 15px;"></canvas>
-    </div>
-  </div>
-</div>
-
-<!-- 完成弹窗 -->
-<div class="modal" id="complete-modal">
-  <div class="modal-content">
-    <h2>🎉 回忆已收录！</h2>
-    <div class="stamp stamp-gold stamp-big" id="modal-stamp"></div>
-    <p id="modal-text"></p>
-    <div class="confirm-btns">
-      <button class="btn btn-primary" onclick="closeModalAndContinue()">📖 翻到下一页</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ============ 修改点总结 ============
-// 1. 修复拖拽交互：使用 closest('.drag-item') 正确获取拖拽元素
-// 2. 增强触摸支持：添加 touch-action: none 防止页面滚动
-// 3. 修复 handleTouchStart：使用 e.target.closest('.drag-item') 确保获取正确元素
-// 4. 统一拖拽逻辑：PC 和移动端使用相同的拖拽流程
-// 5. 添加详细 console.log 调试信息
-// 6. 「在图书馆装美式」活动内容 = 借书免费领一杯美式咖啡
-// 7. 开馆时间 = 2024年5月
-console.log('🎮 [游戏加载] 碧道喵游记完整版已加载');
-console.log('📝 [修改点] 拖拽交互已修复，支持PC和移动端');
-
-// ============ 游戏数据 ============
-const chapters = [
-  {
-    id: 0, name: '序章', subtitle: '新馆初见', icon: '🏠', class: 'prologue',
-    levels: [
-      { id: 'level-0-1', name: '碧碧的第一天', activity: '新馆开放日', stamp: '🏆', stampName: '新馆纪念章' }
-    ]
-  },
-  {
-    id: 1, name: '第一章', subtitle: '夏日阅章', icon: '☀️', class: 'ch1',
-    levels: [
-      { id: 'level-1-1', name: '美式阅读大挑战', activity: '借书免费领美式咖啡', stamp: '📚', stampName: '美式阅读勋章' },
-      { id: 'level-1-2', name: '夏日联章行动', activity: '21家图书馆联动', stamp: '🔖', stampName: '联章行动勋章' },
-      { id: 'level-1-3', name: '集章小能手', activity: '集齐印章换好礼', stamp: '⭐', stampName: '集章达人勋章' }
-    ]
-  },
-  {
-    id: 2, name: '第二章', subtitle: '秋日故事', icon: '🍂', class: 'ch2',
-    levels: [
-      { id: 'level-2-1', name: '叶子先生的故事', activity: '共绘秋色故事会', stamp: '🍁', stampName: '秋日故事勋章' },
-      { id: 'level-2-2', name: '穿内裤的狼', activity: '亲子故事分享', stamp: '🐺', stampName: '狼的故事勋章' },
-      { id: 'level-2-3', name: '饿肚子的小男孩', activity: '故事接龙', stamp: '🍳', stampName: '小厨师勋章' },
-      { id: 'level-2-4', name: '聪明的树', activity: '沿河树木科普', stamp: '🌳', stampName: '自然探索勋章' },
-      { id: 'level-2-5', name: '一本童书的诞生', activity: '自制童书工作坊', stamp: '📕', stampName: '创作达人勋章' }
-    ]
-  },
-  {
-    id: 3, name: '第三章', subtitle: '非遗冬藏', icon: '🎨', class: 'ch3',
-    levels: [
-      { id: 'level-3-1', name: '蜡染与撑天伞', activity: '苗族蜡染体验', stamp: '🖌️', stampName: '非遗蜡染勋章' },
-      { id: 'level-3-2', name: '草帽彩绘DIY', activity: '创意草帽彩绘', stamp: '🎩', stampName: '彩绘达人勋章' },
-      { id: 'level-3-3', name: '非遗螺钿', activity: '贝壳镶嵌艺术', stamp: '🐚', stampName: '螺钿艺术勋章' }
-    ]
-  },
-  {
-    id: 4, name: '第四章', subtitle: '河畔书香', icon: '🌿', class: 'ch4',
-    levels: [
-      { id: 'level-4-1', name: '草地读书会', activity: '户外阅读分享', stamp: '📖', stampName: '阅读分享勋章' },
-      { id: 'level-4-2', name: '以书换蔬', activity: '书香市集', stamp: '🥬', stampName: '公益阅读勋章' },
-      { id: 'level-4-3', name: '溜达鸡和流浪兔', activity: '配音互动游戏', stamp: '🐔', stampName: '配音达人勋章' }
-    ]
-  },
-  {
-    id: 5, name: '第五章', subtitle: '粤读时光', icon: '⏰', class: 'ch5',
-    levels: [
-      { id: 'level-5-1', name: '粤读半小时', activity: '专注阅读计划', stamp: '⏱️', stampName: '粤读勋章' },
-      { id: 'level-5-2', name: '北京兔儿爷', activity: '换装创意手工', stamp: '🐰', stampName: '兔儿爷勋章' },
-      { id: 'level-5-3', name: '书房奇趣日', activity: '综合体验活动', stamp: '🎭', stampName: '奇趣达人勋章' }
-    ]
-  },
-  {
-    id: 6, name: '第六章', subtitle: '新春闯关', icon: '🧧', class: 'ch6',
-    levels: [
-      { id: 'level-6-1', name: '西游闹春', activity: '新春寻年记', stamp: '🐵', stampName: '新春闯关勋章' },
-      { id: 'level-6-2', name: '元宵猜谜', activity: '灯谜竞猜', stamp: '🏮', stampName: '灯谜达人勋章' },
-      { id: 'level-6-3', name: '树立世界', activity: '植树节活动', stamp: '🌱', stampName: '绿植达人勋章' },
-      { id: 'level-6-4', name: '书香漂流第二届', activity: '图书交换', stamp: '📚', stampName: '漂流书香勋章' }
-    ]
-  },
-  {
-    id: 7, name: '隐藏关卡', subtitle: '特别挑战', icon: '🔮', class: 'ch7', secret: true,
-    levels: [
-      { id: 'level-7-1', name: '双龙聚义', activity: '八馆地图探索', stamp: '🐉', stampName: '双龙勋章', require: 15 },
-      { id: 'level-7-2', name: '宫阙深对话', activity: '历史知识问答', stamp: '🏯', stampName: '宫阙勋章', require: 19 }
-    ]
-  }
-];
-
-// ============ 关卡跳转流程（调试用） ============
-const levelFlow = [
-  { from: 'start-page', to: 'chapter-page', desc: '开始冒险 → 章节选择' },
-  { from: 'chapter-page', to: 'level-select-page', desc: '选择章节 → 关卡列表' },
-  { from: 'level-select-page', to: 'level-page', desc: '选择关卡 → 关卡内容' },
-  { from: 'level-page', to: 'complete-modal', desc: '完成关卡 → 完成弹窗' },
-  { from: 'complete-modal', to: 'level-select-page', desc: '弹窗确认 → 关卡列表' }
-];
-console.log('🔄 [关卡流程]', levelFlow);
-
-// ============ 游戏状态 ============
-let gameState = {
-  stamps: [],
-  completedLevels: [],
-  currentChapter: null,
-  currentLevel: null
-};
-
-// ============ 初始化 ============
-function init() {
-  console.log('🎮 [init] 初始化游戏');
-  loadGame();
-  renderChapters();
-  renderStampWall();
-  
-  // 初始化拖拽事件委托
-  initDragDelegation();
-}
-
-// ============ 页面切换 ============
-function showPage(pageId) {
-  console.log(`🔄 [showPage] 切换到: ${pageId}`);
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const targetPage = document.getElementById(pageId);
-  if (targetPage) {
-    targetPage.classList.add('active');
-    console.log(`✅ [showPage] 页面切换成功: ${pageId}`);
-  } else {
-    console.error(`❌ [showPage] 页面不存在: ${pageId}`);
-  }
-  
-  // 隐藏底部导航在开始页
-  const bottomNav = document.querySelector('.bottom-nav');
-  if (bottomNav) {
-    bottomNav.style.display = pageId === 'start-page' ? 'none' : 'flex';
-  }
-  
-  // 更新印章计数
-  if (pageId === 'stamp-wall-page') {
-    updateStampCount();
-  }
-}
-
-// ============ 章节渲染 ============
-function renderChapters() {
-  const grid = document.getElementById('chapter-grid');
-  grid.innerHTML = chapters.map(ch => {
-    const completed = ch.levels.filter(l => gameState.completedLevels.includes(l.id)).length;
-    const total = ch.levels.length;
-    const locked = isChapterLocked(ch);
-    const unlocked = !locked ? '' : ' locked';
-    const secretClass = ch.secret ? ' secret-level' : '';
-    const secretUnlocked = ch.secret && isChapterUnlocked(ch) ? ' unlocked' : '';
-    
-    return `
-      <div class="chapter-card ${ch.class}${unlocked}${secretClass}${secretUnlocked}" 
-           onclick="${locked ? '' : `selectChapter(${ch.id})`}">
-        <div class="icon">${ch.icon}</div>
-        <h3>${ch.name}</h3>
-        <p>${ch.subtitle}</p>
-        <p style="margin-top:5px; color: var(--primary);">${completed}/${total}关</p>
-        <div class="progress" style="width: ${(completed/total)*100}%"></div>
-      </div>
-    `;
-  }).join('');
-}
-
-function isChapterLocked(ch) {
-  if (ch.id === 0) return false;
-  if (ch.secret) return !isChapterUnlocked(ch);
-  // 普通章节需要完成前一章
-  const prevChapter = chapters[ch.id - 1];
-  return !prevChapter.levels.every(l => gameState.completedLevels.includes(l.id));
-}
-
-function isChapterUnlocked(ch) {
-  if (ch.require) {
-    return gameState.stamps.length >= ch.require;
-  }
-  return false;
-}
-
-function selectChapter(chapterId) {
-  console.log(`📖 [selectChapter] 选择章节: ${chapterId}`);
-  gameState.currentChapter = chapters[chapterId];
-  document.getElementById('chapter-title').textContent = gameState.currentChapter.name;
-  document.getElementById('chapter-desc').textContent = gameState.currentChapter.subtitle;
-  renderLevelList();
-  showPage('level-select-page');
-}
-
-// ============ 关卡列表渲染 ============
-function renderLevelList() {
-  const list = document.getElementById('level-list');
-  list.innerHTML = gameState.currentChapter.levels.map((level, idx) => {
-    const completed = gameState.completedLevels.includes(level.id);
-    return `
-      <div class="level-item ${completed ? 'completed' : ''}" onclick="startLevel('${level.id}')">
-        <div class="level-num">${completed ? '✓' : idx + 1}</div>
-        <div class="level-info">
-          <h4>${level.name}</h4>
-          <p>${level.activity}</p>
-        </div>
-        <div class="stamp-icon">${completed ? level.stamp : '📋'}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-// ============ 关卡内容渲染 ============
-function startLevel(levelId) {
-  console.log(`🎮 [startLevel] 开始关卡: ${levelId}`);
-  const allLevels = chapters.flatMap(ch => ch.levels);
-  const level = allLevels.find(l => l.id === levelId);
-  if (!level) {
-    console.error(`❌ [startLevel] 关卡不存在: ${levelId}`);
-    return;
-  }
-  
-  gameState.currentLevel = level;
-  document.getElementById('level-title').textContent = level.name;
-  document.getElementById('level-subtitle').textContent = level.activity;
-  
-  const content = document.getElementById('level-content');
-  content.innerHTML = getLevelContent(level);
-  
-  // 初始化关卡特定逻辑
-  initLevelLogic(level);
-  
-  showPage('level-page');
-}
-
-function getLevelContent(level) {
-  const contents = {
-    // 序章
-    'level-0-1': `
-      <div class="story-box">
-        <p class="story-text">碧碧翻开了回忆册，第一页记录着2024年5月那天的美好...<br><br>"那天阳光正好，我第一次走进这家书房，看见了好多书和落地窗，阳光洒在木地板上...这里真是太棒了！"</p>
-      </div>
-      <div class="card">
-        <h3 style="color: var(--primary); margin-bottom: 15px;">📍 碧道分馆小档案</h3>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-          <div style="background: #F5F5F5; padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 1.5rem;">📍</div>
-            <div style="font-size: 0.8rem; color: var(--text-light);">位置</div>
-            <div style="font-size: 0.9rem; font-weight: 600;">龙岗河碧道</div>
-          </div>
-          <div style="background: #F5F5F5; padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 1.5rem;">📐</div>
-            <div style="font-size: 0.8rem; color: var(--text-light);">面积</div>
-            <div style="font-size: 0.9rem; font-weight: 600;">290㎡</div>
-          </div>
-          <div style="background: #F5F5F5; padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 1.5rem;">📚</div>
-            <div style="font-size: 0.8rem; color: var(--text-light);">藏书</div>
-            <div style="font-size: 0.9rem; font-weight: 600;">1万册</div>
-          </div>
-          <div style="background: #F5F5F5; padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 1.5rem;">🕐</div>
-            <div style="font-size: 0.8rem; color: var(--text-light);">开放</div>
-            <div style="font-size: 0.9rem; font-weight: 600;">2024年5月</div>
-          </div>
-        </div>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🎯 知识问答</div>
-        <p style="margin-bottom: 15px;">碧道分馆的别名是什么？</p>
-        <button class="option-btn" onclick="checkAnswer(this, false)">A. 碧道书房</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">B. 曲水书院·碧道馆</button>
-        <button class="option-btn" onclick="checkAnswer(this, false)">C. 龙岗图书馆</button>
-      </div>
-    `,
-    
-    // 第一章
-    'level-1-1': `
-      <div class="story-box">
-        <p class="story-text">那年（2024年）6月，图书馆推出了一项特别福利——借一本书，免费领一杯美式咖啡！碧碧回忆起来，那是边读边喝的最美时光~☕</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">☕ 「在图书馆装美式」活动回顾</div>
-        <p style="margin-bottom: 15px;">当年的"借书免费领美式咖啡"活动，需要怎么做？</p>
-        <button class="option-btn" onclick="checkAnswer(this, false)">A. 借书后需要购买会员卡才能领取</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">B. 借一本书就可以免费领一杯美式咖啡</button>
-        <button class="option-btn" onclick="checkAnswer(this, false)">C. 必须借满5本书才能兑换一杯咖啡</button>
-      </div>
-    `,
-    
-    'level-1-2': `
-      <div class="story-box">
-        <p class="story-text">那年夏天，碧道分馆加入了龙岗区图书馆联盟，与其他20家图书馆一起联动举办"夏日联章行动"！碧碧跑遍了每一家图书馆，集齐了21枚印章~🏃‍♀️</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🔖 「夏日联章行动」回顾</div>
-        <p style="margin-bottom: 15px;">点击收集图书馆印章，目标是集齐5枚！</p>
-        <div class="game-area" id="stamp-collect-area" style="cursor: pointer;">
-          <div style="position: absolute; top: 10px; left: 10px; background: white; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem;">
-            已收集: <span id="stamp-count-display">0</span>/5
-          </div>
-        </div>
-        <p class="hint">点击随机出现的印章📚收集它们！</p>
-      </div>
-    `,
-    
-    'level-1-3': `
-      <div class="story-box">
-        <p class="story-text">集章本上密密麻麻盖满了章！碧碧把印章拖到集章本上，整整齐齐的，看着好治愈~这是那年在图书馆最开心的事情之一呢！</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">⭐ 「集齐印章换好礼」活动回顾</div>
-        <p style="margin-bottom: 15px;">将印章拖到集章本中</p>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-          <div style="text-align: center;">
-            <p style="margin-bottom: 10px; font-weight: 600;">📋 印章</p>
-            <div id="stamp-source" style="display: flex; flex-wrap: wrap; gap: 8px; min-width: 80px;">
-              <div class="drag-item" data-stamp="📚">📚</div>
-              <div class="drag-item" data-stamp="🔖">🔖</div>
-              <div class="drag-item" data-stamp="⭐">⭐</div>
-            </div>
-          </div>
-          <div style="text-align: center;">
-            <p style="margin-bottom: 10px; font-weight: 600;">📖 集章本</p>
-            <div class="drop-zone" id="stamp-drop" style="min-width: 120px; min-height: 120px;"></div>
-          </div>
-        </div>
-        <p class="hint">拖拽印章到集章本中</p>
-      </div>
-    `,
-    
-    // 第二章
-    'level-2-1': `
-      <div class="story-box">
-        <p class="story-text">那年秋天（2024年），图书馆举办了一场"共绘秋色故事会"。《叶子先生》绘本让碧碧和小朋友们一起描绘秋天的故事🍂</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🍁 「共绘秋色故事会」回顾</div>
-        <div class="book-container">
-          <div class="book" id="book-area">
-            <div class="book-page" id="book-page-1">
-              <div style="font-size: 4rem;">🍂</div>
-              <p style="margin: 15px 0; font-size: 1rem;">叶子先生从树上飘落，</p>
-              <p>随风飞过金黄的田野...</p>
-              <span class="page-num">1/3</span>
-            </div>
-            <div class="book-page" id="book-page-2" style="display: none;">
-              <div style="font-size: 4rem;">🌊</div>
-              <p style="margin: 15px 0; font-size: 1rem;">叶子先生落在小溪里，</p>
-              <p>顺着水流缓缓前行...</p>
-              <span class="page-num">2/3</span>
-            </div>
-            <div class="book-page" id="book-page-3" style="display: none;">
-              <div style="font-size: 4rem;">🌱</div>
-              <p style="margin: 15px 0; font-size: 1rem;">叶子先生变成泥土的养分，</p>
-              <p>等待下一个春天...</p>
-              <span class="page-num">3/3</span>
-            </div>
-          </div>
-        </div>
-        <div class="page-nav">
-          <button class="btn btn-outline" id="prev-page" onclick="turnPage(-1)" disabled>← 上一页</button>
-          <button class="btn btn-primary" id="next-page" onclick="turnPage(1)">下一页 →</button>
-        </div>
-      </div>
-    `,
-    
-    'level-2-2': `
-      <div class="story-box">
-        <p class="story-text">那年秋天，图书馆亲子故事会上分享了《穿内裤的狼》。碧碧记得，小朋友们都抢着发言，说这只狼其实是个善良的家伙呢~🐺</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🐺 「亲子故事分享」回顾</div>
-        <p style="margin-bottom: 15px;">故事里的狼是好是坏？小朋友们怎么看？</p>
-        <div style="font-size: 5rem; text-align: center; margin: 20px 0;">🐺</div>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🐺 狼也可以是好人！</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🐺 故事里没有绝对的坏人</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🐺 勇敢做自己最重要</button>
-      </div>
-    `,
-    
-    'level-2-3': `
-      <div class="story-box">
-        <p class="story-text">那年秋天，图书馆里进行了一场有趣的故事接龙！"从前有一个饿肚子的小男孩..."碧碧至今还记得大家的奇思妙想~🍳</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🍳 「故事接龙」活动回顾</div>
-        <p style="margin-bottom: 15px;">为故事选择一个结局：</p>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🍳 小男孩学会了做饭，还分享给大家</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🍳 小男孩发现厨房里有个小精灵帮忙</button>
-        <button class="option-btn" onclick="checkAnswer(this, true)">🍳 小男孩决定开一家小餐厅</button>
-      </div>
-    `,
-    
-    'level-2-4': `
-      <div class="story-box">
-        <p class="story-text">那年秋天，图书馆沿河举办了一场树木科普活动。碧碧在龙岗河边认识了好多有趣的树木朋友~🌳</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🌳 「沿河树木科普」活动回顾</div>
-        <div class="map-container" id="tree-map">
-          <div class="map-point" style="left: 20%; top: 30%;" onclick="visitTree(this, '榕树', '可以长出很多气根，是鸟类天堂')">🌳</div>
-          <div class="map-point" style="left: 70%; top: 50%;" onclick="visitTree(this, '桂花', '秋天开花，香气满园')">🌸</div>
-          <div class="map-point" style="left: 40%; top: 70%;" onclick="visitTree(this, '柳树', '枝条细长，随风飘舞')">🌿</div>
-          <div style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 8px; font-size: 0.85rem;">
-            已探索: <span id="tree-count">0</span>/3 种树木
-          </div>
-        </div>
-        <div id="tree-info" style="margin-top: 15px; padding: 15px; background: #F5F5F5; border-radius: 8px; min-height: 60px;">
-          <p style="color: var(--text-light); text-align: center;">点击树木探索它们的故事~</p>
-        </div>
-      </div>
-    `,
-    
-    'level-2-5': `
-      <div class="story-box">
-        <p class="story-text">那年秋天，图书馆举办了一场自制童书工作坊！碧碧和小朋友们一起创作了属于自己的第一本小童书，好有成就感~📕</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">📕 「自制童书工作坊」回顾</div>
-        <p style="margin-bottom: 15px;">将素材拖到书页上创作你的故事</p>
-        <div style="display: flex; gap: 20px; align-items: flex-start;">
-          <div>
-            <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">🎨 素材</p>
-            <div id="book素材" style="display: flex; flex-wrap: wrap; gap: 8px; max-width: 100px;">
-              <div class="drag-item" data-item="🐱">🐱</div>
-              <div class="drag-item" data-item="📚">📚</div>
-              <div class="drag-item" data-item="☀️">☀️</div>
-              <div class="drag-item" data-item="🌈">🌈</div>
-            </div>
-          </div>
-          <div style="flex: 1;">
-            <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">📖 童书</p>
-            <div class="drop-zone" id="book-drop" style="min-height: 150px;"></div>
-          </div>
-        </div>
-        <p class="hint">拖拽素材到童书上</p>
-      </div>
-    `,
-    
-    // 第三章
-    'level-3-1': `
-      <div class="story-box">
-        <p class="story-text">那年冬天（2024年），图书馆举办了一场特别的活动——苗族蜡染体验！碧碧第一次体验了用蜡刀在布上画图案，好神奇呀~🖌️</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🖌️ 「苗族蜡染体验」回顾</div>
-        <p style="margin-bottom: 15px;">选择颜色为撑天伞图案上色</p>
-        <div class="coloring-area">
-          <canvas id="coloring-canvas" width="300" height="300"></canvas>
-        </div>
-        <div class="color-palette">
-          <div class="color-btn" style="background: #1565C0;" onclick="selectColor('#1565C0')"></div>
-          <div class="color-btn" style="background: #2E7D32;" onclick="selectColor('#2E7D32')"></div>
-          <div class="color-btn" style="background: #F57C00;" onclick="selectColor('#F57C00')"></div>
-          <div class="color-btn" style="background: #7B1FA2;" onclick="selectColor('#7B1FA2')"></div>
-          <div class="color-btn" style="background: #C62828;" onclick="selectColor('#C62828')"></div>
-        </div>
-        <p class="hint">点击图案区域进行涂色</p>
-      </div>
-    `,
-    
-    'level-3-2': `
-      <div class="story-box">
-        <p class="story-text">那年冬天，图书馆还举办了创意草帽彩绘活动！大家把普通的草帽变成了五彩缤纷的艺术品~🎩</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🎩 「创意草帽彩绘」回顾</div>
-        <p style="margin-bottom: 15px;">选择颜色绘制草帽图案</p>
-        <div class="coloring-area">
-          <canvas id="hat-canvas" width="300" height="250"></canvas>
-        </div>
-        <div class="color-palette">
-          <div class="color-btn" style="background: #E91E63;" onclick="selectColor('#E91E63')"></div>
-          <div class="color-btn" style="background: #FF9800;" onclick="selectColor('#FF9800')"></div>
-          <div class="color-btn" style="background: #4CAF50;" onclick="selectColor('#4CAF50')"></div>
-          <div class="color-btn" style="background: #2196F3;" onclick="selectColor('#2196F3')"></div>
-          <div class="color-btn" style="background: #9C27B0;" onclick="selectColor('#9C27B0')"></div>
-        </div>
-      </div>
-    `,
-    
-    'level-3-3': `
-      <div class="story-box">
-        <p class="story-text">那年冬天，图书馆还带来了非遗螺钿体验活动！碧碧第一次尝试把贝壳碎片镶嵌成闪闪发光的图案，好美呀~🐚</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🐚 「非遗螺钿」体验回顾</div>
-        <p style="margin-bottom: 15px;">将贝壳碎片拖到图案中</p>
-        <div style="display: flex; gap: 20px; align-items: flex-start;">
-          <div>
-            <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">🐚 贝壳</p>
-            <div id="shell-source" style="display: flex; flex-wrap: wrap; gap: 8px; max-width: 80px;">
-              <div class="drag-item" data-shell="●" style="background: linear-gradient(135deg, #E0E0E0, #9E9E9E);">●</div>
-              <div class="drag-item" data-shell="◆" style="background: linear-gradient(135deg, #E0E0E0, #9E9E9E);">◆</div>
-              <div class="drag-item" data-shell="■" style="background: linear-gradient(135deg, #E0E0E0, #9E9E9E);">■</div>
-              <div class="drag-item" data-shell="★" style="background: linear-gradient(135deg, #FFD700, #FFA500);">★</div>
-            </div>
-          </div>
-          <div style="flex: 1;">
-            <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">🎨 图案</p>
-            <div class="drop-zone" id="shell-drop" style="min-height: 150px; background: #1A237E; border-color: #3F51B5;">
-              <p style="color: #7986CB; font-size: 0.9rem;">拖拽贝壳到这里</p>
-            </div>
-          </div>
-        </div>
-        <p class="hint">拖拽贝壳碎片到图案区域</p>
-      </div>
-    `,
-    
-    // 第四章
-    'level-4-1': `
-      <div class="story-box">
-        <p class="story-text">那年河畔书香浓！图书馆在草地上办了一场户外阅读分享会。碧碧铺开野餐垫，和小朋友们一起分享阅读的快乐~📖</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">📖 「户外阅读分享」回顾</div>
-        <p style="margin-bottom: 15px;">选择一本想读的书：</p>
-        <div class="book-options" id="book-select">
-          <div class="book-option" onclick="selectBook(this, '绘本')">
-            <div class="book-icon">📚</div>
-            <div class="book-title">儿童绘本</div>
-          </div>
-          <div class="book-option" onclick="selectBook(this, '童话')">
-            <div class="book-icon">🏰</div>
-            <div class="book-title">童话故事</div>
-          </div>
-          <div class="book-option" onclick="selectBook(this, '科普')">
-            <div class="book-icon">🔬</div>
-            <div class="book-title">科普百科</div>
-          </div>
-          <div class="book-option" onclick="selectBook(this, '冒险')">
-            <div class="book-icon">⚔️</div>
-            <div class="book-title">冒险小说</div>
-          </div>
-        </div>
-      </div>
-    `,
-    
-    'level-4-2': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆还举办了一场特别的"以书换蔬"书香市集！用旧书换取新鲜蔬菜，让知识继续漂流~🥬</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🥬 「以书换蔬」书香市集回顾</div>
-        <div class="booth-area">
-          <div class="booth">
-            <h4>📚 换书区</h4>
-            <div class="booth-items">
-              <div class="drag-item" data-exchange="book1">📕</div>
-            </div>
-          </div>
-          <div class="swap-arrow">⇄</div>
-          <div class="booth">
-            <h4>🥬 换蔬区</h4>
-            <div class="booth-items">
-              <span style="font-size: 2rem;">🥬</span>
-              <span style="font-size: 2rem;">🍅</span>
-              <span style="font-size: 2rem;">🥕</span>
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-block" onclick="completeExchange()">
-          完成交换
-        </button>
-      </div>
-    `,
-    
-    'level-4-3': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆还办了一场特别的配音互动游戏——"溜达鸡和流浪兔"！碧碧给大家扮演的角色配音，笑得肚子疼~🐔🐰</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🐔 「溜达鸡和流浪兔」配音回顾</div>
-        <p style="margin-bottom: 15px;">选择你想配音的角色：</p>
-        <div style="display: flex; justify-content: center; gap: 30px; margin: 20px 0;">
-          <div style="text-align: center; cursor: pointer;" onclick="selectCharacter('鸡')">
-            <div style="font-size: 4rem;">🐔</div>
-            <p style="margin-top: 8px;">溜达鸡</p>
-          </div>
-          <div style="text-align: center; cursor: pointer;" onclick="selectCharacter('兔')">
-            <div style="font-size: 4rem;">🐰</div>
-            <p style="margin-top: 8px;">流浪兔</p>
-          </div>
-        </div>
-        <div id="character-result" style="text-align: center; min-height: 60px; padding: 15px; background: #F5F5F5; border-radius: 8px; margin-top: 15px;">
-          <p style="color: var(--text-light);">选择一个角色开始配音~</p>
-        </div>
-      </div>
-    `,
-    
-    // 第五章
-    'level-5-1': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆发起了"粤读半小时"专注阅读计划！碧碧每天都给自己半小时，安静地读一本书，让心灵去旅行~⏱️</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">⏱️ 「粤读半小时」活动回顾</div>
-        <div class="timer-display" id="timer-display">00:30</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="timer-progress" style="width: 0%;"></div>
-        </div>
-        <button class="btn btn-primary btn-block" id="timer-btn" onclick="startTimer()">
-          ▶️ 开始计时
-        </button>
-        <div style="margin-top: 20px; text-align: center;">
-          <p style="font-weight: 600; margin-bottom: 10px;">计时结束后回答问题：</p>
-          <p style="color: var(--text-light); font-size: 0.9rem;">粤读半小时的目的是什么？</p>
-          <button class="option-btn" onclick="checkAnswer(this, true)">A. 培养专注阅读习惯</button>
-          <button class="option-btn" onclick="checkAnswer(this, false)">B. 比赛阅读速度</button>
-        </div>
-      </div>
-    `,
-    
-    'level-5-2': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆还办了一场换装创意手工活动！北京兔儿爷来到图书馆，小朋友们为它穿上了漂亮的衣服~🐰</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🐰 「北京兔儿爷」换装回顾</div>
-        <div class="dressup-area">
-          <div class="dressup-preview" id="dressup-preview"></div>
-          <div class="dressup-item" style="bottom: 10px; font-size: 4rem;">🐰</div>
-          <div class="dressup-options">
-            <div>
-              <p style="font-size: 0.85rem; margin-bottom: 5px;">🎨 衣服：</p>
-              <div class="dressup-option">
-                <span onclick="selectDress(this, '👘')">👘</span>
-                <span onclick="selectDress(this, '🎎')">🎎</span>
-                <span onclick="selectDress(this, '🧥')">🧥</span>
-              </div>
-            </div>
-            <div>
-              <p style="font-size: 0.85rem; margin-bottom: 5px;">🦌 坐骑：</p>
-              <div class="dressup-option">
-                <span onclick="selectMount(this, '🦌')">🦌</span>
-                <span onclick="selectMount(this, '🐉')">🐉</span>
-                <span onclick="selectMount(this, '🦅')">🦅</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-    
-    'level-5-3': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆的"书房奇趣日"真是太热闹了！有手势舞、植物手工、立体书体验...碧碧玩得开心极了！🎭</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🎭 「书房奇趣日」综合回顾</div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div id="activity-1" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #F5F5F5; border-radius: 10px; cursor: pointer;" onclick="doActivity(1, this)">
-            <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">1</div>
-            <div style="flex: 1;">
-              <div style="font-weight: 600;">🖐️ 手势舞学习</div>
-              <div style="font-size: 0.8rem; color: var(--text-light);">学习简单的手势舞动作</div>
-            </div>
-            <div class="activity-check" style="width: 24px; height: 24px; border: 2px solid #E0E0E0; border-radius: 50%;"></div>
-          </div>
-          <div id="activity-2" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #F5F5F5; border-radius: 10px; cursor: pointer;" onclick="doActivity(2, this)">
-            <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">2</div>
-            <div style="flex: 1;">
-              <div style="font-weight: 600;">🌱 植物拓印</div>
-              <div style="font-size: 0.8rem; color: var(--text-light);">用树叶创作自然艺术</div>
-            </div>
-            <div class="activity-check" style="width: 24px; height: 24px; border: 2px solid #E0E0E0; border-radius: 50%;"></div>
-          </div>
-          <div id="activity-3" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #F5F5F5; border-radius: 10px; cursor: pointer;" onclick="doActivity(3, this)">
-            <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">3</div>
-            <div style="flex: 1;">
-              <div style="font-weight: 600;">📚 立体书制作</div>
-              <div style="font-size: 0.8rem; color: var(--text-light);">制作一本立体书</div>
-            </div>
-            <div class="activity-check" style="width: 24px; height: 24px; border: 2px solid #E0E0E0; border-radius: 50%;"></div>
-          </div>
-        </div>
-        <p class="hint" style="margin-top: 15px;">点击完成所有3个活动</p>
-      </div>
-    `,
-    
-    // 第六章
-    'level-6-1': `
-      <div class="story-box">
-        <p class="story-text">那年新春（2024年初），图书馆举办了一场热闘的新春寻年记！碧碧在"西游闹春"游戏中躲避障碍，收集了好多新年灯笼🏮~</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🐵 「西游闹春·新春寻年记」回顾</div>
-        <div class="road-game" id="road-game">
-          <div class="road-line"></div>
-          <div class="player-road" id="player-road">🐱</div>
-          <div id="collectibles-container"></div>
-          <div id="obstacles-container"></div>
-          <div style="position: absolute; top: 10px; left: 10px; background: white; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem;">
-            🏮 <span id="lantern-count">0</span>/3
-          </div>
-        </div>
-        <p class="hint">点击屏幕左右移动碧碧躲避障碍！</p>
-      </div>
-    `,
-    
-    'level-6-2': `
-      <div class="story-box">
-        <p class="story-text">那年元宵节，图书馆挂满了红灯笼，举办了一场热闹的灯谜竞猜活动！碧碧和小朋友们一起猜灯谜，可有意思啦~🏮</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🏮 「元宵灯谜竞猜」回顾</div>
-        <div id="riddle-area">
-          <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #FF5252, #D32F2F); border-radius: 12px; margin-bottom: 15px;">
-            <p style="color: white; font-size: 1.1rem;">🏮 灯谜 <span id="riddle-num">1</span>/3 🏮</p>
-          </div>
-          <div id="current-riddle" style="padding: 20px; background: #FFF8E1; border-radius: 12px; text-align: center; margin-bottom: 15px;">
-            <p style="font-size: 1.2rem; font-weight: 600; color: var(--secondary);">上下一体打一字</p>
-          </div>
-          <button class="option-btn" onclick="checkRiddle(this, true)">A. 卡</button>
-          <button class="option-btn" onclick="checkRiddle(this, false)">B. 忐</button>
-          <button class="option-btn" onclick="checkRiddle(this, false)">C. 忐</button>
-        </div>
-      </div>
-    `,
-    
-    'level-6-3': `
-      <div class="story-box">
-        <p class="story-text">那年春天，图书馆在植树节举办了一场植树活动！碧碧亲手种下了小树苗，等待它快快长大~🌱</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🌱 「植树节活动」回顾</div>
-        <p style="margin-bottom: 15px;">选择种子并浇水种植</p>
-        <div class="garden-area" id="garden-area">
-          <div class="seed-slot" id="seed-slot" onclick="plantSeed()">
-            <span id="seed-icon">🌰</span>
-          </div>
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-          <button class="btn btn-secondary" onclick="selectSeed('🌰')">🌰 橡树</button>
-          <button class="btn btn-secondary" onclick="selectSeed('🌸')">🌸 樱花</button>
-          <button class="btn btn-secondary" onclick="selectSeed('🍎')">🍎 苹果</button>
-        </div>
-        <button class="btn btn-primary btn-block" id="water-btn" onclick="waterPlant()" style="margin-top: 15px;" disabled>
-          💧 浇水
-        </button>
-      </div>
-    `,
-    
-    'level-6-4': `
-      <div class="story-box">
-        <p class="story-text">那年图书馆还举办了"书香漂流第二届"！碧碧带着自己的书去了三个站点交换，收获了好多新朋友~📚</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">📚 「书香漂流第二届」回顾</div>
-        <div style="display: flex; justify-content: space-between; margin: 20px 0;">
-          <div style="text-align: center;">
-            <div style="width: 60px; height: 60px; background: #E3F2FD; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 8px;" id="station-1">📍</div>
-            <p style="font-size: 0.8rem;">碧道站</p>
-          </div>
-          <div style="text-align: center;">
-            <div style="width: 60px; height: 60px; background: #E8F5E9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 8px;" id="station-2">📍</div>
-            <p style="font-size: 0.8rem;">龙城站</p>
-          </div>
-          <div style="text-align: center;">
-            <div style="width: 60px; height: 60px; background: #FFF3E0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 8px;" id="station-3">📍</div>
-            <p style="font-size: 0.8rem;">中心城站</p>
-          </div>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="exchange-progress" style="width: 0%;"></div>
-        </div>
-        <p style="text-align: center; margin-top: 10px; color: var(--text-light);">
-          已到达: <span id="station-count">0</span>/3 站
-        </p>
-        <button class="btn btn-primary btn-block" onclick="visitStation()">
-          🚶 前往下一站
-        </button>
-      </div>
-    `,
-    
-    // 隐藏关卡
-    'level-7-1': `
-      <div class="story-box" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
-        <p class="story-text">🐉 回忆那次特别的"八馆联动"！碧碧探索了龙岗区的8家图书馆，收集了好多分馆的印章呢~</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🗺️ 「八馆地图探索」回顾</div>
-        <div class="map-container" style="height: 300px;">
-          <div class="map-point" style="left: 15%; top: 25%;" onclick="visitLibrary(this, '碧道分馆')">🏠</div>
-          <div class="map-point" style="left: 35%; top: 15%;" onclick="visitLibrary(this, '龙城分馆')">📚</div>
-          <div class="map-point" style="left: 60%; top: 30%;" onclick="visitLibrary(this, '坂田分馆')">📖</div>
-          <div class="map-point" style="left: 25%; top: 55%;" onclick="visitLibrary(this, '布吉分馆')">📕</div>
-          <div class="map-point" style="left: 50%; top: 60%;" onclick="visitLibrary(this, '横岗分馆')">📗</div>
-          <div class="map-point" style="left: 75%; top: 50%;" onclick="visitLibrary(this, '平湖分馆')">📘</div>
-          <div class="map-point" style="left: 40%; top: 80%;" onclick="visitLibrary(this, '坪地分馆')">📙</div>
-          <div class="map-point" style="left: 65%; top: 75%;" onclick="visitLibrary(this, '吉华分馆')">📓</div>
-          <div style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 8px; font-size: 0.85rem;">
-            已探索: <span id="library-count">0</span>/8 馆
-          </div>
-        </div>
-        <div id="library-info" style="margin-top: 15px; padding: 15px; background: #F5F5F5; border-radius: 8px; min-height: 50px;">
-          <p style="color: var(--text-light); text-align: center;">点击图书馆图标开始探索~</p>
-        </div>
-      </div>
-    `,
-    
-    'level-7-2': `
-      <div class="story-box" style="background: linear-gradient(135deg, #E1F5FE, #81D4FA);">
-        <p class="story-text">🏯 回忆那次历史知识问答！关于龙岗区的历史文化，碧碧可是认真学习了一番呢~</p>
-      </div>
-      <div class="task-box">
-        <div class="task-title">🏛️ 「历史知识问答」回顾</div>
-        <div id="history-area">
-          <div style="text-align: center; margin-bottom: 15px;">
-            <span style="background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem;">
-              第 <span id="history-q-num">1</span> 题
-            </span>
-          </div>
-          <p style="margin-bottom: 15px; font-weight: 600;">龙岗区图书馆成立于哪一年？</p>
-          <button class="option-btn" onclick="checkHistory(this, false)">A. 1990年</button>
-          <button class="option-btn" onclick="checkHistory(this, true)">B. 1995年</button>
-          <button class="option-btn" onclick="checkHistory(this, false)">C. 2000年</button>
-        </div>
-      </div>
-    `
-  };
-  
-  return contents[level.id] || `
-    <div class="story-box">
-      <p class="story-text">"欢迎来到这个有趣的关卡！和碧碧一起探索吧~"</p>
-    </div>
-    <div class="task-box">
-      <div class="task-title">🎯 互动任务</div>
-      <p style="margin-bottom: 15px;">完成以下任务即可获得印章：</p>
-      <button class="btn btn-primary btn-block" onclick="checkAnswer(this, true)">
-        ✅ 完成任务
-      </button>
-    </div>
-  `;
-}
-
-// ============ 关卡逻辑初始化 ============
-let currentBookPage = 1;
-let bookTotalPages = 3;
-let timerInterval = null;
-let timerSeconds = 30;
-let selectedColor = '#1565C0';
-let coloringCtx = null;
-let hatCtx = null;
-let currentSeed = '🌰';
-let plantedSeed = null;
-let growthStage = 0;
-let visitedTrees = new Set();
-let completedActivities = new Set();
-let collectedStamps = 0;
-let stampCollectInterval = null;
-let lanterns = 0;
-let playerX = 180;
-let gameRunning = false;
-let gameInterval = null;
-let visitedLibraries = new Set();
-let riddleIndex = 0;
-const riddles = [
-  { q: '上下一体打一字', a: 0 },
-  { q: '人在草木中打一字', a: 1 },
-  { q: '七人八只眼打一字', a: 0 }
-];
-let historyQ = 0;
-let stationsVisited = 0;
-let selectedDress = null;
-let selectedMount = null;
-let selectedCharacter = null;
-
-function initLevelLogic(level) {
-  console.log(`🎮 [initLevelLogic] 初始化关卡逻辑: ${level.id}`);
-  
-  // 重置状态
-  currentBookPage = 1;
-  timerSeconds = 30;
-  lanterns = 0;
-  playerX = 180;
-  visitedTrees.clear();
-  completedActivities.clear();
-  collectedStamps = 0;
-  visitedLibraries.clear();
-  riddleIndex = 0;
-  historyQ = 0;
-  stationsVisited = 0;
-  plantedSeed = null;
-  growthStage = 0;
-  selectedDress = null;
-  selectedMount = null;
-  selectedCharacter = null;
-  
-  document.getElementById('complete-btn').style.display = 'none';
-  
-  // 初始化特定关卡
-  switch(level.id) {
-    case 'level-1-2':
-      initStampCollect();
-      break;
-    case 'level-1-3':
-      // 延迟初始化，确保DOM已渲染
-      setTimeout(() => initDragDrop('stamp-source', 'stamp-drop', 'stamp'), 100);
-      break;
-    case 'level-2-1':
-      updateBookPage();
-      break;
-    case 'level-2-5':
-      setTimeout(() => initDragDrop('book素材', 'book-drop', 'item'), 100);
-      break;
-    case 'level-3-1':
-      initColoring('coloring-canvas', true);
-      break;
-    case 'level-3-2':
-      initColoring('hat-canvas', false);
-      break;
-    case 'level-3-3':
-      setTimeout(() => initDragDrop('shell-source', 'shell-drop', 'shell'), 100);
-      break;
-    case 'level-4-2':
-      // 以书换蔬
-      break;
-    case 'level-6-1':
-      initRoadGame();
-      break;
-    case 'level-0-1':
-    case 'level-1-1':
-    case 'level-2-2':
-    case 'level-2-3':
-    case 'level-4-1':
-    case 'level-5-1':
-    case 'level-6-2':
-    case 'level-7-2':
-      // 答题类关卡
-      break;
-  }
-}
-
-// ============ 答题检查（允许选错后重试） ============
-function checkAnswer(btn, correct) {
-  console.log(`❓ [checkAnswer] 答题: correct=${correct}`);
-  const btns = btn.parentElement.querySelectorAll('.option-btn');
-  
-  if (correct) {
-    // 答对了：禁用所有按钮，显示完成按钮
-    btn.classList.add('correct');
-    btns.forEach(b => {
-      b.disabled = true;
-      // 如果不是正确答案但也不是当前点击的，移除wrong状态
-      if (!b.classList.contains('correct')) {
-        b.classList.remove('wrong');
-      }
-    });
-    showCompleteButton();
-  } else {
-    // 答错了：当前按钮标红+抖动，其他按钮仍可点击
-    btn.classList.add('wrong');
-    btn.style.animation = 'shake 0.5s ease';
-    setTimeout(() => btn.style.animation = '', 500);
-    
-    // 找出正确答案并高亮（不自动显示，让用户自己选）
-    btns.forEach(b => {
-      // 找到正确答案但先不显示，让用户自己重试
-      // 只有已经标记为correct的才保持
-    });
-    
-    // 提示可以重试
-    const taskBox = btn.closest('.task-box');
-    let hint = taskBox.querySelector('.retry-hint');
-    if (!hint) {
-      hint = document.createElement('p');
-      hint.className = 'retry-hint';
-      hint.style.cssText = 'color: #F57C00; font-size: 0.9rem; margin-top: 10px; text-align: center;';
-      hint.textContent = '答错了，再试一次吧~';
-      taskBox.appendChild(hint);
-    }
-  }
-}
-
-function showCompleteButton() {
-  console.log('✅ [showCompleteButton] 显示完成按钮');
-  document.getElementById('complete-btn').style.display = 'block';
-}
-
-// ============ 翻页书 ============
-function turnPage(dir) {
-  currentBookPage += dir;
-  updateBookPage();
-}
-
-function updateBookPage() {
-  for (let i = 1; i <= bookTotalPages; i++) {
-    const page = document.getElementById(`book-page-${i}`);
-    if (page) {
-      page.style.display = i === currentBookPage ? 'flex' : 'none';
-    }
-  }
-  
-  document.getElementById('prev-page').disabled = currentBookPage <= 1;
-  document.getElementById('next-page').disabled = currentBookPage >= bookTotalPages;
-  
-  if (currentBookPage >= bookTotalPages) {
-    showCompleteButton();
-  }
-}
-
-// ============ 涂色游戏 ============
-function initColoring(canvasId, isUmbrella) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * 2;
-  canvas.height = rect.height * 2;
-  ctx.scale(2, 2);
-  
-  const w = rect.width;
-  const h = rect.height;
-  
-  if (isUmbrella) {
-    ctx.fillStyle = '#FAFAFA';
-    ctx.fillRect(0, 0, w, h);
-    
-    ctx.beginPath();
-    ctx.moveTo(w/2, 30);
-    ctx.lineTo(w * 0.15, h * 0.7);
-    ctx.quadraticCurveTo(w/2, h * 0.85, w * 0.85, h * 0.7);
-    ctx.lineTo(w/2, 30);
-    ctx.fillStyle = '#E0E0E0';
-    ctx.fill();
-    ctx.strokeStyle = '#BDBDBD';
-    ctx.stroke();
-    
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI;
-      ctx.moveTo(w/2, 30);
-      ctx.lineTo(w/2 + Math.cos(angle) * w * 0.35, 30 + Math.sin(angle) * h * 0.4);
-    }
-    ctx.strokeStyle = '#9E9E9E';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(w/2, h * 0.75);
-    ctx.lineTo(w/2, h - 20);
-    ctx.quadraticCurveTo(w/2, h - 10, w/2 + 10, h - 10);
-    ctx.strokeStyle = '#8D6E63';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = '#FAFAFA';
-    ctx.fillRect(0, 0, w, h);
-    
-    ctx.beginPath();
-    ctx.ellipse(w/2, h * 0.4, w * 0.25, h * 0.2, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#D7CCC8';
-    ctx.fill();
-    ctx.strokeStyle = '#A1887F';
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.ellipse(w/2, h * 0.55, w * 0.45, h * 0.12, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#BCAAA4';
-    ctx.fill();
-    ctx.strokeStyle = '#A1887F';
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.ellipse(w/2, h * 0.35, w * 0.2, h * 0.05, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#8D6E63';
-    ctx.fill();
-  }
-  
-  canvas.onclick = function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    ctx.beginPath();
-    ctx.arc(x, y, 15, 0, Math.PI * 2);
-    ctx.fillStyle = selectedColor;
-    ctx.fill();
-    
-    showCompleteButton();
-  };
-  
-  if (isUmbrella) {
-    coloringCtx = ctx;
-  } else {
-    hatCtx = ctx;
-  }
-}
-
-function selectColor(color) {
-  selectedColor = color;
-  document.querySelectorAll('.color-btn').forEach(btn => {
-    btn.classList.toggle('selected', btn.style.background === color || rgbToHex(btn.style.background) === color);
-  });
-}
-
-function rgbToHex(rgb) {
-  if (!rgb || rgb.startsWith('#')) return rgb;
-  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-  if (!match) return rgb;
-  return '#' + [match[1], match[2], match[3]].map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-}
-
-// ============ 计时器 ============
-function startTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    document.getElementById('timer-btn').textContent = '▶️ 继续';
-    return;
-  }
-  
-  document.getElementById('timer-btn').textContent = '⏸️ 暂停';
-  
-  timerInterval = setInterval(() => {
-    timerSeconds--;
-    const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
-    const secs = (timerSeconds % 60).toString().padStart(2, '0');
-    document.getElementById('timer-display').textContent = `${mins}:${secs}`;
-    
-    const progress = ((30 - timerSeconds) / 30) * 100;
-    document.getElementById('timer-progress').style.width = `${progress}%`;
-    
-    if (timerSeconds <= 0) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      document.getElementById('timer-btn').textContent = '✅ 时间到！';
-      document.getElementById('timer-btn').disabled = true;
-      showCompleteButton();
-    }
-  }, 1000);
-}
-
-// ============ 拖拽功能（使用事件委托，修复只能拖一个的问题） ============
-
-let dragState = {
-  element: null,
-  clone: null,
-  isDragging: false,
-  offsetX: 0,
-  offsetY: 0
-};
-
-// 初始化拖拽事件委托（只在document上绑定一次）
-function initDragDelegation() {
-  console.log('📦 [initDragDelegation] 初始化拖拽事件委托');
-  
-  // mousedown 事件委托
-  document.addEventListener('mousedown', function(e) {
-    const item = e.target.closest('.drag-item');
-    if (!item || item.classList.contains('placed') || item.classList.contains('hidden')) {
-      return;
-    }
-    handleDragStart(e, item);
-  });
-  
-  // touchstart 事件委托
-  document.addEventListener('touchstart', function(e) {
-    const item = e.target.closest('.drag-item');
-    if (!item || item.classList.contains('placed') || item.classList.contains('hidden')) {
-      return;
-    }
-    handleDragStart(e, item);
-  }, { passive: false });
-}
-
-function handleDragStart(e, element) {
-  // 再次检查，确保已放置或已隐藏的元素不能拖动
-  if (element.classList.contains('placed') || element.classList.contains('hidden')) {
-    return;
-  }
-  
-  e.preventDefault();
-  console.log('🖐️ [handleDragStart] 开始拖拽:', element.dataset);
-  
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  const rect = element.getBoundingClientRect();
-  
-  dragState.element = element;
-  dragState.isDragging = true;
-  dragState.offsetX = clientX - rect.left;
-  dragState.offsetY = clientY - rect.top;
-  
-  // 创建跟随克隆
-  const clone = element.cloneNode(true);
-  clone.style.cssText = `position:fixed; left:${rect.left}px; top:${rect.top}px; z-index:9999; pointer-events:none; opacity:0.9; transform:scale(1.1); transition:none; touch-action:none;`;
-  clone.id = 'drag-clone';
-  document.body.appendChild(clone);
-  dragState.clone = clone;
-  
-  element.style.opacity = '0.3';
-  
-  // 绑定到document（如果之前没有绑定的话，检查避免重复绑定）
-  if (!dragState._bound) {
-    document.addEventListener('mousemove', handleDragMove, { passive: false });
-    document.addEventListener('mouseup', handleDragEnd);
-    document.addEventListener('touchmove', handleDragMove, { passive: false });
-    document.addEventListener('touchend', handleDragEnd);
-    dragState._bound = true;
-  }
-}
-
-function handleDragMove(e) {
-  if (!dragState.isDragging || !dragState.clone) return;
-  e.preventDefault();
-  
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  
-  dragState.clone.style.left = (clientX - dragState.offsetX) + 'px';
-  dragState.clone.style.top = (clientY - dragState.offsetY) + 'px';
-  
-  // 用 elementFromPoint 检测目标（先隐藏克隆让检测穿透）
-  dragState.clone.style.display = 'none';
-  const target = document.elementFromPoint(clientX, clientY);
-  dragState.clone.style.display = '';
-  
-  // 高亮drop-zone
-  document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('over'));
-  const dropZone = target ? target.closest('.drop-zone') : null;
-  if (dropZone) dropZone.classList.add('over');
-}
-
-function handleDragEnd(e) {
-  if (!dragState.isDragging) return;
-  
-  console.log('🔓 [handleDragEnd] 结束拖拽');
-  
-  const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-  const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-  
-  // 检测drop目标
-  dragState.clone.style.display = 'none';
-  const target = document.elementFromPoint(clientX, clientY);
-  dragState.clone.style.display = '';
-  
-  const dropZone = target ? target.closest('.drop-zone') : null;
-  
-  if (dropZone) {
-    // 检查这个物品是否已经放置过了
-    const existingInZone = dropZone.querySelector(`.placed[data-placed]`);
-    
-    // 获取拖拽元素的data值
-    const dataKeys = ['stamp', 'item', 'shell'];
-    let dataValue = null;
-    for (const key of dataKeys) {
-      if (dragState.element.dataset[key]) {
-        dataValue = dragState.element.dataset[key];
-        break;
-      }
-    }
-    
-    // 检查这个物品是否已经在目标区域
-    if (dataValue) {
-      const alreadyPlaced = dropZone.querySelector(`.placed[data-placed="${dataValue}"]`);
-      if (!alreadyPlaced) {
-        // 放置成功
-        console.log(`📦 [handleDragEnd] 放置物品: ${dataValue}`);
-        addToDropZone(dropZone, dataValue, dragState.element);
-      }
-    }
-  }
-  
-  // 清理
-  if (dragState.clone) {
-    dragState.clone.remove();
-    dragState.clone = null;
-  }
-  if (dragState.element) {
-    dragState.element.style.opacity = '1';
-    dragState.element = null;
-  }
-  document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('over'));
-  
-  // 重置拖拽状态（但保持事件绑定的标志位）
-  dragState.isDragging = false;
-  dragState.offsetX = 0;
-  dragState.offsetY = 0;
-}
-
-// 初始化拖拽区域（兼容旧接口，但实际使用事件委托）
-function initDragDrop(sourceId, targetId, dataKey) {
-  console.log(`📦 [initDragDrop] 初始化拖拽区域: ${sourceId} -> ${targetId}`);
-  
-  // 由于使用事件委托，这里只需要确保元素存在即可
-  // 事件监听在 initDragDelegation 中统一处理
-  const source = document.getElementById(sourceId);
-  if (!source) return;
-  
-  // 确保 drag-item 元素有正确的样式
-  const items = source.querySelectorAll('.drag-item');
-  items.forEach(item => {
-    item.style.touchAction = 'none';
-    item.style.cursor = 'grab';
-  });
-}
-
-// 放置到目标区域
-function addToDropZone(zone, item, sourceElement) {
-  console.log(`📦 [addToDropZone] 放置物品: ${item} 到 ${zone.id}`);
-  
-  // 检查是否已放置（根据item内容检查）
-  const existing = zone.querySelector(`.placed[data-placed="${item}"]`);
-  if (existing) return;
-  
-  // 移除提示文字
-  const hint = zone.querySelector('p');
-  if (hint && hint.style.color === 'rgb(121, 134, 203)') {
-    hint.remove();
-  }
-  
-  // 创建放置的元素
-  const div = document.createElement('div');
-  div.className = 'drag-item placed';
-  div.dataset.placed = item;
-  div.style.fontSize = '2rem';
-  div.style.animation = 'pulse 0.5s ease'; // 添加放置动画
-  div.textContent = item;
-  zone.appendChild(div);
-  
-  // 隐藏源元素
-  if (sourceElement) {
-    sourceElement.classList.add('hidden');
-    sourceElement.classList.add('placed');
-  }
-  
-  // 检查是否全部放置
-  const sourceId = zone.id === 'stamp-drop' ? 'stamp-source' : 
-                    zone.id === 'book-drop' ? 'book素材' : 'shell-source';
-  const source = document.getElementById(sourceId);
-  if (source) {
-    const total = source.querySelectorAll('.drag-item').length;
-    const placed = zone.querySelectorAll('.drag-item.placed').length;
-    console.log(`📊 [addToDropZone] 放置进度: ${placed}/${total}`);
-    if (placed >= total) {
-      showCompleteButton();
-    }
-  }
-}
-
-// ============ 印章收集游戏 ============
-function initStampCollect() {
-  collectedStamps = 0;
-  document.getElementById('stamp-count-display').textContent = '0';
-  
-  const area = document.getElementById('stamp-collect-area');
-  if (!area) return;
-  
-  if (stampCollectInterval) clearInterval(stampCollectInterval);
-  
-  stampCollectInterval = setInterval(() => {
-    if (collectedStamps >= 5) {
-      clearInterval(stampCollectInterval);
-      showCompleteButton();
-      return;
-    }
-    
-    const stamp = document.createElement('div');
-    stamp.style.cssText = `
-      position: absolute;
-      font-size: 2rem;
-      cursor: pointer;
-      animation: float 1s ease-in-out infinite;
-      left: ${10 + Math.random() * 70}%;
-      top: ${10 + Math.random() * 70}%;
-    `;
-    stamp.textContent = '📚';
-    stamp.onclick = () => {
-      collectedStamps++;
-      document.getElementById('stamp-count-display').textContent = collectedStamps;
-      stamp.remove();
+  <div class="container">
+    <!-- 首页 -->
+    <div class="page home-page active" id="homePage">
+      <h1 class="game-title">🐱 碧道喵游记</h1>
+      <p class="game-subtitle">一只流浪猫的阅读冒险</p>
       
-      if (collectedStamps >= 5) {
-        clearInterval(stampCollectInterval);
-        showCompleteButton();
+      <div class="cat-avatar">🐱</div>
+      
+      <div class="intro-card">
+        <h3>📖 龙岗河碧道分馆（曲水书院·碧道馆）</h3>
+        <p>藏在龙岗河畔的秘境书房，290㎡温馨空间，万卷藏书静候知音。这里有一只特别的"馆猫"——流浪猫碧碧，欢迎你来和它一起探索阅读的乐趣！</p>
+        
+        <div class="intro-features">
+          <div class="feature-item">
+            <span class="feature-icon">🏞️</span>
+            <div class="feature-text">龙岗河畔</div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">📚</span>
+            <div class="feature-text">万卷藏书</div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🐱</span>
+            <div class="feature-text">馆猫碧碧</div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🎨</span>
+            <div class="feature-text">精彩活动</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="start-btn" onclick="startGame()">开始冒险 🚀</button>
+    </div>
+
+    <!-- 序章：碧碧的第一天（优化版） -->
+    <div class="page" id="prologuePage">
+      <div class="level-header">
+        <span class="level-badge">序章</span>
+        <h2 class="level-title">碧碧的第一天</h2>
+        <p class="level-date">📅 2024年5月 · 新馆开放</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">🏠✨</div>
+        <p class="scene-desc">
+          2024年5月，龙岗河碧道分馆（别名"曲水书院·碧道馆"）正式开馆！地址在龙岗区龙园路435号3楼，面积290㎡，藏书超1万册。流浪猫碧碧第一次走进这个温暖的地方，决定探索这个神奇的空间~
+        </p>
+      </div>
+      
+      <div class="scene-card">
+        <p style="color: var(--primary); font-weight: bold; margin-bottom: 12px;">👆 点击下方区域，探索碧道分馆的特色：</p>
+        <div class="explore-areas" id="exploreAreas">
+          <button class="explore-btn" id="explore-bookshelf" onclick="exploreArea('bookshelf')">
+            <span class="icon">📚</span>
+            <div class="text">
+              <div class="title">书架区</div>
+              <div class="hint">点击探索</div>
+            </div>
+          </button>
+          <button class="explore-btn" id="explore-reading" onclick="exploreArea('reading')">
+            <span class="icon">🛋️</span>
+            <div class="text">
+              <div class="title">阅读区</div>
+              <div class="hint">点击探索</div>
+            </div>
+          </button>
+          <button class="explore-btn" id="explore-window" onclick="exploreArea('window')">
+            <span class="icon">🌅</span>
+            <div class="text">
+              <div class="title">河景窗边</div>
+              <div class="hint">点击探索</div>
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      <div class="scene-card" id="prologueProgress">
+        <p style="text-align: center; color: var(--text-light);">
+          已探索：<span id="prologueExplored">0</span>/3 个区域
+        </p>
+      </div>
+    </div>
+
+    <!-- 第1关：美式阅读大挑战（优化版） -->
+    <div class="page" id="level1Page">
+      <div class="level-header">
+        <span class="level-badge">第1关</span>
+        <h2 class="level-title">美式阅读大挑战</h2>
+        <p class="level-date">📅 2024年6月 · 借书免费领美式咖啡活动</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">☕📖</div>
+        <p class="scene-desc">
+          碧碧在窗边发现了一本有趣的书，旁边的读者端着一杯咖啡告诉它："我们在玩'在图书馆装美式'活动哦！只要借一本书，就能免费领一杯美式咖啡~"碧碧好奇地竖起耳朵，决定挑战一下自己的阅读知识！
+        </p>
+      </div>
+      
+      <!-- 交互步骤指示器 -->
+      <div class="interaction-steps" id="level1Steps">
+        <span class="step-dot active" id="step1"></span>
+        <span class="step-dot" id="step2"></span>
+      </div>
+      
+      <!-- 步骤1：选书借阅互动 -->
+      <div class="scene-card" id="step1Content">
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">📚 选择你喜欢的书</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">点击书籍翻开阅读，然后点击借阅台领取咖啡~</p>
+        
+        <div class="book-display-area" id="bookDisplayArea">
+          <div class="book-item" data-book="绘本" onclick="selectBook(this)">
+            <span class="book-emoji">📕</span>
+            <div class="book-title">儿童绘本</div>
+            <div class="book-desc">适合3-8岁小朋友</div>
+            <div class="book-quote">"每一页都是一个小惊喜~"</div>
+          </div>
+          <div class="book-item" data-book="童话" onclick="selectBook(this)">
+            <span class="book-emoji">🏰</span>
+            <div class="book-title">童话故事</div>
+            <div class="book-desc">经典格林童话合集</div>
+            <div class="book-quote">"从前有座山，山里有座庙..."</div>
+          </div>
+          <div class="book-item" data-book="科普" onclick="selectBook(this)">
+            <span class="book-emoji">🔬</span>
+            <div class="book-title">科普百科</div>
+            <div class="book-desc">探索科学的奥秘</div>
+            <div class="book-quote">"你知道彩虹是怎么形成的吗？"</div>
+          </div>
+          <div class="book-item" data-book="冒险" onclick="selectBook(this)">
+            <span class="book-emoji">⚔️</span>
+            <div class="book-title">冒险小说</div>
+            <div class="book-desc">惊心动魄的冒险之旅</div>
+            <div class="book-quote">"下一站，未知的冒险~"</div>
+          </div>
+        </div>
+        
+        <!-- 借阅台 -->
+        <div class="borrow-desk disabled" id="borrowDesk" onclick="claimCoffee()">
+          <div class="desk-icon">🛒</div>
+          <div class="desk-text">借阅台</div>
+          <div class="desk-hint">请先选择并阅读一本书</div>
+        </div>
+        
+        <!-- 咖啡奖励 -->
+        <div class="coffee-reward" id="coffeeReward">
+          <div class="coffee-cup">
+            ☕
+            <div class="coffee-steam">
+              <span class="steam">~</span>
+              <span class="steam">~</span>
+              <span class="steam">~</span>
+            </div>
+          </div>
+          <div class="coffee-text">🎉 借书领美式成功！</div>
+          <div class="coffee-subtext">完成"在图书馆装美式"成就</div>
+        </div>
+      </div>
+      
+      <!-- 步骤2：答题闯关 -->
+      <div class="scene-card" id="step2Content" style="display: none;">
+        <div class="quiz-progress" id="quiz1Progress">
+          <span class="quiz-dot active"></span>
+          <span class="quiz-dot"></span>
+          <span class="quiz-dot"></span>
+        </div>
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">❓ 答题回顾</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">关于2024年碧道分馆的活动，回顾一下吧~</p>
+        
+        <div id="quiz1Content">
+          <p class="scene-desc" id="quiz1Question"></p>
+          <div class="quiz-options" id="quiz1Options"></div>
+          <div id="quiz1Feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第2关：叶子先生的秋天 -->
+    <div class="page" id="level2Page">
+      <div class="level-header">
+        <span class="level-badge">第2关</span>
+        <h2 class="level-title">叶子先生的秋天</h2>
+        <p class="level-date">📅 2024年10月 · 亲子故事会</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">🍁🍂</div>
+        <p class="scene-desc">
+          2024年秋风送爽，龙岗河畔飘满了金黄的落叶。碧道分馆里正在举办《叶子先生》亲子故事会！碧碧和小朋友们一起听故事、做游戏。现在，它们要玩一个"秋日翻翻乐"配对游戏，考验记忆力的时候到啦~
+        </p>
+      </div>
+      
+      <div class="scene-card">
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">🍂 翻牌配对</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">找出4对相同的秋日元素</p>
+        <div class="memory-game" id="memoryGame"></div>
+        <div class="memory-score">配对进度：<span id="memoryMatched">0</span>/4</div>
+      </div>
+    </div>
+
+    <!-- 第3关：蜡染与螺钿 -->
+    <div class="page" id="level3Page">
+      <div class="level-header">
+        <span class="level-badge">第3关</span>
+        <h2 class="level-title">蜡染与螺钿</h2>
+        <p class="level-date">📅 2024年10-12月 · 非遗手工坊</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">🎨✨</div>
+        <p class="scene-desc">
+          2024年，碧道分馆的非遗手工坊热闹非凡！从《蜡染与撑天伞》到《草帽彩绘DIY》，再到《非遗螺钿》，每一场活动都让参与者感受到了传统文化的魅力。碧碧想要把这些精彩活动按时间顺序排列，你能帮它吗？
+        </p>
+      </div>
+      
+      <div class="scene-card">
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">📋 拖拽排序</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 12px;">请将活动按时间顺序排列（拖动调整）</p>
+        <div class="sort-list" id="sortList"></div>
+        <button class="complete-btn" id="sortCheckBtn" onclick="checkSort()">检查顺序 ✓</button>
+      </div>
+    </div>
+
+    <!-- 第4关：以书换蔬 -->
+    <div class="page" id="level4Page">
+      <div class="level-header">
+        <span class="level-badge">第4关</span>
+        <h2 class="level-title">以书换蔬</h2>
+        <p class="level-date">📅 2024年 · 河畔书香漂流</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">📮🌱🥬</div>
+        <p class="scene-desc">
+          龙岗河畔的书香市集开张啦！"河畔书香漂流"活动设置了三个漂流驿站，每站都有不同的兑换好礼。碧碧想用自己的旧书换取一份春天的礼物，快来帮它完成连线吧~
+        </p>
+      </div>
+      
+      <div class="scene-card">
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">🔗 连线匹配</h3>
+        <p class="line-hint">点击两个节点完成连线</p>
+        <div class="line-game" id="lineGame">
+          <canvas class="line-canvas" id="lineCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第5关：西游闹春 -->
+    <div class="page" id="level5Page">
+      <div class="level-header">
+        <span class="level-badge">第5关</span>
+        <h2 class="level-title">西游闹春</h2>
+        <p class="level-date">📅 2024年 · 新春活动回顾</p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="scene-emoji">🏮🐒🐉</div>
+        <p class="scene-desc">
+          碧道分馆举办过"西游闹春斗年兽"主题活动！碧碧化身为小悟空，和小读者们一起闯关打年兽。快来挑战三道趣味问答，回顾一下当时的精彩吧~
+        </p>
+      </div>
+      
+      <div class="scene-card">
+        <div class="quiz-progress" id="quiz2Progress">
+          <span class="quiz-dot active"></span>
+          <span class="quiz-dot"></span>
+          <span class="quiz-dot"></span>
+        </div>
+        <h3 style="color: var(--secondary); margin-bottom: 8px;">🎯 闯关问答</h3>
+        
+        <div id="quiz2Content">
+          <p class="scene-desc" id="quiz2Question"></p>
+          <div class="quiz-options" id="quiz2Options"></div>
+          <div id="quiz2Feedback"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 结算页 -->
+    <div class="page result-page" id="resultPage">
+      <div class="cat-avatar" style="font-size: 4rem;">🎉</div>
+      <h1 class="result-title">冒险完成！</h1>
+      <p class="result-subtitle">恭喜你收集了全部印章</p>
+      
+      <div class="stamps-collection" id="stampsCollection"></div>
+      
+      <div class="title-badge">🏆 碧道阅读达人</div>
+      
+      <div class="share-card">
+        <p class="share-text" id="shareText">
+          我在碧道喵游记收集了6/6枚印章，成为碧道阅读达人！<br><br>
+          龙岗河碧道分馆（曲水书院·碧道馆），一家藏在碧道里的书房~ 📚🐱
+        </p>
+      </div>
+      
+      <button class="restart-btn" onclick="restartGame()">🔄 再玩一次</button>
+      
+      <div class="safe-bottom"></div>
+    </div>
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div class="modal" id="infoModal">
+    <div class="modal-content">
+      <div class="modal-emoji" id="modalEmoji">🐱</div>
+      <h3 class="modal-title" id="modalTitle">探索发现</h3>
+      <p class="modal-text" id="modalText"></p>
+      <button class="modal-close" onclick="closeModal()">知道了 ✓</button>
+    </div>
+  </div>
+
+  <!-- 印章弹窗 -->
+  <div class="modal" id="stampModal">
+    <div class="modal-content stamp-modal">
+      <div class="stamp-badge" id="stampBadge">
+        <span class="icon" id="stampIcon">🐾</span>
+        <span class="name" id="stampName">新馆纪念章</span>
+      </div>
+      <h3 class="modal-title" id="stampTitle">获得新印章！</h3>
+      <p class="modal-text" id="stampText">恭喜你完成本关挑战！</p>
+      <button class="modal-close" id="stampBtn" onclick="closeStampModal()">继续前进 →</button>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 游戏状态 ====================
+    const gameState = {
+      currentLevel: 0,
+      stamps: [],
+      prologueExplored: 0,
+      
+      // 第一关新增状态
+      level1Step: 1,
+      selectedBook: null,
+      bookRead: false,
+      coffeeClaimed: false,
+      
+      // 答题进度
+      quiz1Progress: 0,
+      quiz2Progress: 0,
+      
+      // 翻牌游戏
+      memoryMatched: 0,
+      
+      // 连线游戏
+      lineConnections: [],
+      
+      // 拖拽排序
+      sortOrder: []
+    };
+
+    // ==================== 关卡配置 ====================
+    const levels = [
+      { id: 'prologue', name: '序章：碧碧的第一天', stamp: { icon: '🐾', name: '新馆纪念章' } },
+      { id: 'level1', name: '第1关：美式阅读大挑战', stamp: { icon: '☕', name: '美式阅读章' } },
+      { id: 'level2', name: '第2关：叶子先生的秋天', stamp: { icon: '🍂', name: '秋日故事章' } },
+      { id: 'level3', name: '第3关：蜡染与螺钿', stamp: { icon: '🎨', name: '非遗传承章' } },
+      { id: 'level4', name: '第4关：以书换蔬', stamp: { icon: '📮', name: '漂流书香章' } },
+      { id: 'level5', name: '第5关：西游闹春', stamp: { icon: '🏮', name: '新春闯关章' } }
+    ];
+
+    // ==================== 序章探索内容（基于真实信息） ====================
+    const exploreContent = {
+      bookshelf: {
+        emoji: '📚',
+        title: '书架区探秘',
+        text: '📍 龙岗河碧道分馆拥有超1万册藏书！\n\n分为儿童绘本区、文学区、科普区等，还有龙岗河主题专区~ 别名"曲水书院·碧道馆"，寓意龙岗河水文化与书香的交融。碧碧最喜欢趴在绘本区的地毯上，听小朋友们讲故事~'
+      },
+      reading: {
+        emoji: '🛋️',
+        title: '温馨阅读区',
+        text: '📍 阅读区配备了舒适的沙发、可爱的帐篷、童趣木马等~\n\n这里经常举办亲子故事会，充满欢声笑语。柔软的抱枕、温暖的灯光，让阅读成为一种享受。碧碧最爱在这里打盹~'
+      },
+      window: {
+        emoji: '🌅',
+        title: '河景窗边',
+        text: '📍 超大落地窗外就是龙岗河碧道！\n\n阳光透过窗户洒进来，温暖又惬意。坐在窗边，一边阅读一边欣赏河畔风光，心情格外舒畅。这里是馆内最受欢迎的阅读位置，常常需要抢座哦~'
       }
     };
-    area.appendChild(stamp);
-    
-    setTimeout(() => {
-      if (stamp.parentElement) stamp.remove();
-    }, 3000);
-  }, 1000);
-}
 
-// ============ 跑酷游戏 ============
-function initRoadGame() {
-  lanterns = 0;
-  document.getElementById('lantern-count').textContent = '0';
-  playerX = 180;
-  document.getElementById('player-road').style.left = playerX + 'px';
-  
-  const game = document.getElementById('road-game');
-  
-  game.onclick = (e) => {
-    const rect = game.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    if (x < rect.width / 2) {
-      playerX = Math.max(20, playerX - 40);
-    } else {
-      playerX = Math.min(rect.width - 60, playerX + 40);
+    // ==================== 第一关题目 ====================
+    const quiz1Questions = [
+      {
+        question: 'Q1: 2024年6月，"在图书馆装美式"是什么活动？',
+        options: ['A. 借书免费领一杯美式咖啡', 'B. 穿美式服装在图书馆拍照', 'C. 学习美式英语阅读'],
+        answer: 0
+      },
+      {
+        question: 'Q2: 龙岗河碧道分馆的别名是什么？',
+        options: ['A. 碧水书院', 'B. 曲水书院·碧道馆', 'C. 河畔书院'],
+        answer: 1
+      },
+      {
+        question: 'Q3: 碧道分馆是什么时候正式开馆的？',
+        options: ['A. 2024年3月', 'B. 2024年5月', 'C. 2024年8月'],
+        answer: 1
+      }
+    ];
+
+    // ==================== 第五关题目 ====================
+    const quiz2Questions = [
+      {
+        question: 'Q1: 碧道分馆举办过什么主题的新春活动？',
+        options: ['A. 西游闹春斗年兽', 'B. 龙腾虎跃', 'C. 福兔迎春'],
+        answer: 0
+      },
+      {
+        question: 'Q2: 碧碧在故事中化身为哪个角色闯关？',
+        options: ['A. 小唐僧', 'B. 小悟空', 'C. 小猪八戒'],
+        answer: 1
+      },
+      {
+        question: 'Q3: 西游闹春活动的目标是什么？',
+        options: ['A. 寻找宝藏', 'B. 斗年兽', 'C. 采摘仙桃'],
+        answer: 1
+      }
+    ];
+
+    // ==================== 翻牌游戏数据 ====================
+    const memoryItems = ['🍁', '🍂', '🪵', '🌰'];
+    let memoryCards = [];
+    let flippedCards = [];
+    let canFlip = true;
+
+    // ==================== 拖拽排序数据 ====================
+    const sortItems = [
+      { id: 1, title: '《蜡染与撑天伞》', date: '10月', icon: '🎨' },
+      { id: 2, title: '《草帽彩绘DIY》', date: '11月', icon: '🎩' },
+      { id: 3, title: '《非遗螺钿》', date: '12月', icon: '✨' }
+    ];
+
+    // ==================== 连线游戏数据 ====================
+    const lineLeftNodes = [
+      { id: 'left1', label: '祥云驿', icon: '☁️' },
+      { id: 'left2', label: '拾光驿', icon: '⏰' },
+      { id: 'left3', label: '碧道分馆', icon: '📚' }
+    ];
+
+    const lineRightNodes = [
+      { id: 'right1', label: '以书换咖', icon: '☕', match: 'left1' },
+      { id: 'right2', label: '以书换植', icon: '🌱', match: 'left2' },
+      { id: 'right3', label: '以书换蔬', icon: '🥬', match: 'left3' }
+    ];
+
+    let selectedNode = null;
+    let connections = [];
+
+    // ==================== 页面切换 ====================
+    function showPage(pageId) {
+      console.log(`🔄 [showPage] 切换到页面: ${pageId}`);
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const targetPage = document.getElementById(pageId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+      
+      const backBtn = document.getElementById('backBtn');
+      if (pageId === 'homePage') {
+        backBtn.classList.remove('visible');
+      } else {
+        backBtn.classList.add('visible');
+      }
     }
-    document.getElementById('player-road').style.left = playerX + 'px';
-  };
-  
-  if (gameInterval) clearInterval(gameInterval);
-  gameRunning = true;
-  
-  gameInterval = setInterval(() => {
-    if (!gameRunning) return;
-    
-    if (Math.random() < 0.03) {
-      const obs = document.createElement('div');
-      obs.className = 'obstacle';
-      obs.style.left = Math.random() * (game.offsetWidth - 50) + 'px';
-      obs.style.animationDuration = (1.5 + Math.random()) + 's';
-      obs.textContent = ['🧧', '🐉', '👹'][Math.floor(Math.random() * 3)];
-      obs.style.animation = `fall ${1.5 + Math.random()}s linear forwards`;
-      document.getElementById('obstacles-container').appendChild(obs);
-      setTimeout(() => obs.remove(), 2000);
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      if (gameState.currentLevel === 0) {
+        showPage('homePage');
+      } else {
+        const prevLevel = levels[gameState.currentLevel - 1];
+        showPage(prevLevel.id + 'Page');
+      }
+    });
+
+    // ==================== 开始游戏 ====================
+    function startGame() {
+      console.log('🎮 [startGame] 开始游戏');
+      gameState.currentLevel = 0;
+      showPage('prologuePage');
     }
-    
-    if (Math.random() < 0.02 && lanterns < 3) {
-      const lantern = document.createElement('div');
-      lantern.className = 'collectible';
-      lantern.style.left = Math.random() * (game.offsetWidth - 50) + 'px';
-      lantern.style.top = '50px';
-      lantern.textContent = '🏮';
-      lantern.style.animation = 'fall 2s linear forwards';
-      lantern.onclick = () => {
-        lanterns++;
-        document.getElementById('lantern-count').textContent = lanterns;
-        lantern.remove();
-        if (lanterns >= 3) {
-          gameRunning = false;
-          clearInterval(gameInterval);
-          showCompleteButton();
+
+    // ==================== 重新开始 ====================
+    function restartGame() {
+      console.log('🔄 [restartGame] 重新开始游戏');
+      gameState.currentLevel = 0;
+      gameState.stamps = [];
+      gameState.prologueExplored = 0;
+      gameState.level1Step = 1;
+      gameState.selectedBook = null;
+      gameState.bookRead = false;
+      gameState.coffeeClaimed = false;
+      gameState.quiz1Progress = 0;
+      gameState.quiz2Progress = 0;
+      gameState.memoryMatched = 0;
+      gameState.lineConnections = [];
+      flippedCards = [];
+      canFlip = true;
+      selectedNode = null;
+      connections = [];
+      
+      // 重置UI
+      document.getElementById('prologueExplored').textContent = '0';
+      document.querySelectorAll('.explore-btn').forEach(btn => btn.classList.remove('discovered'));
+      resetLevel1UI();
+      
+      showPage('homePage');
+    }
+
+    // ==================== 通用弹窗 ====================
+    function showModal(emoji, title, text) {
+      console.log('📋 [showModal] 显示弹窗:', { emoji, title, text });
+      document.getElementById('modalEmoji').textContent = emoji;
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalText').textContent = text;
+      document.getElementById('infoModal').classList.add('active');
+    }
+
+    function closeModal() {
+      console.log('📋 [closeModal] 关闭弹窗');
+      document.getElementById('infoModal').classList.remove('active');
+    }
+
+    // ==================== 序章探索（优化版） ====================
+    function exploreArea(areaId) {
+      console.log(`🗺️ [exploreArea] 探索区域: ${areaId}`);
+      const content = exploreContent[areaId];
+      showModal(content.emoji, content.title, content.text);
+      
+      // 标记为已发现
+      const btn = document.getElementById(`explore-${areaId}`);
+      if (!btn.classList.contains('discovered')) {
+        btn.classList.add('discovered');
+        btn.querySelector('.hint').textContent = '已探索';
+        
+        gameState.prologueExplored++;
+        document.getElementById('prologueExplored').textContent = gameState.prologueExplored;
+        console.log(`📊 [exploreArea] 探索进度: ${gameState.prologueExplored}/3`);
+        
+        if (gameState.prologueExplored === 3) {
+          console.log('🎉 [exploreArea] 探索完成，准备显示印章弹窗');
+          setTimeout(() => {
+            closeModal();
+            setTimeout(() => {
+              showStampModal('🐾', '新馆纪念章', '碧碧成功探索了碧道分馆！它发现这里有1万册藏书、舒适的阅读区、还有美丽的河景窗边~', () => {
+                console.log('🏆 [exploreArea] 序章完成，进入第1关');
+                gameState.stamps.push({ icon: '🐾', name: '新馆纪念章' });
+                gameState.currentLevel = 1;
+                initLevel1();
+                showPage('level1Page');
+              });
+            }, 300);
+          }, 500);
+        }
+      }
+    }
+
+    // ==================== 印章弹窗 ====================
+    function showStampModal(icon, name, text, callback) {
+      console.log('🏆 [showStampModal] 显示印章弹窗:', { icon, name, text });
+      
+      document.getElementById('stampIcon').textContent = icon;
+      document.getElementById('stampName').textContent = name;
+      document.getElementById('stampText').textContent = text;
+      document.getElementById('stampModal').classList.add('active');
+      
+      document.getElementById('stampBtn').onclick = () => {
+        console.log('🖱️ [showStampModal] 印章弹窗按钮点击');
+        document.getElementById('stampModal').classList.remove('active');
+        if (callback) {
+          callback();
         }
       };
-      document.getElementById('collectibles-container').appendChild(lantern);
-      setTimeout(() => lantern.remove(), 2500);
     }
-    
-    const player = document.getElementById('player-road');
-    const playerRect = player.getBoundingClientRect();
-    document.querySelectorAll('#obstacles-container .obstacle').forEach(obs => {
-      const obsRect = obs.getBoundingClientRect();
-      if (isColliding(playerRect, obsRect)) {
-        obs.remove();
+
+    function closeStampModal() {
+      console.log('🏆 [closeStampModal] 关闭印章弹窗');
+      document.getElementById('stampModal').classList.remove('active');
+    }
+
+    // ==================== 第一关：选书借阅互动（优化版） ====================
+    function initLevel1() {
+      console.log('📖 [initLevel1] 初始化第一关');
+      gameState.level1Step = 1;
+      gameState.selectedBook = null;
+      gameState.bookRead = false;
+      gameState.coffeeClaimed = false;
+      gameState.quiz1Progress = 0;
+      
+      resetLevel1UI();
+    }
+
+    function resetLevel1UI() {
+      // 重置步骤显示
+      document.getElementById('step1Content').style.display = 'block';
+      document.getElementById('step2Content').style.display = 'none';
+      
+      // 重置步骤指示器
+      document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+        dot.classList.remove('active', 'done');
+        if (idx === 0) dot.classList.add('active');
+      });
+      
+      // 重置书籍选择
+      document.querySelectorAll('.book-item').forEach(item => {
+        item.classList.remove('selected', 'reading');
+      });
+      
+      // 重置借阅台
+      const borrowDesk = document.getElementById('borrowDesk');
+      borrowDesk.classList.add('disabled');
+      borrowDesk.querySelector('.desk-hint').textContent = '请先选择并阅读一本书';
+      
+      // 隐藏咖啡奖励
+      document.getElementById('coffeeReward').classList.remove('show');
+      
+      // 重置答题进度
+      updateQuiz1Progress();
+      document.getElementById('quiz1Feedback').innerHTML = '';
+    }
+
+    function updateLevel1Steps(step) {
+      console.log(`📊 [updateLevel1Steps] 更新步骤到: ${step}`);
+      gameState.level1Step = step;
+      
+      document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+        dot.classList.remove('active', 'done');
+        if (idx < step - 1) {
+          dot.classList.add('done');
+        } else if (idx === step - 1) {
+          dot.classList.add('active');
+        }
+      });
+      
+      document.getElementById('step1Content').style.display = step >= 1 ? 'block' : 'none';
+      document.getElementById('step2Content').style.display = step >= 2 ? 'block' : 'none';
+      
+      if (step === 2) {
+        initQuiz1();
       }
-    });
-  }, 100);
-}
+    }
 
-function isColliding(r1, r2) {
-  return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
-}
-
-// ============ 树木探索 ============
-function visitTree(el, name, info) {
-  if (visitedTrees.has(name)) return;
-  
-  visitedTrees.add(name);
-  el.classList.add('visited');
-  document.getElementById('tree-count').textContent = visitedTrees.size;
-  
-  document.getElementById('tree-info').innerHTML = `
-    <p><strong>🌳 ${name}</strong></p>
-    <p style="margin-top: 8px; color: var(--text);">${info}</p>
-  `;
-  
-  if (visitedTrees.size >= 3) {
-    showCompleteButton();
-  }
-}
-
-// ============ 书籍选择 ============
-function selectBook(el, bookType) {
-  document.querySelectorAll('.book-option').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  showCompleteButton();
-}
-
-// ============ 角色选择 ============
-function selectCharacter(type) {
-  selectedCharacter = type;
-  const result = document.getElementById('character-result');
-  if (type === '鸡') {
-    result.innerHTML = `
-      <div style="font-size: 3rem;">🐔</div>
-      <p style="margin-top: 10px; color: var(--primary); font-weight: 600;">溜达鸡：我每天在院子里溜达，找虫子吃~</p>
-      <button class="btn btn-primary" onclick="showCompleteButton()" style="margin-top: 15px;">完成配音</button>
-    `;
-  } else {
-    result.innerHTML = `
-      <div style="font-size: 3rem;">🐰</div>
-      <p style="margin-top: 10px; color: var(--primary); font-weight: 600;">流浪兔：我没有固定的家，但我喜欢到处冒险~</p>
-      <button class="btn btn-primary" onclick="showCompleteButton()" style="margin-top: 15px;">完成配音</button>
-    `;
-  }
-}
-
-// ============ 换装游戏 ============
-function selectDress(el, dress) {
-  document.querySelectorAll('.dressup-option:first-child span').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedDress = dress;
-  updateDressup();
-}
-
-function selectMount(el, mount) {
-  document.querySelectorAll('.dressup-option:last-child span').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedMount = mount;
-  updateDressup();
-}
-
-function updateDressup() {
-  const preview = document.getElementById('dressup-preview');
-  let html = '<div class="dressup-item" style="bottom: 10px; font-size: 4rem;">🐰</div>';
-  if (selectedMount) {
-    html += `<div class="dressup-item" style="bottom: 60px; left: 50%; transform: translateX(-50%); font-size: 2rem;">${selectedMount}</div>`;
-  }
-  if (selectedDress) {
-    html += `<div class="dressup-item" style="bottom: 20px; right: 30px; font-size: 1.8rem;">${selectedDress}</div>`;
-  }
-  preview.innerHTML = html;
-  
-  if (selectedDress && selectedMount) {
-    showCompleteButton();
-  }
-}
-
-// ============ 书房奇趣日 ============
-function doActivity(num, el) {
-  if (completedActivities.has(num)) return;
-  
-  completedActivities.add(num);
-  el.querySelector('.activity-check').innerHTML = '✓';
-  el.querySelector('.activity-check').style.background = 'var(--primary)';
-  el.querySelector('.activity-check').style.borderColor = 'var(--primary)';
-  el.querySelector('.activity-check').style.color = 'white';
-  el.style.background = '#E8F5E9';
-  
-  if (completedActivities.size >= 3) {
-    showCompleteButton();
-  }
-}
-
-// ============ 灯谜 ============
-function checkRiddle(btn, correct) {
-  const btns = document.querySelectorAll('#riddle-area .option-btn');
-  btns.forEach(b => b.disabled = true);
-  
-  if (correct) {
-    btn.classList.add('correct');
-    riddleIndex++;
-    
-    if (riddleIndex >= 3) {
-      showCompleteButton();
-    } else {
+    // 选书并翻开
+    function selectBook(element) {
+      if (gameState.coffeeClaimed) return;
+      
+      const bookType = element.dataset.book;
+      
+      // 如果已经读过这本书，忽略
+      if (element.classList.contains('reading')) return;
+      
+      // 取消之前的选择
+      document.querySelectorAll('.book-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // 选中这本书
+      element.classList.add('selected');
+      gameState.selectedBook = bookType;
+      
+      console.log(`📚 [selectBook] 选择书籍: ${bookType}`);
+      
+      // 翻开动画
       setTimeout(() => {
-        document.getElementById('riddle-num').textContent = riddleIndex + 1;
-        document.getElementById('current-riddle').innerHTML = `
-          <p style="font-size: 1.2rem; font-weight: 600; color: var(--secondary);">${riddles[riddleIndex].q}</p>
-        `;
-        btns.forEach((b, i) => {
-          b.disabled = false;
-          b.classList.remove('correct', 'wrong');
-          if (i === riddles[riddleIndex].a) {
-            b.onclick = () => checkRiddle(b, true);
+        element.classList.add('reading');
+        gameState.bookRead = true;
+        console.log('📖 [selectBook] 书已翻开，显示精彩语句');
+        
+        // 激活借阅台
+        const borrowDesk = document.getElementById('borrowDesk');
+        borrowDesk.classList.remove('disabled');
+        borrowDesk.querySelector('.desk-hint').textContent = `点击领取"借书领美式"咖啡~`;
+      }, 300);
+    }
+
+    // 领取咖啡
+    function claimCoffee() {
+      if (!gameState.bookRead || gameState.coffeeClaimed) {
+        console.log('⚠️ [claimCoffee] 条件不满足');
+        return;
+      }
+      
+      console.log('☕ [claimCoffee] 领取咖啡！');
+      gameState.coffeeClaimed = true;
+      
+      // 显示咖啡奖励动画
+      const coffeeReward = document.getElementById('coffeeReward');
+      coffeeReward.classList.add('show');
+      
+      // 禁用借阅台
+      const borrowDesk = document.getElementById('borrowDesk');
+      borrowDesk.classList.add('disabled');
+      borrowDesk.querySelector('.desk-hint').textContent = '已领取 ☕';
+      
+      // 2秒后自动进入答题环节
+      setTimeout(() => {
+        updateLevel1Steps(2);
+      }, 2000);
+    }
+
+    // ==================== 第一关答题（支持答错重试） ====================
+    function initQuiz1() {
+      console.log('❓ [initQuiz1] 初始化第一关答题');
+      gameState.quiz1Progress = 0;
+      showQuiz1Question();
+    }
+
+    function showQuiz1Question() {
+      const q = quiz1Questions[gameState.quiz1Progress];
+      console.log(`❓ [showQuiz1Question] 显示题目 ${gameState.quiz1Progress + 1}: ${q.question}`);
+      
+      document.getElementById('quiz1Question').textContent = q.question;
+      
+      const optionsEl = document.getElementById('quiz1Options');
+      optionsEl.innerHTML = '';
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option';
+        btn.textContent = opt;
+        btn.onclick = () => selectQuiz1Answer(idx, q.answer);
+        optionsEl.appendChild(btn);
+      });
+      
+      document.getElementById('quiz1Feedback').innerHTML = '';
+      updateQuiz1Progress();
+    }
+
+    function selectQuiz1Answer(selected, correct) {
+      console.log(`❓ [selectQuiz1Answer] selected=${selected}, correct=${correct}`);
+      
+      const options = document.querySelectorAll('#quiz1Options .quiz-option');
+      const feedback = document.getElementById('quiz1Feedback');
+      
+      // 禁用所有选项
+      options.forEach((opt, idx) => {
+        opt.style.pointerEvents = 'none';
+        if (idx === correct) {
+          opt.classList.add('correct');
+        } else if (idx === selected && selected !== correct) {
+          opt.classList.add('wrong');
+        }
+      });
+      
+      if (selected === correct) {
+        feedback.innerHTML = '<div class="quiz-feedback correct">✓ 回答正确！</div>';
+        gameState.quiz1Progress++;
+        console.log(`✅ [selectQuiz1Answer] 答对！进度: ${gameState.quiz1Progress}/3`);
+        
+        setTimeout(() => {
+          if (gameState.quiz1Progress >= 3) {
+            console.log('🎉 [selectQuiz1Answer] 第1关全部答对，显示印章弹窗');
+            setTimeout(() => {
+              showStampModal('☕', '美式阅读章', '碧碧完成了"借书领美式"挑战！了解了2024年6月活动的精彩~', () => {
+                console.log('🏆 [selectQuiz1Answer] 第1关完成，进入第2关');
+                gameState.stamps.push({ icon: '☕', name: '美式阅读章' });
+                gameState.currentLevel = 2;
+                initMemoryGame();
+                showPage('level2Page');
+              });
+            }, 500);
           } else {
-            b.onclick = () => checkRiddle(b, false);
+            showQuiz1Question();
           }
-        });
-      }, 500);
-    }
-  } else {
-    btn.classList.add('wrong');
-    btns.forEach((b, i) => {
-      if (i === riddles[riddleIndex].a) {
-        b.classList.add('correct');
+        }, 1000);
+      } else {
+        const q = quiz1Questions[gameState.quiz1Progress];
+        feedback.innerHTML = '<div class="quiz-feedback wrong">✗ 回答错误，再试一次吧~</div>';
+        console.log(`❌ [selectQuiz1Answer] 答错！正确答案: ${q.options[correct]}`);
+        
+        // 允许重试
+        setTimeout(() => {
+          options.forEach(opt => {
+            opt.style.pointerEvents = 'auto';
+            opt.classList.remove('correct', 'wrong');
+          });
+          feedback.innerHTML = '';
+        }, 1500);
       }
-    });
-  }
-}
+    }
 
-// ============ 历史问答 ============
-function checkHistory(btn, correct) {
-  const btns = document.querySelectorAll('#history-area .option-btn');
-  btns.forEach(b => b.disabled = true);
-  
-  if (correct) {
-    btn.classList.add('correct');
-    historyQ++;
-    
-    if (historyQ >= 3) {
-      showCompleteButton();
-    } else {
+    function updateQuiz1Progress() {
+      const dots = document.querySelectorAll('#quiz1Progress .quiz-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.remove('active', 'done');
+        if (idx < gameState.quiz1Progress) {
+          dot.classList.add('done');
+        } else if (idx === gameState.quiz1Progress) {
+          dot.classList.add('active');
+        }
+      });
+    }
+
+    // ==================== 第二关翻牌游戏 ====================
+    function initMemoryGame() {
+      console.log('🃏 [initMemoryGame] 初始化翻牌游戏');
+      gameState.memoryMatched = 0;
+      document.getElementById('memoryMatched').textContent = '0';
+      
+      memoryCards = [...memoryItems, ...memoryItems].sort(() => Math.random() - 0.5);
+      flippedCards = [];
+      canFlip = true;
+      
+      const gameEl = document.getElementById('memoryGame');
+      gameEl.innerHTML = '';
+      
+      memoryCards.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'memory-card';
+        card.dataset.index = idx;
+        card.dataset.item = item;
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-back">❓</div>
+            <div class="card-front">${item}</div>
+          </div>
+        `;
+        card.onclick = () => flipCard(card);
+        gameEl.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      console.log('🃏 [flipCard] 翻牌');
+      
+      if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) {
+        return;
+      }
+      
+      card.classList.add('flipped');
+      flippedCards.push(card);
+      
+      if (flippedCards.length === 2) {
+        canFlip = false;
+        
+        if (flippedCards[0].dataset.item === flippedCards[1].dataset.item) {
+          console.log('✅ [flipCard] 配对成功！');
+          flippedCards.forEach(c => c.classList.add('matched'));
+          gameState.memoryMatched++;
+          document.getElementById('memoryMatched').textContent = gameState.memoryMatched;
+          
+          flippedCards = [];
+          canFlip = true;
+          
+          if (gameState.memoryMatched === 4) {
+            console.log('🎉 [flipCard] 全部配对完成，显示印章弹窗');
+            setTimeout(() => {
+              showStampModal('🍂', '秋日故事章', '碧碧和小朋友们配对成功！2024年10月的秋日故事真美好~', () => {
+                console.log('🏆 [flipCard] 第2关完成，进入第3关');
+                gameState.stamps.push({ icon: '🍂', name: '秋日故事章' });
+                gameState.currentLevel = 3;
+                initSortGame();
+                showPage('level3Page');
+              });
+            }, 500);
+          }
+        } else {
+          console.log('❌ [flipCard] 配对失败，翻回');
+          setTimeout(() => {
+            flippedCards.forEach(c => c.classList.remove('flipped'));
+            flippedCards = [];
+            canFlip = true;
+          }, 1000);
+        }
+      }
+    }
+
+    // ==================== 第三关拖拽排序 ====================
+    function initSortGame() {
+      console.log('📋 [initSortGame] 初始化拖拽排序');
+      const listEl = document.getElementById('sortList');
+      listEl.innerHTML = '';
+      
+      const shuffled = [...sortItems].sort(() => Math.random() - 0.5);
+      
+      shuffled.forEach((item, idx) => {
+        const el = document.createElement('div');
+        el.className = 'sort-item';
+        el.dataset.id = item.id;
+        el.innerHTML = `
+          <span class="drag-handle">☰</span>
+          <span class="item-icon">${item.icon}</span>
+          <div class="item-content">
+            <div class="item-title">${item.title}</div>
+            <div class="item-date">${item.date}月</div>
+          </div>
+        `;
+        
+        el.addEventListener('touchstart', handleSortDragStart, { passive: false });
+        el.addEventListener('touchmove', handleSortDragMove, { passive: false });
+        el.addEventListener('touchend', handleSortDragEnd);
+        el.addEventListener('mousedown', handleSortDragStart);
+        
+        listEl.appendChild(el);
+      });
+      
+      document.getElementById('sortCheckBtn').disabled = false;
+      gameState.sortOrder = [];
+    }
+
+    let sortDraggedItem = null;
+    let sortDragStartY = 0;
+
+    function handleSortDragStart(e) {
+      e.preventDefault();
+      sortDraggedItem = e.currentTarget;
+      sortDraggedItem.classList.add('dragging');
+      
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      sortDragStartY = clientY;
+      
+      if (e.type === 'mousedown') {
+        document.addEventListener('mousemove', handleSortDragMove);
+        document.addEventListener('mouseup', handleSortDragEnd);
+      }
+    }
+
+    function handleSortDragMove(e) {
+      if (!sortDraggedItem) return;
+      e.preventDefault();
+      
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const nextSibling = sortDraggedItem.nextElementSibling;
+      const prevSibling = sortDraggedItem.previousElementSibling;
+      
+      if (clientY < sortDragStartY && nextSibling) {
+        const nextRect = nextSibling.getBoundingClientRect();
+        if (clientY < nextRect.top + nextRect.height / 2) {
+          sortDraggedItem.parentNode.insertBefore(sortDraggedItem, nextSibling);
+          sortDragStartY = clientY;
+        }
+      } else if (clientY > sortDragStartY && prevSibling) {
+        const prevRect = prevSibling.getBoundingClientRect();
+        if (clientY > prevRect.top + prevRect.height / 2) {
+          sortDraggedItem.parentNode.insertBefore(prevSibling, sortDraggedItem);
+          sortDragStartY = clientY;
+        }
+      }
+    }
+
+    function handleSortDragEnd() {
+      if (sortDraggedItem) {
+        sortDraggedItem.classList.remove('dragging');
+        sortDraggedItem = null;
+      }
+      document.removeEventListener('mousemove', handleSortDragMove);
+      document.removeEventListener('mouseup', handleSortDragEnd);
+    }
+
+    function checkSort() {
+      console.log('✓ [checkSort] 检查排序');
+      const items = document.querySelectorAll('#sortList .sort-item');
+      const currentOrder = Array.from(items).map(el => parseInt(el.dataset.id));
+      const correctOrder = [1, 2, 3];
+      
+      const isCorrect = currentOrder.every((id, idx) => id === correctOrder[idx]);
+      
+      if (isCorrect) {
+        console.log('✅ [checkSort] 排序正确');
+        document.getElementById('sortCheckBtn').disabled = true;
+        setTimeout(() => {
+          showStampModal('🎨', '非遗传承章', '碧碧正确排列了2024年非遗活动时间！蜡染→草帽彩绘→螺钿，文化代代相传~', () => {
+            console.log('🏆 [checkSort] 第3关完成，进入第4关');
+            gameState.stamps.push({ icon: '🎨', name: '非遗传承章' });
+            gameState.currentLevel = 4;
+            initLineGame();
+            showPage('level4Page');
+          });
+        }, 300);
+      } else {
+        console.log('❌ [checkSort] 排序错误');
+        showModal('🔄', '再试一次', '顺序不太对哦~ 请按时间从早到晚排列（10月→11月→12月）');
+      }
+    }
+
+    // ==================== 第四关连线游戏 ====================
+    function initLineGame() {
+      console.log('🔗 [initLineGame] 初始化连线游戏');
+      connections = [];
+      selectedNode = null;
+      
+      const gameEl = document.getElementById('lineGame');
+      const canvas = document.getElementById('lineCanvas');
+      
+      gameEl.innerHTML = '';
+      gameEl.appendChild(canvas);
+      
+      lineLeftNodes.forEach((node, idx) => {
+        const el = document.createElement('div');
+        el.className = 'line-node';
+        el.id = node.id;
+        el.innerHTML = `<span class="icon">${node.icon}</span><span class="label">${node.label}</span>`;
+        el.onclick = () => selectLineNode(node.id);
+        gameEl.appendChild(el);
+      });
+      
+      lineRightNodes.forEach((node, idx) => {
+        const el = document.createElement('div');
+        el.className = 'line-node';
+        el.id = node.id;
+        el.innerHTML = `<span class="icon">${node.icon}</span><span class="label">${node.label}</span>`;
+        el.onclick = () => selectLineNode(node.id);
+        gameEl.appendChild(el);
+      });
+      
       setTimeout(() => {
-        document.getElementById('history-q-num').textContent = historyQ + 1;
-        btns.forEach(b => {
-          b.disabled = false;
-          b.classList.remove('correct', 'wrong');
-        });
-      }, 500);
+        canvas.width = gameEl.offsetWidth;
+        canvas.height = gameEl.offsetHeight;
+        drawLines();
+      }, 100);
     }
-  } else {
-    btn.classList.add('wrong');
-    btns[1].classList.add('correct');
-  }
-}
 
-// ============ 种植游戏 ============
-function selectSeed(type) {
-  currentSeed = type;
-  document.getElementById('seed-icon').textContent = type;
-  document.getElementById('water-btn').disabled = true;
-  
-  const existingPlant = document.querySelector('.plant-stage');
-  if (existingPlant) existingPlant.remove();
-  plantedSeed = null;
-  growthStage = 0;
-}
-
-function plantSeed() {
-  if (!currentSeed) return;
-  
-  plantedSeed = currentSeed;
-  growthStage = 1;
-  
-  const plant = document.createElement('div');
-  plant.className = 'plant-stage';
-  plant.id = 'plant';
-  plant.textContent = '🌱';
-  document.getElementById('garden-area').appendChild(plant);
-  
-  document.getElementById('water-btn').disabled = false;
-}
-
-function waterPlant() {
-  if (!plantedSeed || growthStage >= 4) return;
-  
-  growthStage++;
-  const plant = document.getElementById('plant');
-  
-  const stages = {
-    '🌰': ['🌱', '🌿', '🌳', '🌲'],
-    '🌸': ['🌱', '🌿', '🌸', '🌸'],
-    '🍎': ['🌱', '🌿', '🍎', '🍎🍎']
-  };
-  
-  plant.textContent = stages[plantedSeed]?.[growthStage - 1] || '🌱';
-  plant.style.animation = 'none';
-  plant.offsetHeight;
-  plant.style.animation = 'grow 0.5s ease-out';
-  
-  if (growthStage >= 4) {
-    document.getElementById('water-btn').disabled = true;
-    showCompleteButton();
-  }
-}
-
-// ============ 书香漂流 ============
-function visitStation() {
-  if (stationsVisited >= 3) return;
-  
-  stationsVisited++;
-  const station = document.getElementById(`station-${stationsVisited}`);
-  station.textContent = '✅';
-  station.style.background = 'var(--primary)';
-  
-  document.getElementById('station-count').textContent = stationsVisited;
-  document.getElementById('exchange-progress').style.width = (stationsVisited / 3 * 100) + '%';
-  
-  if (stationsVisited >= 3) {
-    showCompleteButton();
-  }
-}
-
-// ============ 交换完成 ============
-function completeExchange() {
-  showCompleteButton();
-}
-
-// ============ 图书馆探索 ============
-function visitLibrary(el, name) {
-  if (visitedLibraries.has(name)) return;
-  
-  visitedLibraries.add(name);
-  el.classList.add('visited');
-  document.getElementById('library-count').textContent = visitedLibraries.size;
-  
-  document.getElementById('library-info').innerHTML = `
-    <p><strong>📍 ${name}</strong></p>
-    <p style="margin-top: 8px; color: var(--text);">龙岗区图书馆大家庭的一员~</p>
-  `;
-  
-  if (visitedLibraries.size >= 8) {
-    showCompleteButton();
-  }
-}
-
-// ============ 完成关卡 ============
-function completeCurrentLevel() {
-  const level = gameState.currentLevel;
-  if (!level) return;
-  
-  console.log(`🏆 [completeCurrentLevel] 完成关卡: ${level.id}`);
-  
-  // 保存进度
-  if (!gameState.completedLevels.includes(level.id)) {
-    gameState.completedLevels.push(level.id);
-  }
-  if (!gameState.stamps.includes(level.stampName)) {
-    gameState.stamps.push(level.stampName);
-  }
-  saveGame();
-  
-  // 显示弹窗
-  document.getElementById('modal-stamp').textContent = level.stamp;
-  document.getElementById('modal-text').textContent = `碧碧记住了这段美好的回忆！\n\n「${level.stampName}」已收入回忆册~`;
-  document.getElementById('complete-modal').classList.add('active');
-}
-
-function closeModalAndContinue() {
-  console.log('✅ [closeModalAndContinue] 继续探索');
-  document.getElementById('complete-modal').classList.remove('active');
-  renderChapters();
-  
-  // 查找下一个关卡
-  const nextLevelId = getNextLevelId();
-  
-  if (nextLevelId) {
-    // 自动进入下一个关卡
-    console.log(`🔄 [closeModalAndContinue] 自动进入下一关: ${nextLevelId}`);
-    startLevel(nextLevelId);
-  } else {
-    // 已经是最后一关，显示完成页
-    console.log('🎊 [closeModalAndContinue] 已通关，显示完成页');
-    showCompletePage();
-  }
-}
-
-// 获取下一个关卡的ID
-function getNextLevelId() {
-  const allLevels = chapters.flatMap(ch => ch.levels);
-  const currentIndex = allLevels.findIndex(l => l.id === gameState.currentLevel?.id);
-  
-  if (currentIndex === -1 || currentIndex >= allLevels.length - 1) {
-    return null; // 没有下一个关卡
-  }
-  
-  return allLevels[currentIndex + 1].id;
-}
-
-// 显示完成页
-function showCompletePage() {
-  document.getElementById('complete-stamp').textContent = '🎊';
-  document.getElementById('complete-title').textContent = '回忆册已翻完！';
-  document.getElementById('complete-desc').textContent = `碧碧成功回顾了${gameState.stamps.length}个精彩活动的美好回忆！`;
-  showPage('complete-page');
-}
-
-// 开始游戏（从第一关开始）
-function startGame() {
-  // 获取第一个关卡
-  const firstLevel = chapters[0].levels[0];
-  console.log(`🎮 [startGame] 开始游戏，第一个关卡: ${firstLevel.id}`);
-  startLevel(firstLevel.id);
-}
-
-// ============ 印章墙 ============
-function renderStampWall() {
-  const wall = document.getElementById('stamp-wall');
-  const allStamps = chapters.flatMap(ch => ch.levels.map(l => ({ stamp: l.stamp, name: l.stampName })));
-  
-  wall.innerHTML = allStamps.map(s => {
-    const owned = gameState.stamps.includes(s.name);
-    const colors = ['stamp-gold', 'stamp-blue', 'stamp-orange', 'stamp-purple', 'stamp-green', 'stamp-red'];
-    const colorIdx = allStamps.indexOf(s) % colors.length;
-    
-    return `
-      <div class="stamp ${owned ? colors[colorIdx] : 'stamp-gray'}" style="position: relative;">
-        ${owned ? s.stamp : '❓'}
-        <span class="stamp-name" style="position: absolute; bottom: -20px; font-size: 0.6rem; white-space: nowrap; color: var(--text-light);">${s.name}</span>
-      </div>
-    `;
-  }).join('');
-  
-  updateStampCount();
-}
-
-function updateStampCount() {
-  const count = gameState.stamps.length;
-  document.getElementById('stamp-count').textContent = `已收集 ${count}/27 枚印章`;
-}
-
-// ============ 证书 ============
-function showCertificate() {
-  document.getElementById('cert-stamps').innerHTML = `您已收集 <strong>${gameState.stamps.length}</strong> 枚印章`;
-  document.getElementById('cert-date').textContent = new Date().toLocaleDateString('zh-CN');
-  showPage('certificate-page');
-  
-  setTimeout(() => drawShareCard(), 100);
-}
-
-function drawShareCard() {
-  const canvas = document.getElementById('share-canvas');
-  const ctx = canvas.getContext('2d');
-  
-  ctx.fillStyle = '#FFF8F0';
-  ctx.fillRect(0, 0, 320, 400);
-  
-  ctx.fillStyle = '#2D9B83';
-  ctx.font = 'bold 24px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🐱 碧道喵游记', 160, 50);
-  
-  ctx.fillStyle = '#5D4037';
-  ctx.font = '14px sans-serif';
-  ctx.fillText('一只流浪猫的阅读冒险', 160, 80);
-  
-  const stamps = gameState.stamps.slice(0, 9);
-  const stampEmojis = chapters.flatMap(ch => ch.levels.map(l => l.stamp));
-  
-  for (let i = 0; i < 9; i++) {
-    const x = 40 + (i % 3) * 90;
-    const y = 110 + Math.floor(i / 3) * 70;
-    
-    ctx.beginPath();
-    ctx.arc(x + 30, y + 25, 25, 0, Math.PI * 2);
-    
-    const gradient = ctx.createLinearGradient(x + 5, y, x + 55, y + 50);
-    gradient.addColorStop(0, '#FFD700');
-    gradient.addColorStop(1, '#FFA500');
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.setLineDash([3, 3]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    
-    ctx.font = '24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(stamps[i] || '❓', x + 30, y + 32);
-  }
-  
-  ctx.fillStyle = '#5D4037';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillText(`已收集 ${gameState.stamps.length}/27 枚印章`, 160, 340);
-  
-  let title = '阅读小萌新';
-  if (gameState.stamps.length >= 5) title = '阅读小达人';
-  if (gameState.stamps.length >= 10) title = '阅读小专家';
-  if (gameState.stamps.length >= 20) title = '阅读大师';
-  if (gameState.stamps.length >= 27) title = '阅读传奇';
-  
-  ctx.fillStyle = '#2D9B83';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.fillText(`荣获「${title}」称号！`, 160, 370);
-  
-  ctx.fillStyle = '#8D6E63';
-  ctx.font = '12px sans-serif';
-  ctx.fillText('龙岗区图书馆龙岗河碧道分馆', 160, 395);
-}
-
-// ============ 存储 ============
-function saveGame() {
-  localStorage.setItem('bidao-cat-game', JSON.stringify(gameState));
-}
-
-function loadGame() {
-  const saved = localStorage.getItem('bidao-cat-game');
-  if (saved) {
-    try {
-      gameState = JSON.parse(saved);
-      console.log('💾 [loadGame] 游戏进度已加载', gameState);
-    } catch (e) {
-      console.error('❌ [loadGame] 加载失败', e);
+    function selectLineNode(nodeId) {
+      console.log(`🔗 [selectLineNode] 选择节点: ${nodeId}`);
+      const node = document.getElementById(nodeId);
+      
+      if (node.classList.contains('connected')) return;
+      
+      if (!selectedNode) {
+        selectedNode = nodeId;
+        node.classList.add('selected');
+      } else {
+        const prevNode = document.getElementById(selectedNode);
+        
+        // 检查是否已经连线过
+        const isAlreadyConnected = connections.some(c => 
+          (c.left === selectedNode && c.right === nodeId) ||
+          (c.left === nodeId && c.right === selectedNode)
+        );
+        
+        if (isAlreadyConnected) {
+          prevNode.classList.remove('selected');
+          selectedNode = null;
+          return;
+        }
+        
+        // 判断左右配对
+        const leftNode = lineLeftNodes.find(n => n.id === selectedNode);
+        const rightNode = lineRightNodes.find(n => n.id === nodeId);
+        
+        if (leftNode && rightNode) {
+          connections.push({ left: selectedNode, right: nodeId });
+          prevNode.classList.remove('selected');
+          prevNode.classList.add('connected');
+          node.classList.add('connected');
+        } else {
+          // 反向连线（左连右）
+          const leftOfRight = lineLeftNodes.find(n => n.id === nodeId);
+          const rightOfLeft = lineRightNodes.find(n => n.id === selectedNode);
+          
+          if (leftOfRight && rightOfLeft) {
+            connections.push({ left: nodeId, right: selectedNode });
+            prevNode.classList.remove('selected');
+            node.classList.remove('selected');
+            node.classList.add('connected');
+            prevNode.classList.add('connected');
+          } else {
+            prevNode.classList.remove('selected');
+          }
+        }
+        
+        selectedNode = null;
+        drawLines();
+        
+        if (connections.length === 3) {
+          setTimeout(() => {
+            const allCorrect = connections.every(c => {
+              const leftData = lineLeftNodes.find(n => n.id === c.left);
+              const rightData = lineRightNodes.find(n => n.id === c.right);
+              return leftData && rightData && leftData.id === rightData.match;
+            });
+            
+            if (allCorrect) {
+              console.log('🎉 [selectLineNode] 连线全部正确');
+              showStampModal('📮', '漂流书香章', '碧碧成功完成书香漂流！用一本书换一份春天的礼物~', () => {
+                console.log('🏆 [selectLineNode] 第4关完成，进入第5关');
+                gameState.stamps.push({ icon: '📮', name: '漂流书香章' });
+                gameState.currentLevel = 5;
+                initQuiz2();
+                showPage('level5Page');
+              });
+            } else {
+              // 连线错误，重置
+              console.log('❌ [selectLineNode] 连线有误，重置游戏');
+              showModal('🔄', '再试一次', '连线不太对哦~ 每个驿站对应不同的兑换好礼~');
+              connections = [];
+              document.querySelectorAll('.line-node').forEach(n => {
+                n.classList.remove('selected', 'connected');
+              });
+              drawLines();
+            }
+          }, 300);
+        }
+      }
     }
-  }
-}
 
-// ============ 启动 ============
-document.addEventListener('DOMContentLoaded', init);
-</script>
+    function drawLines() {
+      const canvas = document.getElementById('lineCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.strokeStyle = '#2D9B83';
+      ctx.lineWidth = 3;
+      
+      connections.forEach(conn => {
+        const leftEl = document.getElementById(conn.left);
+        const rightEl = document.getElementById(conn.right);
+        
+        if (leftEl && rightEl) {
+          const leftRect = leftEl.getBoundingClientRect();
+          const rightRect = rightEl.getBoundingClientRect();
+          const canvasRect = canvas.getBoundingClientRect();
+          
+          const x1 = leftRect.right - canvasRect.left;
+          const y1 = leftRect.top + leftRect.height / 2 - canvasRect.top;
+          const x2 = rightRect.left - canvasRect.left;
+          const y2 = rightRect.top + rightRect.height / 2 - canvasRect.top;
+          
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          const midX = (x1 + x2) / 2;
+          ctx.bezierCurveTo(midX, y1, midX, y2, x2, y2);
+          ctx.stroke();
+        }
+      });
+    }
+
+    // ==================== 第五关问答（支持答错重试） ====================
+    function initQuiz2() {
+      console.log('❓ [initQuiz2] 初始化第五关问答');
+      gameState.quiz2Progress = 0;
+      showQuiz2Question();
+    }
+
+    function showQuiz2Question() {
+      const q = quiz2Questions[gameState.quiz2Progress];
+      console.log(`❓ [showQuiz2Question] 显示题目 ${gameState.quiz2Progress + 1}: ${q.question}`);
+      
+      document.getElementById('quiz2Question').textContent = q.question;
+      
+      const optionsEl = document.getElementById('quiz2Options');
+      optionsEl.innerHTML = '';
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option';
+        btn.textContent = opt;
+        btn.onclick = () => selectQuiz2Answer(idx, q.answer);
+        optionsEl.appendChild(btn);
+      });
+      
+      document.getElementById('quiz2Feedback').innerHTML = '';
+      updateQuiz2Progress();
+    }
+
+    function selectQuiz2Answer(selected, correct) {
+      console.log(`❓ [selectQuiz2Answer] selected=${selected}, correct=${correct}`);
+      
+      const options = document.querySelectorAll('#quiz2Options .quiz-option');
+      const feedback = document.getElementById('quiz2Feedback');
+      
+      options.forEach((opt, idx) => {
+        opt.style.pointerEvents = 'none';
+        if (idx === correct) {
+          opt.classList.add('correct');
+        } else if (idx === selected && selected !== correct) {
+          opt.classList.add('wrong');
+        }
+      });
+      
+      if (selected === correct) {
+        feedback.innerHTML = '<div class="quiz-feedback correct">✓ 回答正确！</div>';
+        gameState.quiz2Progress++;
+        console.log(`✅ [selectQuiz2Answer] 答对！进度: ${gameState.quiz2Progress}/3`);
+        
+        setTimeout(() => {
+          if (gameState.quiz2Progress >= 3) {
+            console.log('🎉 [selectQuiz2Answer] 第5关全部答对，显示印章弹窗');
+            setTimeout(() => {
+              showStampModal('🏮', '新春闯关章', '碧碧成功闯过新春关卡！回忆起西游闹春斗年兽的精彩~', () => {
+                console.log('🏆 [selectQuiz2Answer] 第5关完成，进入结算页');
+                gameState.stamps.push({ icon: '🏮', name: '新春闯关章' });
+                showResultPage();
+              });
+            }, 500);
+          } else {
+            showQuiz2Question();
+          }
+        }, 1000);
+      } else {
+        const q = quiz2Questions[gameState.quiz2Progress];
+        feedback.innerHTML = '<div class="quiz-feedback wrong">✗ 回答错误，再试一次吧~</div>';
+        console.log(`❌ [selectQuiz2Answer] 答错！正确答案: ${q.options[correct]}`);
+        
+        // 允许重试
+        setTimeout(() => {
+          options.forEach(opt => {
+            opt.style.pointerEvents = 'auto';
+            opt.classList.remove('correct', 'wrong');
+          });
+          feedback.innerHTML = '';
+        }, 1500);
+      }
+    }
+
+    function updateQuiz2Progress() {
+      const dots = document.querySelectorAll('#quiz2Progress .quiz-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.remove('active', 'done');
+        if (idx < gameState.quiz2Progress) {
+          dot.classList.add('done');
+        } else if (idx === gameState.quiz2Progress) {
+          dot.classList.add('active');
+        }
+      });
+    }
+
+    // ==================== 结算页 ====================
+    function showResultPage() {
+      console.log('🏆 [showResultPage] 显示结算页');
+      
+      const collection = document.getElementById('stampsCollection');
+      collection.innerHTML = '';
+      
+      gameState.stamps.forEach(stamp => {
+        const item = document.createElement('div');
+        item.className = 'stamp-item';
+        item.innerHTML = `
+          <div class="stamp-icon">${stamp.icon}</div>
+          <div class="stamp-name">${stamp.name}</div>
+        `;
+        collection.appendChild(item);
+      });
+      
+      showPage('resultPage');
+    }
+
+    // ==================== 初始化 ====================
+    console.log('🐱 碧道喵游记已加载');
+  </script>
 </body>
 </html>
