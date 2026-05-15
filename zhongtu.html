@@ -2,141 +2,15 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>图书管理员游戏 - 完美版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>图书管理员游戏</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    /* ===== 入口页面样式 ===== */
-    .entry-page {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      color: white;
-    }
-    .entry-container {
-      max-width: 600px;
-      width: 100%;
-      background: rgba(255,255,255,0.98);
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      text-align: center;
-      color: #333;
-    }
-    .entry-container h1 {
-      font-size: 32px;
-      color: #1e3a8a;
-      margin-bottom: 10px;
-    }
-    .entry-subtitle {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 30px;
-    }
-    .game-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-    }
-    .game-btn {
-      display: inline-block;
-      padding: 20px 40px;
-      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 15px;
-      font-size: 20px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
-      margin: 20px 0;
-      border: none;
-      cursor: pointer;
-    }
-    .game-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 40px rgba(6, 182, 212, 0.6);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin: 30px 0;
-    }
-    .feature-item {
-      background: #f0f9ff;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-    }
-    .feature-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-    .feature-text {
-      font-size: 12px;
-      color: #1e40af;
-      font-weight: 500;
-    }
-    .update-badge {
-      background: #dcfce7;
-      color: #166534;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-      margin-bottom: 10px;
-    }
-    .changelog {
-      background: #f0f9ff;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 20px 0;
-      text-align: left;
-    }
-    .changelog h3 {
-      font-size: 14px;
-      color: #1e40af;
-      margin-bottom: 10px;
-    }
-    .changelog ul {
-      font-size: 12px;
-      color: #666;
-      padding-left: 20px;
-      margin: 0;
-    }
-    .changelog li {
-      margin-bottom: 5px;
-    }
-    .improvement-box {
-      background: #dcfce7;
-      padding: 12px;
-      border-radius: 8px;
-      margin: 15px 0;
-    }
-    .improvement-box h4 {
-      font-size: 14px;
-      color: #166534;
-      margin-bottom: 8px;
-    }
-    .improvement-box p {
-      font-size: 12px;
-      color: #166534;
-      margin: 4px 0;
-    }
-    
-    /* ===== 游戏页面样式 ===== */
-    .game-page {
+    body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       overflow-x: hidden;
-      display: none;
     }
     .app {
       max-width: 430px;
@@ -384,246 +258,190 @@
   </style>
 </head>
 <body>
-  <!-- ===== 入口页面 ===== -->
-  <div class="entry-page" id="entryPage">
-    <div class="entry-container">
-      <div class="update-badge">✨ 完美版</div>
-      <div class="game-icon">📚</div>
-      <h1>图书管理员游戏</h1>
-      <p class="entry-subtitle">人性化的学习体验，每阶段前都有复习时间！</p>
+  <div class="app">
+    <!-- 规则页面 -->
+    <div id="rulesPage" style="padding: 20px;">
+      <h1 class="rules-title">📚 图书管理员</h1>
       
-      <button class="game-btn" onclick="enterGame()">🚀 立即开始游戏</button>
-      
-      <div class="features">
-        <div class="feature-item">
-          <div class="feature-icon">📖</div>
-          <div class="feature-text">60+经典图书</div>
+      <div class="rules-section">
+        <h3>🎯 游戏目标</h3>
+        <p>通过三个阶段逐步学习中图法22个分类，最终挑战成为图书管理专家！</p>
+      </div>
+
+      <div class="rules-section">
+        <h3>📖 游戏规则</h3>
+        <p>• 游戏分为三个阶段，难度递增</p>
+        <p>• 第一阶段：7个分类（入门）</p>
+        <p>• 第二阶段：7个分类（进阶）</p>
+        <p>• 第三阶段：8个分类（挑战）</p>
+        <p>• 每阶段完成后进入下一阶段</p>
+        <p>• 封面颜色与答案无关</p>
+      </div>
+
+      <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 16px 0;">
+        <h3 style="color: #92400e; margin-bottom: 8px;">⚠️ 重要提示</h3>
+        <p style="color: #92400e; margin: 0;">每个阶段的分类按钮不会显示字母代码，你必须记住字母对应关系！</p>
+      </div>
+
+      <div class="stage-card">
+        <h3>📝 第一阶段分类（入门）</h3>
+        <table class="stage-table">
+          <tr><td class="code">A</td><td>马克思主义</td><td class="code">B</td><td>哲学宗教</td></tr>
+          <tr><td class="code">E</td><td>军事</td><td class="code">F</td><td>经济</td></tr>
+          <tr><td class="code">I</td><td>文学</td><td class="code">J</td><td>艺术</td></tr>
+          <tr><td class="code">K</td><td>历史地理</td><td></td><td></td></tr>
+        </table>
+      </div>
+
+      <div class="stage-card">
+        <h3>📝 第二阶段分类（进阶）</h3>
+        <table class="stage-table">
+          <tr><td class="code">C</td><td>社会科学总论</td><td class="code">D</td><td>政治法律</td></tr>
+          <tr><td class="code">G</td><td>文化教育</td><td class="code">H</td><td>语言文字</td></tr>
+          <tr><td class="code">N</td><td>自然科学总论</td><td class="code">O</td><td>数理化学</td></tr>
+          <tr><td class="code">P</td><td>天文地球</td><td class="code">Q</td><td>生物科学</td></tr>
+        </table>
+      </div>
+
+      <div class="stage-card">
+        <h3>📝 第三阶段分类（挑战）</h3>
+        <table class="stage-table">
+          <tr><td class="code">R</td><td>医药卫生</td><td class="code">S</td><td>农业科学</td></tr>
+          <tr><td class="code">T</td><td>工业技术</td><td class="code">U</td><td>交通运输</td></tr>
+          <tr><td class="code">V</td><td>航空航天</td><td class="code">X</td><td>环境安全</td></tr>
+          <tr><td class="code">Z</td><td>综合性图书</td><td></td><td></td></tr>
+        </table>
+      </div>
+
+      <button class="rules-btn" onclick="startGame()">开始挑战</button>
+    </div>
+
+    <!-- 游戏页面 -->
+    <div id="gamePage" style="display: none;">
+      <div class="header">
+        <h1>图书管理员</h1>
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-value" id="score">0</div>
+            <div class="stat-label">得分</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value"><span id="current">0</span>/<span id="total">0</span></div>
+            <div class="stat-label">进度</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="combo">0</div>
+            <div class="stat-label">连击</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="time">00:00</div>
+            <div class="stat-label">时间</div>
+          </div>
         </div>
-        <div class="feature-item">
-          <div class="feature-icon">🎯</div>
-          <div class="feature-text">三大阶段</div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon">🎲</div>
-          <div class="feature-text">随机选项</div>
+        <div class="stage-indicator" id="stageIndicator">第一阶段：入门</div>
+        <div class="progress">
+          <div class="progress-bar" id="progressBar"></div>
         </div>
       </div>
-      
-      <div class="changelog">
-        <h3>🎉 完美版改进</h3>
-        <ul>
-          <li>✅ 每阶段开始前展示分类对照表</li>
-          <li>✅ 给玩家时间复习，压力更小</li>
-          <li>✅ 选项按钮顺序随机打乱</li>
-          <li>✅ 防止玩家记住位置规律</li>
-          <li>✅ 更公平的挑战体验</li>
-          <li>✅ 人性化的学习节奏</li>
-        </ul>
+
+      <div class="main">
+        <div class="book-card">
+          <div class="book-cover" id="bookCover">📚</div>
+          <div class="book-title" id="bookTitle">红楼梦</div>
+          <div class="book-author" id="bookAuthor">作者：曹雪芹</div>
+          <div class="call-number" id="callNumber">I</div>
+        </div>
       </div>
-      
-      <div class="improvement-box">
-        <h4>🎯 游戏流程优化</h4>
-        <p>📝 每阶段开始前：显示该阶段的分类对照表</p>
-        <p>👀 复习时间：仔细查看字母对应关系</p>
-        <p>🎲 选项随机：每次顺序都不一样</p>
-        <p>✨ 开始答题：进入挑战模式</p>
+
+      <div class="categories">
+        <div class="categories-title">选择正确的分类</div>
+        <div class="category-grid" id="categoryGrid"></div>
       </div>
     </div>
-  </div>
 
-  <!-- ===== 游戏页面 ===== -->
-  <div class="game-page" id="gamePage">
-    <div class="app">
-      <!-- 规则页面 -->
-      <div id="rulesPage" style="padding: 20px;">
-        <h1 class="rules-title">📚 图书管理员</h1>
+    <!-- 阶段完成弹窗 -->
+    <div class="modal" id="stageCompleteModal">
+      <div class="modal-content">
+        <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">🎉</div>
+        <h2 style="text-align: center; margin-bottom: 20px;">阶段完成！</h2>
         
-        <div class="rules-section">
-          <h3>🎯 游戏目标</h3>
-          <p>通过三个阶段逐步学习中图法22个分类，最终挑战成为图书管理专家！</p>
+        <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+          <div style="font-size: 16px; font-weight: 600; color: #1e40af;">
+            阶段得分：<span id="stageScore" style="font-size: 24px;">0</span>
+          </div>
+          <div style="font-size: 14px; color: #666; margin-top: 4px;">
+            正确：<span id="stageCorrect">0</span> | 错误：<span id="stageWrong">0</span>
+          </div>
         </div>
 
-        <div class="rules-section">
-          <h3>📖 游戏规则</h3>
-          <p>• 游戏分为三个阶段，难度递增</p>
-          <p>• 第一阶段：7个分类（入门）</p>
-          <p>• 第二阶段：7个分类（进阶）</p>
-          <p>• 第三阶段：8个分类（挑战）</p>
-          <p>• 每阶段完成后进入下一阶段</p>
-          <p>• 封面颜色与答案无关</p>
+        <div style="background: #dcfce7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+          <p style="font-size: 14px; color: #166534; margin: 0;">
+            🎊 恭喜完成这一阶段！准备好进入下一阶段了吗？
+          </p>
         </div>
 
-        <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 16px 0;">
-          <h3 style="color: #92400e; margin-bottom: 8px;">⚠️ 重要提示</h3>
-          <p style="color: #92400e; margin: 0;">每个阶段的分类按钮不会显示字母代码，你必须记住字母对应关系！</p>
-        </div>
-
-        <div class="stage-card">
-          <h3>📝 第一阶段分类（入门）</h3>
-          <table class="stage-table">
-            <tr><td class="code">A</td><td>马克思主义</td><td class="code">B</td><td>哲学宗教</td></tr>
-            <tr><td class="code">E</td><td>军事</td><td class="code">F</td><td>经济</td></tr>
-            <tr><td class="code">I</td><td>文学</td><td class="code">J</td><td>艺术</td></tr>
-            <tr><td class="code">K</td><td>历史地理</td><td></td><td></td></tr>
-          </table>
-        </div>
-
-        <div class="stage-card">
-          <h3>📝 第二阶段分类（进阶）</h3>
-          <table class="stage-table">
-            <tr><td class="code">C</td><td>社会科学总论</td><td class="code">D</td><td>政治法律</td></tr>
-            <tr><td class="code">G</td><td>文化教育</td><td class="code">H</td><td>语言文字</td></tr>
-            <tr><td class="code">N</td><td>自然科学总论</td><td class="code">O</td><td>数理化学</td></tr>
-            <tr><td class="code">P</td><td>天文地球</td><td class="code">Q</td><td>生物科学</td></tr>
-          </table>
-        </div>
-
-        <div class="stage-card">
-          <h3>📝 第三阶段分类（挑战）</h3>
-          <table class="stage-table">
-            <tr><td class="code">R</td><td>医药卫生</td><td class="code">S</td><td>农业科学</td></tr>
-            <tr><td class="code">T</td><td>工业技术</td><td class="code">U</td><td>交通运输</td></tr>
-            <tr><td class="code">V</td><td>航空航天</td><td class="code">X</td><td>环境安全</td></tr>
-            <tr><td class="code">Z</td><td>综合性图书</td><td></td><td></td></tr>
-          </table>
-        </div>
-
-        <button class="rules-btn" onclick="startGame()">开始挑战</button>
+        <button class="continue-btn" onclick="nextStage()">进入下一阶段</button>
       </div>
+    </div>
 
-      <!-- 游戏页面 -->
-      <div id="gameArea" style="display: none;">
-        <div class="header">
-          <h1>图书管理员</h1>
-          <div class="stats">
-            <div class="stat-box">
-              <div class="stat-value" id="score">0</div>
-              <div class="stat-label">得分</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value"><span id="current">0</span>/<span id="total">0</span></div>
-              <div class="stat-label">进度</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="combo">0</div>
-              <div class="stat-label">连击</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-value" id="time">00:00</div>
-              <div class="stat-label">时间</div>
-            </div>
-          </div>
-          <div class="stage-indicator" id="stageIndicator">第一阶段：入门</div>
-          <div class="progress">
-            <div class="progress-bar" id="progressBar"></div>
-          </div>
+    <!-- 错误弹窗 -->
+    <div class="modal" id="wrongModal">
+      <div class="modal-content">
+        <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">❌</div>
+        <h2 style="text-align: center; margin-bottom: 20px;">分类错误！</h2>
+        
+        <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+          <strong>📚 图书信息</strong>
+          <div id="wrongBookTitle" style="font-size: 16px; font-weight: 600; margin-top: 4px;"></div>
+          <div id="wrongBookAuthor" style="font-size: 14px; color: #666;"></div>
         </div>
 
-        <div class="main">
-          <div class="book-card">
-            <div class="book-cover" id="bookCover">📚</div>
-            <div class="book-title" id="bookTitle">红楼梦</div>
-            <div class="book-author" id="bookAuthor">作者：曹雪芹</div>
-            <div class="call-number" id="callNumber">I</div>
-          </div>
+        <div style="background: #eff6ff; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+          <strong>📍 索书号</strong>
+          <div id="wrongCallNumber" style="font-size: 24px; font-weight: bold; color: #4A90E2; margin-top: 4px;"></div>
         </div>
 
-        <div class="categories">
-          <div class="categories-title">选择正确的分类</div>
-          <div class="category-grid" id="categoryGrid"></div>
+        <div class="wrong-choice">
+          <strong>❌ 你的选择</strong>
+          <div id="wrongSelected"></div>
         </div>
+
+        <div class="correct-choice">
+          <strong>✅ 正确答案</strong>
+          <div id="wrongCorrect"></div>
+        </div>
+
+        <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+          💡 记住这个代码对应的分类，下次就不会错了！
+        </div>
+
+        <button class="continue-btn" onclick="continueGame()">继续答题</button>
       </div>
+    </div>
 
-      <!-- 阶段完成弹窗 -->
-      <div class="modal" id="stageCompleteModal">
-        <div class="modal-content">
-          <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">🎉</div>
-          <h2 style="text-align: center; margin-bottom: 20px;">阶段完成！</h2>
-          
-          <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-            <div style="font-size: 16px; font-weight: 600; color: #1e40af;">
-              阶段得分：<span id="stageScore" style="font-size: 24px;">0</span>
-            </div>
-            <div style="font-size: 14px; color: #666; margin-top: 4px;">
-              正确：<span id="stageCorrect">0</span> | 错误：<span id="stageWrong">0</span>
-            </div>
-          </div>
-
-          <div style="background: #dcfce7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-            <p style="font-size: 14px; color: #166534; margin: 0;">
-              🎊 恭喜完成这一阶段！准备好进入下一阶段了吗？
-            </p>
-          </div>
-
-          <button class="continue-btn" onclick="nextStage()">进入下一阶段</button>
+    <!-- 阶段开始弹窗 -->
+    <div class="modal" id="stageStartModal">
+      <div class="modal-content">
+        <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">📝</div>
+        <h2 style="text-align: center; margin-bottom: 20px;" id="stageStartTitle">第一阶段：入门</h2>
+        
+        <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+          <h3 style="font-size: 14px; color: #1e40af; margin-bottom: 10px; text-align: center;">📚 本阶段分类对照表</h3>
+          <div id="stageStartTable" style="font-size: 12px;"></div>
         </div>
-      </div>
 
-      <!-- 错误弹窗 -->
-      <div class="modal" id="wrongModal">
-        <div class="modal-content">
-          <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">❌</div>
-          <h2 style="text-align: center; margin-bottom: 20px;">分类错误！</h2>
-          
-          <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-            <strong>📚 图书信息</strong>
-            <div id="wrongBookTitle" style="font-size: 16px; font-weight: 600; margin-top: 4px;"></div>
-            <div id="wrongBookAuthor" style="font-size: 14px; color: #666;"></div>
-          </div>
-
-          <div style="background: #eff6ff; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-            <strong>📍 索书号</strong>
-            <div id="wrongCallNumber" style="font-size: 24px; font-weight: bold; color: #4A90E2; margin-top: 4px;"></div>
-          </div>
-
-          <div class="wrong-choice">
-            <strong>❌ 你的选择</strong>
-            <div id="wrongSelected"></div>
-          </div>
-
-          <div class="correct-choice">
-            <strong>✅ 正确答案</strong>
-            <div id="wrongCorrect"></div>
-          </div>
-
-          <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-            💡 记住这个代码对应的分类，下次就不会错了！
-          </div>
-
-          <button class="continue-btn" onclick="continueGame()">继续答题</button>
+        <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+          <p style="font-size: 13px; color: #92400e; margin: 0;">
+            💡 请记住这些字母对应的分类，游戏开始后按钮上不会显示字母！
+          </p>
         </div>
-      </div>
 
-      <!-- 阶段开始弹窗 -->
-      <div class="modal" id="stageStartModal">
-        <div class="modal-content">
-          <div style="text-align: center; font-size: 48px; margin-bottom: 10px;">📝</div>
-          <h2 style="text-align: center; margin-bottom: 20px;" id="stageStartTitle">第一阶段：入门</h2>
-          
-          <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <h3 style="font-size: 14px; color: #1e40af; margin-bottom: 10px; text-align: center;">📚 本阶段分类对照表</h3>
-            <div id="stageStartTable" style="font-size: 12px;"></div>
-          </div>
-
-          <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-            <p style="font-size: 13px; color: #92400e; margin: 0;">
-              💡 请记住这些字母对应的分类，游戏开始后按钮上不会显示字母！
-            </p>
-          </div>
-
-          <button class="continue-btn" onclick="startStageGame()">开始答题</button>
-        </div>
+        <button class="continue-btn" onclick="startStageGame()">开始答题</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 进入游戏
-    function enterGame() {
-      document.getElementById('entryPage').style.display = 'none'
-      document.getElementById('gamePage').style.display = 'block'
-    }
-    
     // 游戏数据 - 完整的22个中图法分类
     const CATEGORIES = [
       { code: 'A', name: '马克思主义', color: '#FF6B6B' },
@@ -790,7 +608,7 @@
     // 开始游戏
     function startGame() {
       document.getElementById('rulesPage').style.display = 'none'
-      document.getElementById('gameArea').style.display = 'block'
+      document.getElementById('gamePage').style.display = 'block'
       
       gameState.currentStageIndex = 0
       gameState.score = 0
@@ -1026,7 +844,7 @@
         `
       })
       
-      document.getElementById('gameArea').innerHTML = `
+      document.getElementById('gamePage').innerHTML = `
         <div style="padding: 40px 20px; text-align: center;">
           <div style="font-size: 64px; margin-bottom: 20px;">🏆</div>
           <h2 style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">恭喜通关！</h2>
@@ -1065,5 +883,11 @@
       `
     }
   </script>
+
+<!-- ICP备案信息 -->
+<div style="text-align:center; padding:12px 0 8px; font-size:12px; color:#999; background:transparent; position:relative; z-index:1;">
+  <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer" style="color:#999; text-decoration:none;">粤ICP备2026052617号</a>
+</div>
+
 </body>
 </html>
