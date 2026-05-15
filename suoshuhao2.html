@@ -1207,6 +1207,58 @@
     opacity: 0.6;
   }
 
+  /* ===== 音乐开关按钮 ===== */
+  .music-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--dark-blue);
+    border: 2px solid var(--gold);
+    color: var(--gold-light);
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(26,39,68,0.35);
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+    opacity: 0.85;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    line-height: 1;
+  }
+  .music-toggle::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+  .music-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(26,39,68,0.45);
+    opacity: 1;
+  }
+  .music-toggle:active {
+    transform: scale(0.92);
+  }
+  .music-toggle.muted {
+    opacity: 0.5;
+  }
+  @keyframes musicPulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(26,39,68,0.35); }
+    50% { box-shadow: 0 4px 24px rgba(212,168,67,0.5); }
+  }
+  .music-toggle.playing {
+    animation: musicPulse 2s ease-in-out infinite;
+  }
+
   /* ===== 响应式 ===== */
   @media (max-width: 480px) {
     .page-wrapper { padding: 16px 14px 32px; }
@@ -1223,6 +1275,7 @@
     .lobby-hero h1::before, .lobby-hero h1::after { display: none; }
     .lobby-leaderboard-btn { margin-left: 14px; margin-right: 14px; }
     .btn-leaderboard-game { font-size: 12px; padding: 6px 14px; }
+    .music-toggle { bottom: 18px; right: 18px; width: 42px; height: 42px; font-size: 17px; }
   }
 </style>
 </head>
@@ -1480,6 +1533,9 @@
 
 <canvas id="confetti-canvas"></canvas>
 
+<!-- 音乐开关按钮 -->
+<button class="music-toggle muted" id="musicToggle" onclick="toggleMusic()" title="音乐开关">🎵</button>
+
 <script>
 // ===== 书库数据（50本） =====
 const BOOK_LIBRARY = [
@@ -1536,6 +1592,27 @@ const BOOK_LIBRARY = [
   {title: "鲁智深倒拔垂杨柳", callNumber: "I287.8 312"},
   {title: "呼延灼连环马", callNumber: "I287.5 265"},
   {title: "智取生辰纲", callNumber: "I287.8 189"},
+  // ---- 再增20本（进一步丰富类目，避免重复出题）----
+  {title: "论语", callNumber: "B222.1 042"},
+  {title: "庄子说", callNumber: "B223.5 017"},
+  {title: "中国神话故事", callNumber: "I276.5 088"},
+  {title: "一千零一夜", callNumber: "I371.7 056"},
+  {title: "木偶奇遇记", callNumber: "I546.8 042"},
+  {title: "海底两万里", callNumber: "I565.4 023"},
+  {title: "假如给我三天光明", callNumber: "I712.5 078"},
+  {title: "秘密花园", callNumber: "I712.8 345"},
+  {title: "格列佛游记", callNumber: "I561.4 019"},
+  {title: "中国历史故事", callNumber: "K209 156"},
+  {title: "世界地理大发现", callNumber: "K916 034"},
+  {title: "围棋入门", callNumber: "G891.3 012"},
+  {title: "少儿编程入门", callNumber: "TP311 058"},
+  {title: "中国美术欣赏", callNumber: "J052 037"},
+  {title: "书法的故事", callNumber: "J292.1 092"},
+  {title: "地球的奥秘", callNumber: "P183 021"},
+  {title: "植物大战僵尸·百科", callNumber: "Q94 045"},
+  {title: "中国诗词大会", callNumber: "I207.2 156"},
+  {title: "水浒人物传", callNumber: "I247.5 678"},
+  {title: "成语接龙", callNumber: "H136.3 089"},
 ];
 
 const PICK_COUNT_R1 = 6;
@@ -1551,8 +1628,10 @@ function parseCallNumber(cn) {
   const letterPart = parts[0] || '';
   const numPart = parts[1] || '';
   const letter = letterPart.match(/^[A-Z]/i) ? letterPart[0].toUpperCase() : '';
-  const afterLetter = letterPart.length > 1 ? letterPart.slice(1) : '';
-  return { letter, afterLetter: parseFloat(afterLetter) || 0, trailingNum: parseFloat(numPart) || 0 };
+  // 分类号数字部分：去掉小数点，用字符串逐位比较（对位比较法）
+  // 例如 Q915 → "915", Q96 → "96"，字符串比较 "915" < "96"（第二位1<6），正确
+  const afterLetter = letterPart.length > 1 ? letterPart.slice(1).replace('.', '') : '';
+  return { letter, afterLetter, trailingNum: parseFloat(numPart) || 0 };
 }
 
 function compareCallNumber(a, b) {
@@ -1582,116 +1661,23 @@ function pickBooks(count) {
   return shuffled.slice(0, count);
 }
 // ===== 难度平衡抽题（第二轮专用） =====
-// 策略：确保8本书中有2-3组同字母的书（需比较数字），总共3-5种字母，每轮难度均衡
+// 策略：随机抽8本，确保至少有2组同字母的书（需比较数字），避免全不同字母太简单
 function pickBooksBalanced(count) {
-  // 按首字母分组
-  const groups = {};
-  BOOK_LIBRARY.forEach(book => {
-    const letter = book.callNumber.trim()[0].toUpperCase();
-    if (!groups[letter]) groups[letter] = [];
-    groups[letter].push(book);
-  });
-
-  // 解析索书号的主要数字部分（字母后的数字，含小数点）
-  function parseMainNumber(callNumber) {
-    const match = callNumber.trim().match(/^[A-Za-z](\d+\.?\d*)/);
-    return match ? parseFloat(match[1]) : 0;
-  }
-
-  // 从同字母的书中选出难度适中的组合（数字部分差异不太大不太小）
-  function pickFromGroup(letterBooks, size) {
-    if (letterBooks.length <= size) return shuffle([...letterBooks]);
-
-    // 按主要数字排序，用滑动窗口找数字相近的组合
-    const sorted = [...letterBooks].sort((a, b) => parseMainNumber(a.callNumber) - parseMainNumber(b.callNumber));
-    const candidates = [];
-
-    for (let i = 0; i <= sorted.length - size; i++) {
-      const window = sorted.slice(i, i + size);
-      const nums = window.map(b => parseMainNumber(b.callNumber));
-      const minN = Math.min(...nums);
-      const maxN = Math.max(...nums);
-      // 排除所有数字完全相同的情况（太特殊），排除差异过大的情况（太简单）
-      const allSame = nums.every(n => n === nums[0]);
-      if (!allSame && minN > 0 && maxN / minN < 3) {
-        candidates.push(window);
-      }
-    }
-
-    if (candidates.length > 0) {
-      return shuffle(candidates[Math.floor(Math.random() * candidates.length)]);
-    }
-    // 兜底：随机选
-    return shuffle([...letterBooks]).slice(0, size);
-  }
-
-  // 有≥2本书的字母（可做同字母组）
-  const multiLetters = Object.keys(groups).filter(l => groups[l].length >= 2);
-
-  // 结构模板：groupDefs=同字母组每组本数，extraSingle=额外单本数
-  // 约束：sum(groupDefs) + extraSingle = count，总字母数 = groupDefs.length + extraSingle ∈ [3,5]
-  const templates = [
-    { groupDefs: [2, 2, 2], extraSingle: 2 },  // 8本, 5种字母, 3组同字母
-    { groupDefs: [3, 2, 2], extraSingle: 1 },  // 8本, 4种字母, 3组同字母
-    { groupDefs: [3, 3, 2], extraSingle: 0 },  // 8本, 3种字母, 3组同字母
-    { groupDefs: [3, 2], extraSingle: 3 },     // 8本, 5种字母, 2组同字母
-    { groupDefs: [4, 2], extraSingle: 2 },     // 8本, 4种字母, 2组同字母
-  ].filter(t => t.groupDefs.reduce((a, b) => a + b, 0) + t.extraSingle === count
-    && t.groupDefs.length + t.extraSingle >= 3
-    && t.groupDefs.length + t.extraSingle <= 5);
-
-  for (let attempt = 0; attempt < 300; attempt++) {
-    const template = templates[Math.floor(Math.random() * templates.length)];
-    const picked = [];
-    const usedLetters = new Set();
-
-    // 大组优先分配（先满足需要更多书的组）
-    const sortedDefs = [...template.groupDefs].sort((a, b) => b - a);
-    const shuffledMulti = shuffle([...multiLetters]);
-    let success = true;
-
-    for (const size of sortedDefs) {
-      let found = false;
-      for (const letter of shuffledMulti) {
-        if (usedLetters.has(letter)) continue;
-        const available = groups[letter].filter(b => !picked.includes(b));
-        if (available.length >= size) {
-          const chosen = pickFromGroup(available, size);
-          chosen.forEach(b => picked.push(b));
-          usedLetters.add(letter);
-          found = true;
-          break;
-        }
-      }
-      if (!found) { success = false; break; }
-    }
-
-    if (!success) continue;
-
-    // 填充单本（从尚未使用的字母中各取1本）
-    const remainingCount = count - picked.length;
-    const availableForSingle = Object.keys(groups).filter(l => !usedLetters.has(l));
-    const shuffledSingles = shuffle([...availableForSingle]);
-
-    for (let i = 0; i < remainingCount && i < shuffledSingles.length; i++) {
-      const letter = shuffledSingles[i];
-      const available = groups[letter].filter(b => !picked.includes(b));
-      if (available.length > 0) {
-        picked.push(shuffle(available)[0]);
-        usedLetters.add(letter);
-      }
-    }
-
-    // 验证：总本数=8，总字母数3-5，有2-3组同字母
-    const totalLetters = usedLetters.size;
-    const sameLetterGroups = template.groupDefs.length;
-    if (picked.length === count && totalLetters >= 3 && totalLetters <= 5
-      && sameLetterGroups >= 2 && sameLetterGroups <= 3) {
-      return shuffle(picked); // 最终打乱顺序
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const picked = shuffle(BOOK_LIBRARY).slice(0, count);
+    // 统计各字母出现次数
+    const letterCount = {};
+    picked.forEach(b => {
+      const l = b.callNumber.trim()[0].toUpperCase();
+      letterCount[l] = (letterCount[l] || 0) + 1;
+    });
+    // 至少有2个字母出现2次及以上（即至少2组同字母书需要比数字）
+    const multiGroups = Object.values(letterCount).filter(c => c >= 2).length;
+    if (multiGroups >= 2) {
+      return picked;
     }
   }
-
-  // 兜底：如果300次都没找到合规组合，直接随机抽
+  // 兜底：随机抽
   return pickBooks(count);
 }
 
@@ -2306,6 +2292,441 @@ window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 });
+
+// ============================================================
+//  武侠书香配乐系统 — Web Audio API 程序化生成
+// ============================================================
+const MusicSystem = (() => {
+  let ctx = null;          // AudioContext
+  let masterGain = null;   // 主音量
+  let currentMode = null;  // 'relaxed' | 'tense' | null
+  let isPlaying = false;
+  let isMuted = true;      // 默认静音，需用户主动开启
+  let loopTimer = null;
+  let activeNodes = [];    // 追踪所有活跃的音频节点
+
+  // --- 五声音阶频率表（宫商角徵羽）---
+  // C调五声: C D E G A，多八度
+  const PENTATONIC = {
+    low:   [130.81,146.83,164.81,196.00,220.00],  // C3-A3
+    mid:   [261.63,293.66,329.63,392.00,440.00],  // C4-A4
+    high:  [523.25,587.33,659.26,783.99,880.00],  // C5-A5
+  };
+
+  // ====== 第一轮：轻松武侠书香（古筝+笛子+轻鼓点）======
+  // 旋律灵感：类似《笑傲江湖》主题曲的文人气质，舒缓悠然
+  const RELAXED_MELODY = [
+    // 古筝主旋律 — 像在藏书阁翻书的悠然
+    { note: 'mid', idx: 2, dur: 0.7, delay: 0,    vol: 0.12, type: 'guzheng' },  // E4 长音起
+    { note: 'mid', idx: 1, dur: 0.4, delay: 0.85,  vol: 0.10, type: 'guzheng' },  // D4
+    { note: 'mid', idx: 0, dur: 0.9, delay: 1.35,  vol: 0.13, type: 'guzheng' },  // C4 延留
+    { note: 'low', idx: 4, dur: 0.5, delay: 2.4,   vol: 0.09, type: 'guzheng' },  // A3 低回
+    { note: 'mid', idx: 0, dur: 0.35,delay: 3.05,  vol: 0.10, type: 'guzheng' },  // C4
+    { note: 'mid', idx: 2, dur: 0.6, delay: 3.55,  vol: 0.11, type: 'guzheng' },  // E4
+    { note: 'mid', idx: 4, dur: 1.0, delay: 4.3,   vol: 0.14, type: 'guzheng' },  // A4 飘逸长音
+    // 留白 1.2秒
+    { note: 'mid', idx: 3, dur: 0.5, delay: 6.3,   vol: 0.10, type: 'guzheng' },  // G4
+    { note: 'mid', idx: 2, dur: 0.35,delay: 6.95,  vol: 0.09, type: 'guzheng' },  // E4
+    { note: 'mid', idx: 1, dur: 0.8, delay: 7.45,  vol: 0.12, type: 'guzheng' },  // D4 收束
+    // 笛子点缀 — 远处传来
+    { note: 'high', idx: 0, dur: 1.2, delay: 2.0,  vol: 0.06, type: 'flute' },    // C5 远笛
+    { note: 'high', idx: 2, dur: 0.8, delay: 5.5,  vol: 0.05, type: 'flute' },    // E5 短笛
+    { note: 'high', idx: 3, dur: 0.6, delay: 8.5,  vol: 0.05, type: 'flute' },    // G5 尾音
+    // 轻鼓点 — 偶尔一下
+    { note: null, dur: 0.12, delay: 0,    vol: 0.15, type: 'drum' },
+    { note: null, dur: 0.12, delay: 4.2,  vol: 0.12, type: 'drum' },
+    { note: null, dur: 0.12, delay: 7.3,  vol: 0.10, type: 'drum' },
+    // 低音持续衬底（非常轻）
+    { note: 'low', idx: 0, dur: 4.5, delay: 0,    vol: 0.04, type: 'drone' },     // C3
+    { note: 'low', idx: 3, dur: 4.5, delay: 4.5,  vol: 0.04, type: 'drone' },     // G3
+  ];
+  const RELAXED_LOOP_DUR = 9.5; // 秒
+
+  // ====== 第二轮：紧张武侠书香（鼓点+古琴急拨+笛子高音）======
+  // 旋律灵感：武林大会笔试，争分夺秒但非厮杀
+  const TENSE_MELODY = [
+    // 古琴急拨 — 紧迫的轮指感
+    { note: 'mid', idx: 0, dur: 0.2, delay: 0,    vol: 0.11, type: 'guzheng' },
+    { note: 'mid', idx: 2, dur: 0.2, delay: 0.25, vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 4, dur: 0.2, delay: 0.5,  vol: 0.11, type: 'guzheng' },
+    { note: 'mid', idx: 3, dur: 0.25,delay: 0.75, vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 2, dur: 0.6, delay: 1.05, vol: 0.13, type: 'guzheng' },   // E4 延留
+    // 短暂留白
+    { note: 'mid', idx: 1, dur: 0.2, delay: 2.0,  vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 3, dur: 0.2, delay: 2.25, vol: 0.11, type: 'guzheng' },
+    { note: 'high',idx: 0, dur: 0.35,delay: 2.5,  vol: 0.12, type: 'guzheng' },   // C5 上扬
+    { note: 'mid', idx: 4, dur: 0.7, delay: 2.95, vol: 0.14, type: 'guzheng' },   // A4 稳住
+    // 递进段落
+    { note: 'mid', idx: 0, dur: 0.18,delay: 4.0,  vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 1, dur: 0.18,delay: 4.22, vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 2, dur: 0.18,delay: 4.44, vol: 0.11, type: 'guzheng' },
+    { note: 'mid', idx: 3, dur: 0.18,delay: 4.66, vol: 0.11, type: 'guzheng' },
+    { note: 'mid', idx: 4, dur: 0.5, delay: 4.88, vol: 0.13, type: 'guzheng' },   // A4 高点
+    { note: 'mid', idx: 3, dur: 0.35,delay: 5.5,  vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 2, dur: 0.35,delay: 5.95, vol: 0.10, type: 'guzheng' },
+    { note: 'mid', idx: 0, dur: 0.7, delay: 6.4,  vol: 0.12, type: 'guzheng' },   // C4 收
+    // 笛子紧张高音点缀
+    { note: 'high', idx: 4, dur: 0.4, delay: 1.0,  vol: 0.05, type: 'flute' },    // A5 尖锐
+    { note: 'high', idx: 3, dur: 0.3, delay: 4.5,  vol: 0.04, type: 'flute' },    // G5
+    { note: 'high', idx: 4, dur: 0.5, delay: 6.0,  vol: 0.05, type: 'flute' },    // A5 紧张
+    // 鼓点 — 稳定心跳节奏
+    { note: null, dur: 0.1, delay: 0,    vol: 0.18, type: 'drum' },
+    { note: null, dur: 0.08,delay: 1.0,  vol: 0.14, type: 'drum' },
+    { note: null, dur: 0.1, delay: 2.0,  vol: 0.16, type: 'drum' },
+    { note: null, dur: 0.08,delay: 3.0,  vol: 0.14, type: 'drum' },
+    { note: null, dur: 0.1, delay: 4.0,  vol: 0.18, type: 'drum' },
+    { note: null, dur: 0.08,delay: 5.0,  vol: 0.15, type: 'drum' },
+    { note: null, dur: 0.1, delay: 6.0,  vol: 0.16, type: 'drum' },
+    { note: null, dur: 0.08,delay: 7.0,  vol: 0.14, type: 'drum' },
+    // 低音衬底（紧迫感）
+    { note: 'low', idx: 0, dur: 4.0, delay: 0,  vol: 0.05, type: 'drone' },
+    { note: 'low', idx: 2, dur: 4.0, delay: 4.0,vol: 0.05, type: 'drone' },
+  ];
+  const TENSE_LOOP_DUR = 8.0;
+
+  // ====== 音色合成器 ======
+
+  // 古筝音色：三角波 + 快速衰减 + 轻微颤音
+  function playGuzheng(freq, startTime, duration, volume) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, startTime);
+    // 轻微颤音（古筝的吟揉）
+    const vibratoRate = 5 + Math.random() * 2;
+    const vibratoDepth = freq * 0.005;
+    osc.frequency.setValueAtTime(freq, startTime);
+    osc.frequency.linearRampToValueAtTime(freq, startTime + 0.05);
+    osc.frequency.sinusoidalRampToValueAtTime(freq + vibratoDepth, startTime + duration * 0.6);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, startTime);
+    filter.frequency.linearRampToValueAtTime(800, startTime + duration);
+    filter.Q.value = 1;
+
+    // 古筝包络：快起 - 短 sustaining - 自然衰减
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.008);
+    gain.gain.exponentialRampToValueAtTime(volume * 0.4, startTime + 0.15);
+    gain.gain.exponentialRampToValueAtTime(volume * 0.15, startTime + duration * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+
+    activeNodes.push(osc);
+    osc.onended = () => {
+      const i = activeNodes.indexOf(osc);
+      if (i > -1) activeNodes.splice(i, 1);
+    };
+  }
+
+  // 笛子音色：正弦波 + 慢起 + 长延 + 气息感
+  function playFlute(freq, startTime, duration, volume) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+    // 笛子的气震音
+    osc.frequency.sinusoidalRampToValueAtTime(freq + freq * 0.008, startTime + duration * 0.8);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1500, startTime);
+    filter.frequency.linearRampToValueAtTime(2500, startTime + 0.3);
+    filter.frequency.linearRampToValueAtTime(1200, startTime + duration);
+    filter.Q.value = 0.5;
+
+    // 笛子包络：慢起 - 平稳 - 慢落
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.15);
+    gain.gain.setValueAtTime(volume, startTime + duration * 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+
+    activeNodes.push(osc);
+    osc.onended = () => {
+      const i = activeNodes.indexOf(osc);
+      if (i > -1) activeNodes.splice(i, 1);
+    };
+  }
+
+  // 鼓点：低频噪音脉冲
+  function playDrum(startTime, duration, volume) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const noise = ctx.createOscillator();
+    const noiseGain = ctx.createGain();
+
+    // 鼓心低频
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, startTime);
+    osc.frequency.exponentialRampToValueAtTime(50, startTime + 0.1);
+
+    gain.gain.setValueAtTime(volume, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+
+    // 鼓皮噪音
+    noise.type = 'sawtooth';
+    noise.frequency.setValueAtTime(80, startTime);
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(200, startTime);
+    noiseFilter.Q.value = 2;
+
+    noiseGain.gain.setValueAtTime(volume * 0.3, startTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.08);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterGain);
+
+    osc.start(startTime);
+    osc.stop(startTime + 0.25);
+    noise.start(startTime);
+    noise.stop(startTime + 0.12);
+
+    activeNodes.push(osc, noise);
+  }
+
+  // 持续低音（drone）：极轻的衬底
+  function playDrone(freq, startTime, duration, volume) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, startTime);
+    filter.Q.value = 0.5;
+
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 1.5);
+    gain.gain.setValueAtTime(volume, startTime + duration - 1.5);
+    gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.1);
+
+    activeNodes.push(osc);
+    osc.onended = () => {
+      const i = activeNodes.indexOf(osc);
+      if (i > -1) activeNodes.splice(i, 1);
+    };
+  }
+
+  // ====== 播放一段旋律 ======
+  function playPhrase(phrase, baseTime) {
+    for (const n of phrase) {
+      const t = baseTime + n.delay;
+      if (n.type === 'guzheng' && n.note) {
+        const freq = PENTATONIC[n.note][n.idx];
+        playGuzheng(freq, t, n.dur, n.vol);
+      } else if (n.type === 'flute' && n.note) {
+        const freq = PENTATONIC[n.note][n.idx];
+        playFlute(freq, t, n.dur, n.vol);
+      } else if (n.type === 'drum') {
+        playDrum(t, n.dur, n.vol);
+      } else if (n.type === 'drone' && n.note) {
+        const freq = PENTATONIC[n.note][n.idx];
+        playDrone(freq, t, n.dur, n.vol);
+      }
+    }
+  }
+
+  // ====== 循环调度 ======
+  function scheduleLoop() {
+    if (!isPlaying || !ctx) return;
+
+    const phrase = currentMode === 'relaxed' ? RELAXED_MELODY : TENSE_MELODY;
+    const loopDur = currentMode === 'relaxed' ? RELAXED_LOOP_DUR : TENSE_LOOP_DUR;
+
+    playPhrase(phrase, ctx.currentTime + 0.05);
+
+    loopTimer = setTimeout(() => {
+      if (isPlaying && !isMuted) {
+        scheduleLoop();
+      }
+    }, loopDur * 1000 - 50);  // 提前50ms调度下一轮，减少间隙
+  }
+
+  // ====== 停止所有声音 ======
+  function stopAll() {
+    if (loopTimer) {
+      clearTimeout(loopTimer);
+      loopTimer = null;
+    }
+    // 渐出所有活跃节点
+    if (ctx && masterGain) {
+      masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+      setTimeout(() => {
+        activeNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+        activeNodes = [];
+        if (masterGain) masterGain.gain.setValueAtTime(0.25, ctx.currentTime);
+      }, 350);
+    }
+  }
+
+  // ====== 初始化 AudioContext ======
+  function ensureContext() {
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = 0.25;
+      masterGain.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+  }
+
+  // ====== 对外接口 ======
+  return {
+    // 播放指定模式
+    play(mode) {
+      if (isMuted) return;
+      ensureContext();
+      if (isPlaying && currentMode === mode) return; // 已在播放同模式
+      stopAll();
+      currentMode = mode;
+      isPlaying = true;
+      // 等渐出完成后开始新旋律
+      setTimeout(() => {
+        if (isPlaying && !isMuted) scheduleLoop();
+      }, 380);
+      updateMusicButton();
+    },
+
+    // 停止
+    stop() {
+      isPlaying = false;
+      currentMode = null;
+      stopAll();
+      updateMusicButton();
+    },
+
+    // 切换静音
+    toggleMute() {
+      isMuted = !isMuted;
+      if (isMuted) {
+        stopAll();
+        isPlaying = false;
+        currentMode = null;
+      }
+      updateMusicButton();
+      return isMuted;
+    },
+
+    // 获取状态
+    isMuted() { return isMuted; },
+    isPlaying() { return isPlaying; },
+    getCurrentMode() { return currentMode; },
+
+    // 用户首次交互时触发（移动端兼容）
+    resumeContext() {
+      ensureContext();
+    }
+  };
+})();
+
+// ===== 音乐按钮更新 =====
+function updateMusicButton() {
+  const btn = document.getElementById('musicToggle');
+  if (!btn) return;
+  if (MusicSystem.isMuted()) {
+    btn.textContent = '🎵';
+    btn.classList.add('muted');
+    btn.classList.remove('playing');
+  } else {
+    btn.textContent = MusicSystem.isPlaying() ? '🎵' : '🎵';
+    btn.classList.remove('muted');
+    if (MusicSystem.isPlaying()) {
+      btn.classList.add('playing');
+    } else {
+      btn.classList.remove('playing');
+    }
+  }
+}
+
+// ===== 音乐开关 =====
+function toggleMusic() {
+  MusicSystem.resumeContext();
+  const nowMuted = MusicSystem.toggleMute();
+  // 如果取消静音，根据当前页面决定播放什么
+  if (!nowMuted) {
+    const gameR1 = document.getElementById('gameAreaR1');
+    const gameR2 = document.getElementById('gameAreaR2');
+    if (!gameR1.classList.contains('hidden')) {
+      MusicSystem.play('relaxed');
+    } else if (!gameR2.classList.contains('hidden')) {
+      MusicSystem.play('tense');
+    }
+  }
+}
+
+// ===== 音乐与页面切换集成（修改原有函数）=====
+const _origShowLobby = showLobby;
+showLobby = function() {
+  _origShowLobby();
+  MusicSystem.stop();
+};
+
+const _origStartRound1 = startRound1;
+startRound1 = function() {
+  _origStartRound1();
+  MusicSystem.resumeContext();
+  MusicSystem.play('relaxed');
+};
+
+const _origStartRound2 = startRound2;
+startRound2 = function() {
+  _origStartRound2();
+  MusicSystem.resumeContext();
+  MusicSystem.play('tense');
+};
+
+const _origRestartRound1 = restartRound1;
+restartRound1 = function() {
+  _origRestartRound1();
+  MusicSystem.play('relaxed');
+};
+
+const _origRestartRound2 = restartRound2;
+restartRound2 = function() {
+  _origRestartRound2();
+  MusicSystem.play('tense');
+};
+
+// 移动端：首次触摸任意位置激活AudioContext
+document.addEventListener('touchstart', function initAudioOnTouch() {
+  MusicSystem.resumeContext();
+  document.removeEventListener('touchstart', initAudioOnTouch);
+}, { once: true });
+document.addEventListener('click', function initAudioOnClick() {
+  MusicSystem.resumeContext();
+  document.removeEventListener('click', initAudioOnClick);
+}, { once: true });
 </script>
 
 <!-- ICP备案信息 -->
