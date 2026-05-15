@@ -1468,8 +1468,9 @@
       <span class="leaderboard-only-icon">🏆</span>
       <div class="leaderboard-only-title">🏅 好汉排行榜</div>
       <div id="leaderboardOnlyContent"></div>
-      <div class="modal-buttons" style="margin-top:14px;">
+      <div class="modal-buttons" style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button class="btn-lobby" onclick="closeLeaderboardOnly()">关闭</button>
+        <button class="btn-lobby" id="btnClearLB" style="color:#999; font-size:12px;" onmousedown="startClearLB()" onmouseup="cancelClearLB()" onmouseleave="cancelClearLB()" ontouchstart="startClearLB()" ontouchend="cancelClearLB()">长按清除记录</button>
       </div>
     </div>
   </div>
@@ -1581,6 +1582,7 @@ function pickBooks(count) {
   return shuffled.slice(0, count);
 }
 // ===== 难度平衡抽题（第二轮专用） =====
+// 策略：确保8本书中有2-3组同字母的书（需比较数字），总共3-5种字母，每轮难度均衡
 function pickBooksBalanced(count) {
   // 按首字母分组
   const groups = {};
@@ -1590,50 +1592,106 @@ function pickBooksBalanced(count) {
     groups[letter].push(book);
   });
 
-  const letters = Object.keys(groups);
-  const maxPerLetter = 3; // 同一字母最多3本
-  const minDistinctLetters = Math.max(4, Math.ceil(count / 2)); // 至少4-5个不同字母
+  // 解析索书号的主要数字部分（字母后的数字，含小数点）
+  function parseMainNumber(callNumber) {
+    const match = callNumber.trim().match(/^[A-Za-z](\d+\.?\d*)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
 
-  // 最多尝试200次找到合规组合
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const shuffledLetters = shuffle(letters);
-    const picked = [];
-    const letterCount = {};
+  // 从同字母的书中选出难度适中的组合（数字部分差异不太大不太小）
+  function pickFromGroup(letterBooks, size) {
+    if (letterBooks.length <= size) return shuffle([...letterBooks]);
 
-    // 先从不同字母中各选1本，保证多样性
-    for (const letter of shuffledLetters) {
-      if (picked.length >= count) break;
-      const group = shuffle(groups[letter]);
-      picked.push(group[0]);
-      letterCount[letter] = 1;
-    }
+    // 按主要数字排序，用滑动窗口找数字相近的组合
+    const sorted = [...letterBooks].sort((a, b) => parseMainNumber(a.callNumber) - parseMainNumber(b.callNumber));
+    const candidates = [];
 
-    // 如果还不够，从已有字母中继续抽（但不超过maxPerLetter）
-    if (picked.length < count) {
-      const fillLetters = shuffle(letters);
-      for (const letter of fillLetters) {
-        if (picked.length >= count) break;
-        const group = groups[letter];
-        if (group.length > (letterCount[letter] || 0) && (letterCount[letter] || 0) < maxPerLetter) {
-          const available = group.filter(b => !picked.includes(b));
-          if (available.length > 0) {
-            const extra = shuffle(available)[0];
-            picked.push(extra);
-            letterCount[letter] = (letterCount[letter] || 0) + 1;
-          }
-        }
+    for (let i = 0; i <= sorted.length - size; i++) {
+      const window = sorted.slice(i, i + size);
+      const nums = window.map(b => parseMainNumber(b.callNumber));
+      const minN = Math.min(...nums);
+      const maxN = Math.max(...nums);
+      // 排除所有数字完全相同的情况（太特殊），排除差异过大的情况（太简单）
+      const allSame = nums.every(n => n === nums[0]);
+      if (!allSame && minN > 0 && maxN / minN < 3) {
+        candidates.push(window);
       }
     }
 
-    // 验证约束
-    const distinctLetters = Object.keys(letterCount).length;
-    const maxCount = Math.max(...Object.values(letterCount), 0);
-    if (picked.length === count && distinctLetters >= minDistinctLetters && maxCount <= maxPerLetter) {
-      return picked;
+    if (candidates.length > 0) {
+      return shuffle(candidates[Math.floor(Math.random() * candidates.length)]);
+    }
+    // 兜底：随机选
+    return shuffle([...letterBooks]).slice(0, size);
+  }
+
+  // 有≥2本书的字母（可做同字母组）
+  const multiLetters = Object.keys(groups).filter(l => groups[l].length >= 2);
+
+  // 结构模板：groupDefs=同字母组每组本数，extraSingle=额外单本数
+  // 约束：sum(groupDefs) + extraSingle = count，总字母数 = groupDefs.length + extraSingle ∈ [3,5]
+  const templates = [
+    { groupDefs: [2, 2, 2], extraSingle: 2 },  // 8本, 5种字母, 3组同字母
+    { groupDefs: [3, 2, 2], extraSingle: 1 },  // 8本, 4种字母, 3组同字母
+    { groupDefs: [3, 3, 2], extraSingle: 0 },  // 8本, 3种字母, 3组同字母
+    { groupDefs: [3, 2], extraSingle: 3 },     // 8本, 5种字母, 2组同字母
+    { groupDefs: [4, 2], extraSingle: 2 },     // 8本, 4种字母, 2组同字母
+  ].filter(t => t.groupDefs.reduce((a, b) => a + b, 0) + t.extraSingle === count
+    && t.groupDefs.length + t.extraSingle >= 3
+    && t.groupDefs.length + t.extraSingle <= 5);
+
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    const picked = [];
+    const usedLetters = new Set();
+
+    // 大组优先分配（先满足需要更多书的组）
+    const sortedDefs = [...template.groupDefs].sort((a, b) => b - a);
+    const shuffledMulti = shuffle([...multiLetters]);
+    let success = true;
+
+    for (const size of sortedDefs) {
+      let found = false;
+      for (const letter of shuffledMulti) {
+        if (usedLetters.has(letter)) continue;
+        const available = groups[letter].filter(b => !picked.includes(b));
+        if (available.length >= size) {
+          const chosen = pickFromGroup(available, size);
+          chosen.forEach(b => picked.push(b));
+          usedLetters.add(letter);
+          found = true;
+          break;
+        }
+      }
+      if (!found) { success = false; break; }
+    }
+
+    if (!success) continue;
+
+    // 填充单本（从尚未使用的字母中各取1本）
+    const remainingCount = count - picked.length;
+    const availableForSingle = Object.keys(groups).filter(l => !usedLetters.has(l));
+    const shuffledSingles = shuffle([...availableForSingle]);
+
+    for (let i = 0; i < remainingCount && i < shuffledSingles.length; i++) {
+      const letter = shuffledSingles[i];
+      const available = groups[letter].filter(b => !picked.includes(b));
+      if (available.length > 0) {
+        picked.push(shuffle(available)[0]);
+        usedLetters.add(letter);
+      }
+    }
+
+    // 验证：总本数=8，总字母数3-5，有2-3组同字母
+    const totalLetters = usedLetters.size;
+    const sameLetterGroups = template.groupDefs.length;
+    if (picked.length === count && totalLetters >= 3 && totalLetters <= 5
+      && sameLetterGroups >= 2 && sameLetterGroups <= 3) {
+      return shuffle(picked); // 最终打乱顺序
     }
   }
 
-  // 兜底：如果200次都没找到合规组合，直接随机抽
+  // 兜底：如果300次都没找到合规组合，直接随机抽
   return pickBooks(count);
 }
 
@@ -1954,6 +2012,25 @@ function showLeaderboardOnly() {
 
 function closeLeaderboardOnly() {
   document.getElementById('modalLeaderboard').classList.remove('active');
+}
+
+// ===== 长按清除排行榜 =====
+let _clearLBTimer = null;
+function startClearLB() {
+  const btn = document.getElementById('btnClearLB');
+  if (!btn) return;
+  btn.textContent = '继续按住...';
+  _clearLBTimer = setTimeout(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    btn.textContent = '已清除！';
+    setTimeout(() => { btn.textContent = '长按清除记录'; showLeaderboardOnly(); }, 800);
+  }, 1500);
+}
+function cancelClearLB() {
+  clearTimeout(_clearLBTimer);
+  _clearLBTimer = null;
+  const btn = document.getElementById('btnClearLB');
+  if (btn && btn.textContent === '继续按住...') btn.textContent = '长按清除记录';
 }
 
 function escHtml(str) {
