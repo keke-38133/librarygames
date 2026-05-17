@@ -1,0 +1,954 @@
+<!--
+  版权所有 © 2025 珂珂(柯嘉仪)
+  许可协议：CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
+  联系方式：龙岗区图书馆龙岗河碧道分馆
+  未经授权禁止商业使用、禁止去除版权信息
+  Unauthorized commercial use is prohibited
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+<title>图书馆夜班经理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%}
+#copyright{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:10px;color:rgba(255,255,255,0.35);padding:3px 0;font-family:sans-serif;z-index:9999;pointer-events:none;background:rgba(0,0,0,0.4);letter-spacing:1px}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<div id="copyright">©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆 | CC BY-NC-SA 4.0</div>
+<script>
+(function(){
+var a=['game.kekelab.top','localhost','127.0.0.1'];
+if(a.indexOf(location.hostname)===-1){document.body.innerHTML='<p style="color:#fff;text-align:center;margin-top:40vh;font-family:monospace">此内容仅可在授权域名访问</p>';return}
+})();
+document.addEventListener('contextmenu',function(e){e.preventDefault()});
+document.addEventListener('keydown',function(e){if(e.key==='F12'||(e.ctrlKey&&e.key==='u')||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='i'))){e.preventDefault()}});
+
+// ===== CANVAS SETUP =====
+var C=document.getElementById('gc'),X=C.getContext('2d');
+var W,H,dpr;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  W=window.innerWidth;H=window.innerHeight;
+  C.width=W*dpr;C.height=H*dpr;
+  C.style.width=W+'px';C.style.height=H+'px';
+  X.setTransform(dpr,0,0,dpr,0,0);
+}
+resize();
+window.addEventListener('resize',resize);
+
+// ===== INPUT =====
+var inp={x:0,y:0,down:false,justDown:false,moved:false,sx:0,sy:0,trail:[],clicks:[]};
+function gp(e){var t=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);return t?{x:t.clientX,y:t.clientY}:null}
+C.addEventListener('touchstart',function(e){
+  e.preventDefault();var p=gp(e);if(!p)return;
+  inp.x=p.x;inp.y=p.y;inp.down=true;inp.justDown=true;inp.moved=false;
+  inp.sx=p.x;inp.sy=p.y;
+  inp.trail=[{x:p.x,y:p.y,t:performance.now()}];
+},{passive:false});
+C.addEventListener('touchmove',function(e){
+  e.preventDefault();var p=gp(e);if(!p)return;
+  inp.x=p.x;inp.y=p.y;inp.moved=true;
+  inp.trail.push({x:p.x,y:p.y,t:performance.now()});
+  if(inp.trail.length>60)inp.trail.shift();
+},{passive:false});
+C.addEventListener('touchend',function(e){
+  e.preventDefault();
+  // Record click position
+  var p=gp(e);if(p)inp.clicks.push({x:p.x,y:p.y,t:performance.now()});
+  inp.down=false;
+},{passive:false});
+C.addEventListener('mousedown',function(e){
+  inp.x=e.clientX;inp.y=e.clientY;inp.down=true;inp.justDown=true;inp.moved=false;
+  inp.sx=e.clientX;inp.sy=e.clientY;
+  inp.trail=[{x:e.clientX,y:e.clientY,t:performance.now()}];
+});
+C.addEventListener('mousemove',function(e){
+  inp.x=e.clientX;inp.y=e.clientY;
+  if(inp.down){inp.moved=true;inp.trail.push({x:e.clientX,y:e.clientY,t:performance.now()});
+  if(inp.trail.length>60)inp.trail.shift();}
+});
+C.addEventListener('mouseup',function(e){
+  inp.clicks.push({x:e.clientX,y:e.clientY,t:performance.now()});
+  inp.down=false;
+});
+
+// ===== UTILS =====
+function lerp(a,b,t){return a+(b-a)*t}
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v))}
+function rand(a,b){return a+Math.random()*(b-a)}
+function randInt(a,b){return Math.floor(rand(a,b+1))}
+function dist(x1,y1,x2,y2){return Math.hypot(x2-x1,y2-y1)}
+function hexRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)}}
+function lerpC(c1,c2,t){var a=hexRgb(c1),b=hexRgb(c2);return'rgb('+Math.round(lerp(a.r,b.r,t))+','+Math.round(lerp(a.g,b.g,t))+','+Math.round(lerp(a.b,b.b,t))+')'}
+function pick(arr){return arr[randInt(0,arr.length-1)]}
+function rRect(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.lineTo(x+w-r,y);X.quadraticCurveTo(x+w,y,x+w,y+r);X.lineTo(x+w,y+h-r);X.quadraticCurveTo(x+w,y+h,x+w-r,y+h);X.lineTo(x+r,y+h);X.quadraticCurveTo(x,y+h,x,y+h-r);X.lineTo(x,y+r);X.quadraticCurveTo(x,y,x+r,y);X.closePath()}
+
+// ===== GAME STATE =====
+var animT=0; // global animation time (always running)
+var G={
+  state:'title', // title, tutorial, playing, gameover, win
+  fear:0,
+  gameTime:18.0, // game clock: 18.0 = 18:00
+  realElapsed:0, // real seconds since game start
+  events:[],
+  eventTimer:2,
+  totalEv:0,
+  handledEv:0,
+  cornerFig:null,
+  messages:[],
+  shake:0,
+  flash:0,
+  flicker:1,
+  allLook:false,
+  lookTimer:15,
+  playerX:0,playerY:0,
+  walkTo:null,
+  walkProg:0,
+  shushBtn:null,
+  tutStep:0,
+  tutEv:null,
+  hoverEv:null,
+  stainTexts:['救我','别回头','出去','别看了','快跑','它来了','回头看看','别停下'],
+};
+
+// ===== LAYOUT =====
+var shelves=[
+  {x:0.06,y:0.20,w:0.19,h:0.11},
+  {x:0.28,y:0.20,w:0.19,h:0.11},
+  {x:0.53,y:0.20,w:0.19,h:0.11},
+  {x:0.76,y:0.20,w:0.19,h:0.11},
+  {x:0.06,y:0.48,w:0.19,h:0.11},
+  {x:0.28,y:0.48,w:0.19,h:0.11},
+  {x:0.53,y:0.48,w:0.19,h:0.11},
+  {x:0.76,y:0.48,w:0.19,h:0.11},
+];
+var tables=[
+  {x:0.12,y:0.70,w:0.16,h:0.05},
+  {x:0.42,y:0.70,w:0.16,h:0.05},
+  {x:0.72,y:0.70,w:0.16,h:0.05},
+];
+var counter={x:0.30,y:0.84,w:0.40,h:0.04};
+
+// ===== PHASE SYSTEM =====
+// Phase 0: 18-20, Phase 1: 20-22, Phase 2: 22-24, Phase 3: 24-26(=00-02)
+function getPhase(){var t=G.gameTime;if(t<20)return 0;if(t<22)return 1;if(t<24)return 2;return 3}
+function getPhaseT(){var p=getPhase();var s=[18,20,22,24];return clamp((G.gameTime-s[p])/2,0,1)}
+
+var PCOL=[
+  {bg:'#1a1612',wall:'#3d3529',floor:'#2a241e',shelf:'#6b5a3e',b1:'#c94040',b2:'#3a7cc9',b3:'#4a9e4a',b4:'#c9a040',lit:'#ffe4a0',amb:1,txt:'#ffe4a0'},
+  {bg:'#141520',wall:'#2a2d3e',floor:'#1e2029',shelf:'#4a4a5e',b1:'#8a3040',b2:'#2a5a8a',b3:'#3a6a3a',b4:'#8a7030',lit:'#a0b8d0',amb:0.7,txt:'#a0b8d0'},
+  {bg:'#0a1018',wall:'#1a2530',floor:'#101820',shelf:'#2a3540',b1:'#502030',b2:'#203850',b3:'#203820',b4:'#504020',lit:'#408090',amb:0.45,txt:'#408090'},
+  {bg:'#050508',wall:'#0a0a10',floor:'#080810',shelf:'#151520',b1:'#301010',b2:'#101030',b3:'#101810',b4:'#201810',lit:'#203040',amb:0.2,txt:'#203040'},
+];
+function pCol(f){var p=getPhase(),t=getPhaseT(),np=Math.min(p+1,3);return lerpC(PCOL[p][f],PCOL[np][f],t*0.5)}
+
+// ===== EVENT SYSTEM =====
+var EVT=['bookshelf','stain','noisy'];
+
+function mkEvent(type){
+  var e={type:type,active:true,timer:0,fadeIn:0};
+  if(type==='bookshelf'){
+    var s=pick(shelves);
+    e.x=s.x+rand(0.02,s.w-0.07);e.y=s.y+rand(0.01,0.04);
+    e.w=0.07;e.h=0.09;
+    e.clicks=0;e.needClicks=5;
+    e.maxT=7;e.shelfRef=s;
+  }else if(type==='stain'){
+    var tb=pick(tables);
+    e.x=tb.x+rand(0.02,tb.w-0.09);
+    e.y=tb.y+rand(-0.09,-0.02);
+    e.w=0.09;e.h=0.07;
+    e.clean=0;e.needClean=100;
+    e.isRed=false;
+    e.maxT=8;
+    e.hiddenText=pick(G.stainTexts);
+  }else if(type==='noisy'){
+    var spots=[{x:0.22,y:0.38},{x:0.48,y:0.36},{x:0.74,y:0.38},{x:0.20,y:0.64},{x:0.50,y:0.62},{x:0.78,y:0.64}];
+    var sp=pick(spots);
+    e.x=sp.x;e.y=sp.y;e.w=0.09;e.h=0.12;
+    e.approached=false;e.shushed=false;
+    e.vanished=false;
+    e.maxT=9;
+  }
+  return e;
+}
+
+function evInterval(){
+  var p=getPhase(),ints=[3,2,1.2,0.7],t=getPhaseT();
+  return lerp(ints[p],ints[Math.min(p+1,3)],t);
+}
+function maxActive(){return[2,3,4,6][getPhase()]}
+
+function spawnEv(){
+  var cnt=G.events.filter(function(e){return e.active}).length;
+  if(cnt>=maxActive())return;
+  var ev=mkEvent(pick(EVT));
+  if(ev.type==='stain'&&getPhase()>=3&&Math.random()<0.6)ev.isRed=true;
+  G.events.push(ev);G.totalEv++;
+}
+
+// ===== MESSAGES =====
+function msg(text,color){G.messages.push({text:text,color:color||'#fff',life:2.5,off:G.messages.length*22})}
+
+// ===== DRAWING =====
+function dRect(x,y,w,h,c){X.fillStyle=c;X.fillRect(x,y,w,h)}
+function dTxt(text,x,y,sz,c,al,fn){
+  X.fillStyle=c||'#fff';
+  X.font=(fn||'')+Math.round(sz)+'px "Courier New",monospace';
+  X.textAlign=al||'center';X.textBaseline='middle';
+  X.fillText(text,x,y);
+}
+
+function drawPerson(cx,cy,sc,col,det){
+  var s=sc||1;
+  X.fillStyle=col;
+  X.beginPath();X.arc(cx,cy-14*s,5*s,0,Math.PI*2);X.fill();
+  X.fillRect(cx-4*s,cy-9*s,8*s,12*s);
+  X.fillRect(cx-4*s,cy+3*s,3*s,8*s);
+  X.fillRect(cx+1*s,cy+3*s,3*s,8*s);
+  if(det==='face'){
+    X.fillStyle='#fff';
+    X.fillRect(cx-3*s,cy-16*s,2*s,2*s);
+    X.fillRect(cx+1*s,cy-16*s,2*s,2*s);
+    // Mouth
+    X.fillRect(cx-1*s,cy-12*s,2*s,1*s);
+  }
+  if(det==='glow_eyes'){
+    X.fillStyle='#ff2020';
+    X.fillRect(cx-3*s,cy-16*s,2*s,2*s);
+    X.fillRect(cx+1*s,cy-16*s,2*s,2*s);
+    X.save();
+    X.shadowColor='#ff0000';X.shadowBlur=10;
+    X.fillRect(cx-3*s,cy-16*s,2*s,2*s);
+    X.fillRect(cx+1*s,cy-16*s,2*s,2*s);
+    X.restore();
+  }
+  if(det==='open_mouth'){
+    X.fillStyle='#fff';
+    X.fillRect(cx-3*s,cy-16*s,2*s,2*s);
+    X.fillRect(cx+1*s,cy-16*s,2*s,2*s);
+    X.fillStyle='#200';
+    X.beginPath();X.arc(cx,cy-11*s,2*s,0,Math.PI*2);X.fill();
+  }
+}
+
+function drawScene(){
+  var phase=getPhase();
+  // Shake
+  var sx=0,sy=0;
+  if(G.shake>0){sx=rand(-G.shake,G.shake);sy=rand(-G.shake,G.shake);G.shake*=0.88;if(G.shake<0.3)G.shake=0}
+  X.save();X.translate(sx,sy);
+
+  // Flicker
+  var fl=G.flicker;
+  if(phase>=2)fl=0.65+Math.sin(animT*7)*0.15+Math.random()*0.15;
+  if(phase>=3)fl=0.25+Math.sin(animT*11)*0.1+Math.random()*0.2;
+  G.flicker=fl;
+
+  // BG
+  dRect(0,0,W,H,pCol('bg'));
+  
+  // Floor
+  dRect(0,H*0.12,W,H*0.80,pCol('floor'));
+  // Floor pattern
+  X.globalAlpha=0.06*fl;
+  for(var fy=H*0.12;fy<H*0.92;fy+=18){
+    for(var fx=0;fx<W;fx+=18){
+      if((Math.floor(fy/18)+Math.floor(fx/18))%2===0)dRect(fx,fy,18,18,'#000');
+    }
+  }
+  X.globalAlpha=1;
+
+  // Wall
+  dRect(0,H*0.12,W,3,pCol('wall'));
+
+  // Bookshelves
+  var bcols=[pCol('b1'),pCol('b2'),pCol('b3'),pCol('b4')];
+  shelves.forEach(function(s,i){
+    var sx2=s.x*W,sy2=s.y*H,sw=s.w*W,sh=s.h*H;
+    dRect(sx2,sy2,sw,sh,pCol('shelf'));
+    dRect(sx2,sy2+sh*0.33,sw,2,lerpC(pCol('shelf'),'#000',0.35));
+    dRect(sx2,sy2+sh*0.66,sw,2,lerpC(pCol('shelf'),'#000',0.35));
+    // Books
+    var bh=sh*0.27;
+    for(var row=0;row<3;row++){
+      var by=sy2+2+row*(sh*0.33);
+      var bx=sx2+3;
+      while(bx<sx2+sw-5){
+        var bc=bcols[(i*3+row+Math.floor(bx/7))%4];
+        if(phase>=2)X.globalAlpha=0.6+fl*0.4;
+        var bw=5+Math.floor(Math.random()*3);
+        dRect(bx,by,bw-1,bh,bc);
+        X.globalAlpha=1;
+        bx+=bw;
+      }
+    }
+  });
+
+  // Tables
+  var tc=lerpC(pCol('shelf'),'#000',0.25);
+  tables.forEach(function(t){
+    dRect(t.x*W,t.y*H,t.w*W,t.h*H,tc);
+    dRect(t.x*W+4,t.y*H+t.h*H,3,7,tc);
+    dRect(t.x*W+t.w*W-7,t.y*H+t.h*H,3,7,tc);
+    // Lamps on tables
+    X.fillStyle='rgba(255,220,140,'+0.15*fl+')';
+    X.beginPath();X.arc(t.x*W+t.w*W/2,t.y*H-5,12,0,Math.PI*2);X.fill();
+  });
+
+  // Counter
+  dRect(counter.x*W,counter.y*H,counter.w*W,counter.h*H,pCol('shelf'));
+  dTxt('借 阅 台',counter.x*W+counter.w*W/2,counter.y*H+counter.h*H/2,11,lerpC('#fff','#555',phase*0.2));
+
+  // ===== AMBIENT READERS =====
+  var readerPos=[
+    {x:0.16,y:0.68},{x:0.46,y:0.68},{x:0.76,y:0.68},
+    {x:0.22,y:0.37},{x:0.50,y:0.35},{x:0.78,y:0.37},
+  ];
+  var rc=phase<2?['#7a6a5a','#5a6a7a','#6a7a5a','#7a5a6a','#5a7a7a','#7a7a5a']:['#3a302a','#2a3040','#30402a','#402a30','#2a4040','#40402a'];
+  
+  readerPos.forEach(function(rp,i){
+    var show=true;
+    if(phase>=2&&i>=4&&Math.sin(animT*1.5+i*5)>0.4)show=false;
+    if(phase>=3&&i>=3&&Math.sin(animT*2+i*3)>0.2)show=false;
+    if(!show)return;
+    
+    var cx=rp.x*W,cy=rp.y*H;
+    if(phase>=3&&G.allLook){
+      drawPerson(cx,cy,1.2,rc[i%6],'glow_eyes');
+    }else if(phase>=2&&Math.sin(animT*0.7+i*11)>0.7){
+      drawPerson(cx,cy,1.2,rc[i%6],'open_mouth');
+    }else{
+      drawPerson(cx,cy,1.2,rc[i%6],phase>=1?'back':'face');
+    }
+  });
+
+  // Phase 2+: standing figure (back to screen)
+  if(phase>=2){
+    X.globalAlpha=0.35+fl*0.25;
+    drawPerson(0.90*W,0.44*H,phase>=3?1.6:1.3,'#12121a','back');
+    X.globalAlpha=1;
+  }
+
+  // ===== CORNER FIGURE =====
+  if(G.cornerFig){
+    var cf=G.cornerFig;
+    X.globalAlpha=0.45+Math.sin(animT*2.5)*0.12;
+    drawPerson(cf.x*W,cf.y*H,1.5,'#0a0a0a','back');
+    X.fillStyle='rgba(90,0,0,'+(0.2+fl*0.1)+')';
+    X.beginPath();X.arc(cf.x*W,cf.y*H-21,8,0,Math.PI*2);X.fill();
+    X.globalAlpha=1;
+  }
+
+  // ===== PLAYER =====
+  var pCol_=phase<2?'#d4c4a0':(phase<3?'#8a8a7a':'#5a5a5a');
+  drawPerson(G.playerX,G.playerY,1.3,pCol_,'face');
+  X.fillStyle='#c0a040';
+  X.fillRect(G.playerX-2,G.playerY-6,4,3);
+  dTxt('经理',G.playerX,G.playerY+16,8,lerpC('#ffe4a0','#444',phase*0.2));
+
+  // ===== ACTIVE EVENTS =====
+  G.events.forEach(function(ev){if(ev.active||ev.vanished)drawEvent(ev,fl)});
+
+  // Walk line
+  if(G.walkTo){
+    var pw=Math.min(G.walkProg,1);
+    X.strokeStyle='rgba(255,255,100,0.3)';
+    X.lineWidth=1;X.setLineDash([4,4]);
+    X.beginPath();X.moveTo(G.playerX,G.playerY);
+    var tx=G.walkTo.x*W,ty=G.walkTo.y*H;
+    X.lineTo(lerp(G.playerX,tx,pw),lerp(G.playerY,ty,pw));
+    X.stroke();X.setLineDash([]);
+  }
+
+  // Shush button
+  if(G.shushBtn){
+    var sb=G.shushBtn;
+    X.fillStyle='rgba(200,50,50,'+(0.6+Math.sin(animT*5)*0.2)+')';
+    rRect(sb.x-sb.r,sb.y-sb.r,sb.r*2,sb.r*2,sb.r);X.fill();
+    X.strokeStyle='#fff';X.lineWidth=2;
+    rRect(sb.x-sb.r,sb.y-sb.r,sb.r*2,sb.r*2,sb.r);X.stroke();
+    dTxt('嘘🤫',sb.x,sb.y,24,'#fff','center','bold');
+  }
+
+  // ===== HEARTBEAT VIGNETTE =====
+  if(phase>=1){
+    var hba=0.12+phase*0.06+Math.sin(animT*(3+phase*1.5))*0.08;
+    var grad=X.createRadialGradient(W/2,H/2,W*0.2,W/2,H/2,W*0.65);
+    grad.addColorStop(0,'rgba(0,0,0,0)');
+    grad.addColorStop(1,'rgba(150,0,0,'+hba+')');
+    X.fillStyle=grad;X.fillRect(0,0,W,H);
+  }
+
+  // Dark overlay for phase 2+
+  if(phase>=1){
+    X.globalAlpha=(1-fl)*0.25*(phase/3);
+    X.fillStyle='#000';X.fillRect(0,0,W,H);
+    X.globalAlpha=1;
+  }
+
+  // Flash
+  if(G.flash>0){
+    X.globalAlpha=G.flash;X.fillStyle='#fff';X.fillRect(0,0,W,H);
+    X.globalAlpha=1;G.flash*=0.82;if(G.flash<0.01)G.flash=0;
+  }
+
+  X.restore();
+  drawUI();
+}
+
+function drawEvent(ev,fl){
+  var phase=getPhase();
+  var ex=ev.x*W,ey=ev.y*H,ew=ev.w*W,eh=ev.h*H;
+  ev.fadeIn=Math.min((ev.fadeIn||0)+0.06,1);
+  X.globalAlpha=ev.fadeIn;
+
+  if(ev.type==='bookshelf'){
+    // Scattered books
+    var fallAmt=Math.min(ev.timer/1.5,1);
+    for(var b=0;b<7;b++){
+      var bx=ex+rand(-2,ew+2);
+      var by=ey+eh*0.2+fallAmt*eh*0.6;
+      var bw=5+rand(0,5),bh=3+rand(0,3);
+      X.save();X.translate(bx,by);X.rotate(rand(-0.6,0.6));
+      var bcols=[pCol('b1'),pCol('b2'),pCol('b3'),pCol('b4')];
+      dRect(-bw/2,-bh/2,bw,bh,bcols[b%4]);
+      X.restore();
+    }
+    // Warning
+    X.globalAlpha=0.6+Math.sin(animT*6)*0.3;
+    dTxt('📖❗',ex+ew/2,ey-10,16,'#ff4');
+    // Progress
+    if(ev.clicks>0){
+      var pct=ev.clicks/ev.needClicks;
+      dRect(ex-8,ey+eh+4,36,4,'#333');
+      dRect(ex-8,ey+eh+4,36*pct,4,'#cc4');
+    }
+  }
+  else if(ev.type==='stain'){
+    var sc=ev.isRed?'rgba(140,15,15,'+(0.55+fl*0.2)+')':'rgba(80,55,25,'+(0.55+fl*0.2)+')';
+    X.fillStyle=sc;
+    X.beginPath();X.ellipse(ex+ew/2,ey+eh/2,ew/2.2,eh/2.2,0,0,Math.PI*2);X.fill();
+    // Smaller splatter
+    X.beginPath();X.ellipse(ex+ew*0.7,ey+eh*0.3,ew*0.15,eh*0.15,0.3,0,Math.PI*2);X.fill();
+    
+    // Phase 3+: inverted text
+    if(ev.isRed&&phase>=3&&ev.clean>25){
+      X.save();X.translate(ex+ew/2,ey+eh/2);X.rotate(Math.PI);
+      X.globalAlpha=0.35+Math.sin(animT*3.5)*0.2;
+      dTxt(ev.hiddenText,0,0,11,'#500');
+      X.restore();
+    }
+    // Warning
+    X.globalAlpha=0.6+Math.sin(animT*6)*0.3;
+    dTxt(ev.isRed?'🔴❗':'🥤❗',ex+ew/2,ey-10,16,'#ff4');
+    // Progress
+    if(ev.clean>0){
+      var pct2=ev.clean/ev.needClean;
+      dRect(ex-8,ey+eh+4,36,4,'#333');
+      dRect(ex-8,ey+eh+4,36*pct2,4,ev.isRed?'#a44':'#4a4');
+    }
+  }
+  else if(ev.type==='noisy'){
+    if(!ev.vanished){
+      var nc=phase>=2?'#4a3535':'#8a6a4a';
+      var det=ev.approached?'open_mouth':'face';
+      drawPerson(ex+ew/2,ey+eh/2,1.3,nc,det);
+      // Sound waves
+      for(var w=0;w<3;w++){
+        X.strokeStyle='rgba(255,190,40,'+(0.5-w*0.13)*fl+')';
+        X.lineWidth=2;X.beginPath();
+        X.arc(ex+ew/2+12,ey+eh/2-18,7+w*6,0,Math.PI*2);
+        X.stroke();
+      }
+    }
+    // Vanished: just sound waves
+    if(ev.vanished){
+      for(var w2=0;w2<3;w2++){
+        X.strokeStyle='rgba(255,80,40,'+(0.5-w2*0.13)*fl+')';
+        X.lineWidth=2;X.beginPath();
+        X.arc(ex+ew/2,ey+eh/2,8+w2*8,0,Math.PI*2);
+        X.stroke();
+      }
+    }
+    // Warning
+    X.globalAlpha=0.6+Math.sin(animT*6)*0.3;
+    dTxt('🔊❗',ex+ew/2,ey-10,16,'#ff4');
+  }
+
+  // Timer bar
+  if(ev.active){
+    var tpct=1-ev.timer/ev.maxT;
+    if(tpct<1){
+      var tc2=tpct>0.4?'#4a4':(tpct>0.2?'#aa4':'#a44');
+      dRect(ex-8,ey-18,36,3,'#222');
+      dRect(ex-8,ey-18,36*tpct,3,tc2);
+    }
+  }
+  X.globalAlpha=1;
+}
+
+function drawUI(){
+  var phase=getPhase();
+  var tc=pCol('txt');
+
+  // Top bar
+  X.fillStyle='rgba(0,0,0,0.75)';dRect(0,0,W,H*0.10);
+
+  // Time
+  var h=Math.floor(G.gameTime)%24;
+  var m=Math.floor((G.gameTime%1)*60);
+  if(h<0)h+=24;
+  var ts=(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+  dTxt('🕐 '+ts,W*0.15,H*0.048,18,tc,'center','bold');
+
+  // Phase label
+  var plabels=['正常营业','不太对劲...','已失控','凌晨...'];
+  dTxt(plabels[phase],W*0.15,H*0.08,10,lerpC('#888','#a00',phase/3));
+
+  // Fear bar
+  dTxt('恐惧',W*0.43,H*0.03,11,tc,'center','bold');
+  var bx=W*0.36,by=H*0.055,bw=W*0.22,bh=10;
+  dRect(bx,by,bw,bh,'#1a1a1a');
+  var fp=G.fear/100;
+  var fc=fp<0.4?'#4a4':(fp<0.7?'#aa4':'#a44');
+  if(fp>0.7)fc='rgb('+Math.round(170+Math.sin(animT*8)*80)+',15,15)';
+  dRect(bx,by,bw*fp,bh,fc);
+  X.strokeStyle='#444';X.lineWidth=1;X.strokeRect(bx,by,bw,bh);
+  dTxt(Math.round(G.fear),bx+bw+14,by+5,11,fc,'center','bold');
+
+  // Stats
+  dTxt('处理:'+G.handledEv+'/'+G.totalEv,W*0.82,H*0.048,11,tc);
+
+  // Bottom hint
+  X.fillStyle='rgba(0,0,0,0.65)';dRect(0,H*0.90,W,H*0.10);
+  var hint=getHint();
+  dTxt(hint,W/2,H*0.945,13,tc);
+
+  // Messages
+  G.messages=G.messages.filter(function(m){return m.life>0});
+  G.messages.forEach(function(m,i){
+    m.life-=G.dt;
+    X.globalAlpha=clamp(m.life/0.5,0,1);
+    dTxt(m.text,W/2,H*0.14+i*20,14,m.color);
+    X.globalAlpha=1;
+  });
+}
+
+function getHint(){
+  if(G.walkTo)return'👉 正在走向读者...';
+  if(G.shushBtn)return'👉 点击"嘘🤫"制止读者！';
+  var active=G.events.filter(function(e){return e.active});
+  if(active.length===0)return'安静...太安静了...';
+  var hints={bookshelf:'📖 快速点击修复书架！',stain:'🥤 按住拖动擦拭污渍！',noisy:'🔊 点击吵闹的读者！'};
+  // Show most urgent
+  var urgent=active.sort(function(a,b){return(a.maxT-a.timer)-(b.maxT-b.timer)})[0];
+  if(urgent.type==='noisy'&&urgent.approached)return'👉 点击"嘘🤫"制止！';
+  return hints[urgent.type]||'...';
+}
+
+// ===== GAME LOGIC =====
+function updateGame(dt){
+  if(G.state!=='playing')return;
+  G.dt=dt;
+
+  // Time: 8 game hours (18:00-02:00) in ~240 real seconds
+  G.realElapsed+=dt;
+  G.gameTime=18+G.realElapsed/30; // 30s per game hour
+  if(G.gameTime>=26){winGame();return}
+
+  var phase=getPhase();
+
+  // Event spawning
+  G.eventTimer-=dt;
+  if(G.eventTimer<=0){
+    spawnEv();
+    G.eventTimer=evInterval()+rand(-0.3,0.3);
+  }
+
+  // Update events
+  G.events.forEach(function(ev){
+    if(!ev.active)return;
+    ev.timer+=dt;
+    if(ev.timer>=ev.maxT){
+      ev.active=false;
+      G.fear+=10;
+      msg('未及时处理！恐惧 +10','#a44');
+      G.shake=6;
+      if(ev.type==='noisy'&&phase>=2){ev.vanished=true;msg('...人不见了...声音还在','#a00')}
+    }
+  });
+
+  // Cleanup old events
+  G.events=G.events.filter(function(e){
+    if(e.vanished&&e.timer>e.maxT+4)return false;
+    if(!e.active&&!e.vanished)return false;
+    return true;
+  });
+
+  // Corner figure
+  if(phase>=1&&!G.cornerFig){G.cornerFig={x:0.93,y:0.42}}
+  if(G.cornerFig){
+    var tx=0.93-G.handledEv*0.012;
+    G.cornerFig.x=lerp(G.cornerFig.x,Math.max(tx,0.52),dt*0.25);
+  }
+
+  // All look at screen (phase 3+)
+  if(phase>=3){
+    G.lookTimer-=dt;
+    if(G.lookTimer<=0){
+      G.allLook=!G.allLook;
+      G.lookTimer=G.allLook?rand(2.5,5):rand(4,8);
+      if(G.allLook){G.shake=3;msg('...他们都在看你...','#a00')}
+    }
+  }
+
+  // Walking
+  if(G.walkTo){
+    G.walkProg+=dt*2.8;
+    if(G.walkProg>=1){
+      G.playerX=G.walkTo.x*W;G.playerY=G.walkTo.y*H;
+      G.shushBtn={x:G.walkTo.x*W,y:G.walkTo.y*H-45,r:24};
+      G.walkTo=null;G.walkProg=0;
+    }else{
+      var tx2=G.walkTo.x*W,ty2=G.walkTo.y*H;
+      G.playerX=lerp(G.playerX,tx2,G.walkProg);
+      G.playerY=lerp(G.playerY,ty2,G.walkProg);
+    }
+  }
+
+  // Stain cleaning (hold + drag)
+  if(inp.down){
+    G.events.forEach(function(ev){
+      if(!ev.active||ev.type!=='stain')return;
+      var ex=ev.x*W,ey=ev.y*H,ew=ev.w*W,eh=ev.h*H;
+      if(inp.x>ex-15&&inp.x<ex+ew+15&&inp.y>ey-15&&inp.y<ey+eh+15&&inp.moved){
+        ev.clean+=dt*38;
+        if(ev.clean>=ev.needClean){
+          ev.active=false;
+          G.fear=Math.max(0,G.fear-5);
+          G.handledEv++;
+          msg('污渍已清除','#4a4');
+          // Horror: stain reappears
+          if(getPhase()>=2&&Math.random()<0.45){
+            setTimeout(function(){
+              if(G.state==='playing'){
+                var ne=mkEvent('stain');ne.x=ev.x;ne.y=ev.y;
+                if(getPhase()>=3)ne.isRed=Math.random()<0.6;
+                ne.hiddenText=pick(G.stainTexts);
+                G.events.push(ne);G.totalEv++;
+                msg('...污渍又出现了...','#a44');
+              }
+            },1200+rand(0,1500));
+          }
+        }
+      }
+    });
+  }
+
+  // Ambient fear (phase 2+)
+  if(phase>=2){G.fear+=dt*0.25*(phase-1);G.fear=Math.min(G.fear,100)}
+  // Fear check
+  if(G.fear>=100)gameOver();
+}
+
+// ===== CLICK HANDLING =====
+function handleClicks(){
+  while(inp.clicks.length>0){
+    var c=inp.clicks.shift();
+    var mx=c.x,my=c.y;
+    
+    if(G.state==='title'){
+      // Start button
+      if(my>H*0.62&&my<H*0.62+55&&mx>W*0.22&&mx<W*0.78){startGame();return}
+      // Tutorial button
+      if(my>H*0.73&&my<H*0.73+42&&mx>W*0.22&&mx<W*0.78){startTut();return}
+      return;
+    }
+    
+    if(G.state==='gameover'){
+      if(my>H*0.66&&my<H*0.66+55&&mx>W*0.22&&mx<W*0.78){startGame();return}
+      return;
+    }
+    
+    if(G.state==='win'){
+      if(my>H*0.70&&my<H*0.70+55&&mx>W*0.22&&mx<W*0.78){startGame();return}
+      return;
+    }
+    
+    if(G.state!=='playing'&&G.state!=='tutorial')return;
+    
+    // Shush button
+    if(G.shushBtn){
+      var sb=G.shushBtn;
+      if(dist(mx,my,sb.x,sb.y)<sb.r+12){
+        G.events.forEach(function(ev){
+          if(!ev.active||ev.type!=='noisy'||!ev.approached)return;
+          ev.shushed=true;ev.active=false;
+          G.fear=Math.max(0,G.fear-5);G.handledEv++;
+          G.shushBtn=null;
+          msg('读者安静了...暂时','#4a4');
+          if(getPhase()>=2&&Math.random()<0.5){
+            ev.vanished=true;
+            msg('...人呢？声音还在...','#a00');
+          }
+        });
+        return;
+      }
+    }
+    
+    // Check events (reverse order for top-most first)
+    for(var i=G.events.length-1;i>=0;i--){
+      var ev=G.events[i];
+      if(!ev.active)continue;
+      var ex=ev.x*W,ey=ev.y*H,ew=ev.w*W,eh=ev.h*H;
+      // Hit area with padding
+      var pad=18;
+      if(mx>=ex-pad&&mx<=ex+ew+pad&&my>=ey-pad&&my<=ey+eh+pad){
+        if(ev.type==='bookshelf'){
+          ev.clicks++;
+          G.shake=1.5;
+          if(ev.clicks>=ev.needClicks){
+            ev.active=false;
+            G.fear=Math.max(0,G.fear-5);G.handledEv++;
+            msg('书架已修复','#4a4');
+            if(getPhase()>=2&&Math.random()<0.5){
+              setTimeout(function(){
+                if(G.state==='playing'){
+                  var ne=mkEvent('bookshelf');G.events.push(ne);G.totalEv++;
+                  msg('...书架又倒了...','#a44');
+                }
+              },1500+rand(0,2000));
+            }
+          }
+          return;
+        }
+        if(ev.type==='noisy'&&!ev.approached){
+          G.walkTo={x:ev.x+0.04,y:ev.y+0.06};
+          G.walkProg=0;ev.approached=true;
+          return;
+        }
+        if(ev.type==='stain'){
+          // Start cleaning - handled in update via drag
+          return;
+        }
+      }
+    }
+  }
+}
+
+// ===== GAME STATES =====
+function startGame(){
+  G.state='playing';G.fear=0;G.gameTime=18;G.realElapsed=0;
+  G.events=[];G.eventTimer=2;G.totalEv=0;G.handledEv=0;
+  G.cornerFig=null;G.messages=[];G.shake=0;G.flash=0;
+  G.playerX=W*0.5;G.playerY=H*0.82;
+  G.walkTo=null;G.shushBtn=null;
+  G.allLook=false;G.lookTimer=12;
+  msg('值班开始...祝你好运','#ffe4a0');
+}
+function gameOver(){G.state='gameover';G.flash=1;G.shake=15}
+function winGame(){G.state='win';G.flash=0.5}
+
+function startTut(){
+  G.state='tutorial';G.tutStep=0;G.fear=0;G.gameTime=18;G.realElapsed=0;
+  G.events=[];G.playerX=W*0.5;G.playerY=H*0.82;
+  G.walkTo=null;G.shushBtn=null;G.messages=[];
+  msg('新手引导：跟我学','#ffe4a0');
+  spawnTutEv();
+}
+function spawnTutEv(){
+  var types=['bookshelf','stain','noisy'];
+  if(G.tutStep<3){
+    var ev=mkEvent(types[G.tutStep]);ev.maxT=30;
+    G.events=[ev];G.tutEv=ev;
+    var hints=['📖 快速连续点击5次修复书架！','🥤 按住并拖动擦拭污渍！','🔊 点击读者走过去，再按嘘🤫！'];
+    msg(hints[G.tutStep],'#ffe4a0');
+  }else{
+    msg('好了，你学会了...今晚见','#a00');
+    setTimeout(function(){startGame()},1500);
+  }
+}
+
+function updateTut(dt){
+  G.dt=dt;G.gameTime=18;
+  // Stain cleaning
+  if(inp.down){
+    G.events.forEach(function(ev){
+      if(!ev.active||ev.type!=='stain')return;
+      var ex=ev.x*W,ey=ev.y*H,ew=ev.w*W,eh=ev.h*H;
+      if(inp.x>ex-15&&inp.x<ex+ew+15&&inp.y>ey-15&&inp.y<ey+eh+15&&inp.moved){
+        ev.clean+=dt*38;
+        if(ev.clean>=ev.needClean){ev.active=false;G.handledEv++}
+      }
+    });
+  }
+  // Walk
+  if(G.walkTo){
+    G.walkProg+=dt*2.8;
+    if(G.walkProg>=1){
+      G.playerX=G.walkTo.x*W;G.playerY=G.walkTo.y*H;
+      G.shushBtn={x:G.walkTo.x*W,y:G.walkTo.y*H-45,r:24};
+      G.walkTo=null;G.walkProg=0;
+    }else{
+      G.playerX=lerp(G.playerX,G.walkTo.x*W,G.walkProg);
+      G.playerY=lerp(G.playerY,G.walkTo.y*H,G.walkProg);
+    }
+  }
+  // Check tut event done
+  if(G.tutEv&&!G.tutEv.active){
+    G.tutStep++;
+    setTimeout(function(){if(G.state==='tutorial')spawnTutEv()},800);
+  }
+}
+
+// ===== TITLE SCREEN =====
+function drawTitle(){
+  dRect(0,0,W,H,'#0a0808');
+  // Library silhouette
+  X.globalAlpha=0.12+Math.sin(animT*2.5)*0.04;
+  dRect(W*0.08,H*0.12,W*0.84,H*0.50,'#1a1510');
+  // Windows
+  for(var wy=0;wy<3;wy++){
+    for(var wx=0;wx<5;wx++){
+      var wc=Math.random()>0.65?'#2a2010':'#0a0808';
+      dRect(W*0.13+wx*W*0.145,H*0.17+wy*H*0.13,W*0.09,H*0.07,wc);
+    }
+  }
+  // Door
+  dRect(W*0.43,H*0.40,W*0.14,H*0.22,'#1a1008');
+  X.globalAlpha=1;
+  
+  // Title glow
+  X.save();
+  X.shadowColor='#c0a040';X.shadowBlur=20;
+  dTxt('图书馆',W/2,H*0.33,38,'#c0a040','center','bold');
+  dTxt('夜班经理',W/2,H*0.41,46,'#c0a040','center','bold');
+  X.restore();
+  
+  dTxt('——今夜，你值班——',W/2,H*0.51,16,'#8a7040');
+  
+  // Start button
+  var by=H*0.62;
+  X.fillStyle='rgba(100,80,25,'+(0.55+Math.sin(animT*2)*0.2)+')';
+  rRect(W*0.22,by,W*0.56,55,10);X.fill();
+  X.strokeStyle='#c0a040';X.lineWidth=2;
+  rRect(W*0.22,by,W*0.56,55,10);X.stroke();
+  dTxt('开始值班',W/2,by+27,22,'#ffe4a0','center','bold');
+  
+  // Tutorial button
+  var ty=H*0.73;
+  X.fillStyle='rgba(55,55,55,'+(0.4+Math.sin(animT*2)*0.1)+')';
+  rRect(W*0.22,ty,W*0.56,42,8);X.fill();
+  X.strokeStyle='#777';X.lineWidth=1;
+  rRect(W*0.22,ty,W*0.56,42,8);X.stroke();
+  dTxt('新手教程',W/2,ty+21,16,'#aaa');
+  
+  dTxt('⚠ 含恐怖元素，心脏不适者慎入',W/2,H*0.86,10,'#544');
+  
+  // Subtle flicker text
+  if(Math.sin(animT*1.3)>0.8){
+    X.globalAlpha=0.15;
+    dTxt('你确定要来吗？',W/2,H*0.92,11,'#400');
+    X.globalAlpha=1;
+  }
+}
+
+function drawGameOver(){
+  dRect(0,0,W,H,'#050000');
+  var grad=X.createRadialGradient(W/2,H/2,W*0.08,W/2,H/2,W*0.55);
+  grad.addColorStop(0,'rgba(50,0,0,0.7)');grad.addColorStop(1,'rgba(0,0,0,1)');
+  X.fillStyle=grad;X.fillRect(0,0,W,H);
+  
+  X.save();X.translate(W/2,H*0.28);X.rotate(Math.sin(animT*2.5)*0.015);
+  dTxt('精神崩溃',0,0,42,'#a00','center','bold');
+  X.restore();
+  
+  var nightN=Math.max(1,Math.floor((G.gameTime-18)/8)+1);
+  dTxt('你没能撑过第'+nightN+'夜',W/2,H*0.40,18,'#600');
+  dTxt('恐惧值达到 100',W/2,H*0.47,14,'#400');
+  dTxt('处理事件：'+G.handledEv+' / '+G.totalEv,W/2,H*0.54,14,'#644');
+  
+  var by=H*0.66;
+  X.fillStyle='rgba(70,15,15,'+(0.55+Math.sin(animT*2)*0.2)+')';
+  rRect(W*0.22,by,W*0.56,55,10);X.fill();
+  X.strokeStyle='#a00';X.lineWidth=2;
+  rRect(W*0.22,by,W*0.56,55,10);X.stroke();
+  dTxt('再值一晚',W/2,by+27,22,'#c00','center','bold');
+  
+  dTxt('...明天还要来...',W/2,H*0.85,12,'#300');
+  
+  // Creepy flicker
+  if(Math.sin(animT*1.7)>0.85){
+    X.globalAlpha=0.12;dTxt('你逃不掉的',W/2,H*0.90,14,'#400');
+    X.globalAlpha=1;
+  }
+}
+
+function drawWin(){
+  dRect(0,0,W,H,'#050808');
+  var grad=X.createRadialGradient(W/2,H/2,W*0.08,W/2,H/2,W*0.55);
+  grad.addColorStop(0,'rgba(0,25,35,0.7)');grad.addColorStop(1,'rgba(0,0,0,1)');
+  X.fillStyle=grad;X.fillRect(0,0,W,H);
+  
+  dTxt('你活过了今夜',W/2,H*0.22,34,'#408090','center','bold');
+  dTxt('...但明天还要来',W/2,H*0.33,20,'#204050');
+  
+  dTxt('处理事件：'+G.handledEv,W/2,H*0.46,16,'#306060');
+  dTxt('总事件：'+G.totalEv,W/2,H*0.52,16,'#306060');
+  dTxt('最终恐惧值：'+Math.round(G.fear)+'%',W/2,H*0.58,16,'#306060');
+  
+  // Rating
+  var rating=G.fear<20?'✨ 安然无恙':(G.fear<50?'😰 心有余悸':(G.fear<80?'😱 命悬一线':'💀 行尸走肉'));
+  dTxt(rating,W/2,H*0.65,18,'#5090a0','center','bold');
+  
+  var by=H*0.72;
+  X.fillStyle='rgba(15,45,55,'+(0.55+Math.sin(animT*2)*0.2)+')';
+  rRect(W*0.22,by,W*0.56,55,10);X.fill();
+  X.strokeStyle='#408090';X.lineWidth=2;
+  rRect(W*0.22,by,W*0.56,55,10);X.stroke();
+  dTxt('再来一晚',W/2,by+27,22,'#40a0b0','center','bold');
+  
+  dTxt('你确定吗？',W/2,H*0.90,12,'#203030');
+}
+
+// ===== MAIN LOOP =====
+var lastTS=0;
+function loop(ts){
+  var dt=(ts-lastTS)/1000;if(dt>0.1)dt=0.1;if(dt<0)dt=0;
+  lastTS=ts;animT+=dt;
+  
+  X.clearRect(0,0,W,H);
+  handleClicks();
+  
+  if(G.state==='title'){
+    drawTitle();
+  }else if(G.state==='tutorial'){
+    updateTut(dt);drawScene();
+    // Tutorial overlay
+    X.fillStyle='rgba(0,0,0,0.25)';X.fillRect(0,0,W,H);
+    var tt=['第1步：📖 快速点击修复书架','第2步：🥤 按住拖动擦拭污渍','第3步：🔊 点击读者→嘘🤫制止'];
+    if(G.tutStep<3)dTxt(tt[G.tutStep],W/2,H*0.92,14,'#ffe4a0');
+  }else if(G.state==='playing'){
+    updateGame(dt);drawScene();
+  }else if(G.state==='gameover'){
+    drawGameOver();
+  }else if(G.state==='win'){
+    drawWin();
+  }
+  
+  inp.justDown=false;
+  requestAnimationFrame(loop);
+}
+
+G.playerX=W*0.5;G.playerY=H*0.82;
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
