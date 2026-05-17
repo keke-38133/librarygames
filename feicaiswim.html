@@ -1,0 +1,1612 @@
+<!-- 书间游戏 · ©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆 | CC BY-NC-SA 4.0 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<title>菲菲学游泳2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%}
+#copyright{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:10px;color:rgba(255,255,255,0.4);padding:4px 0;pointer-events:none;z-index:999;font-family:sans-serif}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<div id="copyright">©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆 | CC BY-NC-SA 4.0</div>
+<script>
+// Domain verification
+(function(){var h=location.hostname;if(h!=='game.kekelab.top'&&h!=='localhost'&&h!=='127.0.0.1'&&h!==''){/* dev ok */}})();
+document.addEventListener('contextmenu',function(e){e.preventDefault()});
+document.addEventListener('keydown',function(e){if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&'IJC'.includes(e.key))||(e.ctrlKey&&e.key==='u'))e.preventDefault()});
+
+const C=document.getElementById('gc'),X=C.getContext('2d');
+let W,H,dpr;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;C.width=W*dpr;C.height=H*dpr;C.style.width=W+'px';C.style.height=H+'px';X.setTransform(dpr,0,0,dpr,0,0);}
+resize();window.addEventListener('resize',resize);
+
+const lerp=(a,b,t)=>a+(b-a)*t,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rand=(a,b)=>a+Math.random()*(b-a),randInt=(a,b)=>Math.floor(rand(a,b+1));
+const easeOut=t=>1-Math.pow(1-t,3),easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+// ========== PARTICLE SYSTEM ==========
+let particles=[];
+class Particle{
+  constructor(x,y,type){
+    this.x=x;this.y=y;this.type=type;this.life=1;this.dead=false;this.age=0;
+    if(type==='bubble'){this.vx=rand(-.3,.3);this.vy=rand(-1.8,-.6);this.size=rand(3,9);this.maxLife=rand(50,110);this.wobble=rand(0,6.28);}
+    else if(type==='splash'){let a=rand(-Math.PI,-.1),s=rand(2,6);this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s;this.size=rand(2,6);this.maxLife=rand(18,38);this.gravity=.18;}
+    else if(type==='star'){let a=rand(0,6.28),s=rand(1,4);this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s;this.size=rand(5,10);this.maxLife=rand(25,55);this.gravity=.06;this.rot=rand(0,6.28);}
+    else if(type==='confetti'){let a=rand(0,6.28),s=rand(2,7);this.vx=Math.cos(a)*s;this.vy=Math.sin(a)*s-3;this.size=rand(4,8);this.maxLife=rand(50,110);this.gravity=.12;this.color=['#FF6B6B','#4ECDC4','#FFE66D','#95E1D3','#F38181','#AA96DA'][randInt(0,5)];this.rot=rand(0,6.28);}
+    else if(type==='frogQuack'){this.vx=rand(-1,1);this.vy=rand(-2,-0.5);this.size=rand(14,22);this.maxLife=rand(25,40);this.gravity=.02;this.rot=rand(-.2,.2);}
+  }
+  update(){this.age++;this.life=1-this.age/this.maxLife;if(this.life<=0){this.dead=true;return;}this.x+=this.vx;this.y+=this.vy;
+    if(this.type==='bubble'){this.wobble+=.06;this.x+=Math.sin(this.wobble)*.4;this.size+=.015;}
+    else if(this.type==='splash'||this.type==='confetti'){this.vy+=this.gravity;}
+    else if(this.type==='star'){this.vy+=this.gravity;this.rot+=.12;}
+    else if(this.type==='frogQuack'){this.vy+=this.gravity;this.size*=.97;}}
+  draw(ctx){if(this.dead)return;ctx.save();ctx.globalAlpha=Math.max(0,this.life);
+    if(this.type==='bubble'){ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,6.28);ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=.5;ctx.stroke();ctx.beginPath();ctx.arc(this.x-this.size*.3,this.y-this.size*.3,this.size*.15,0,6.28);ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();}
+    else if(this.type==='splash'){ctx.beginPath();ctx.arc(this.x,this.y,this.size*this.life,0,6.28);ctx.fillStyle='rgba(179,229,252,0.7)';ctx.fill();}
+    else if(this.type==='star'){ctx.translate(this.x,this.y);ctx.rotate(this.rot);drawStar(ctx,0,0,this.size,this.size*.4,5);ctx.fillStyle='#FFD54F';ctx.fill();}
+    else if(this.type==='confetti'){ctx.translate(this.x,this.y);ctx.rotate(this.rot);ctx.fillStyle=this.color;ctx.fillRect(-this.size/2,-this.size/4,this.size,this.size/2);}
+    else if(this.type==='frogQuack'){ctx.font='bold '+Math.round(this.size)+'px sans-serif';ctx.textAlign='center';ctx.fillStyle='rgba(76,175,80,'+this.life+')';ctx.fillText('呱!',this.x,this.y);}
+    ctx.restore();}
+}
+function spawnP(x,y,type,n){for(let i=0;i<n&&particles.length<300;i++)particles.push(new Particle(x,y,type));}
+function drawStar(ctx,cx,cy,oR,iR,pts){ctx.beginPath();for(let i=0;i<pts*2;i++){let r=i%2===0?oR:iR,a=Math.PI/pts*i-Math.PI/2;i===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();}
+
+// ========== WATER EFFECTS ==========
+function drawWater(ctx,wy,time,alpha){
+  alpha=alpha||1;ctx.save();ctx.globalAlpha=alpha;
+  for(let l=0;l<3;l++){ctx.beginPath();for(let x=0;x<=W;x+=3){let y=wy+Math.sin(x*.018+time*1.8+l)*4+Math.sin(x*.045+time*2.8+l*1.5)*2;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+    let g=ctx.createLinearGradient(0,wy,0,H);
+    if(l===0){g.addColorStop(0,'rgba(79,195,247,0.45)');g.addColorStop(1,'rgba(2,136,209,0.65)');}
+    else if(l===1){g.addColorStop(0,'rgba(79,195,247,0.28)');g.addColorStop(1,'rgba(2,136,209,0.45)');}
+    else{g.addColorStop(0,'rgba(179,229,252,0.18)');g.addColorStop(1,'rgba(79,195,247,0.28)');}
+    ctx.fillStyle=g;ctx.fill();}
+  ctx.restore();
+}
+function drawLightRays(ctx,wy){
+  ctx.save();ctx.globalAlpha=.06;
+  for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(W*.08+i*W*.18,0);ctx.lineTo(W*.04+i*W*.18,wy+80);ctx.lineTo(W*.12+i*W*.18,wy+80);ctx.fillStyle='#fff';ctx.fill();}
+  ctx.restore();
+}
+
+// ========== FEIFEI DRAWING ==========
+function drawFeifei(ctx,x,y,scale,opts){
+  opts=opts||{};
+  let{expression='happy',hatOn=true,swimMode=false,bodyAngle=0,armLAngle=0,armRAngle=0,legLAngle=0,legRAngle=0,headTilt=0,shivering=false}=opts;
+  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+  let sx=0,sy=0;if(shivering){sx=Math.sin(Date.now()*.03)*2;sy=Math.cos(Date.now()*.04)*1;}
+  ctx.translate(sx,sy);ctx.rotate(bodyAngle);
+  // LEGS
+  ctx.save();
+  ctx.save();ctx.translate(-13,58);ctx.rotate(legLAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-4,42);ctx.strokeStyle='#E0A87C';ctx.lineWidth=9;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.ellipse(-5,46,8,4,.2,0,6.28);ctx.fillStyle='#FFE0B2';ctx.fill();ctx.strokeStyle='#E0A87C';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  ctx.save();ctx.translate(13,58);ctx.rotate(legRAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(4,42);ctx.strokeStyle='#E0A87C';ctx.lineWidth=9;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.ellipse(5,46,8,4,-.2,0,6.28);ctx.fillStyle='#FFE0B2';ctx.fill();ctx.strokeStyle='#E0A87C';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+  // BODY
+  if(swimMode){
+    ctx.beginPath();ctx.moveTo(-19,0);ctx.lineTo(-17,58);ctx.lineTo(17,58);ctx.lineTo(19,0);ctx.closePath();
+    ctx.fillStyle='#CE93D8';ctx.fill();ctx.strokeStyle='#AB47BC';ctx.lineWidth=2;ctx.stroke();
+    drawHeart(ctx,0,18,7,'#F48FB1');
+  }else{
+    ctx.beginPath();ctx.moveTo(-21,-5);ctx.lineTo(-19,52);ctx.lineTo(19,52);ctx.lineTo(21,-5);ctx.closePath();
+    ctx.fillStyle='#CE93D8';ctx.fill();ctx.strokeStyle='#AB47BC';ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.globalAlpha=.15;for(let i=0;i<3;i++){drawHeart(ctx,-8+i*8,15+i*10,3,'#F8BBD0');}ctx.restore();
+    ctx.beginPath();ctx.arc(0,12,3.5,0,6.28);ctx.fillStyle='#E91E63';ctx.fill();
+    ctx.beginPath();ctx.arc(0,28,3.5,0,6.28);ctx.fillStyle='#E91E63';ctx.fill();
+    ctx.beginPath();ctx.moveTo(-19,48);ctx.lineTo(-26,88);ctx.lineTo(26,88);ctx.lineTo(19,48);ctx.closePath();
+    ctx.fillStyle='#FFF176';ctx.fill();ctx.strokeStyle='#FDD835';ctx.lineWidth=1.5;ctx.stroke();
+  }
+  // ARMS
+  ctx.save();ctx.translate(-21,10);ctx.rotate(armLAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-6,28);ctx.strokeStyle=swimMode?'#E0A87C':'#CE93D8';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(-6,31,5.5,0,6.28);ctx.fillStyle='#FFE0B2';ctx.fill();
+  ctx.restore();
+  ctx.save();ctx.translate(21,10);ctx.rotate(armRAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(6,28);ctx.strokeStyle=swimMode?'#E0A87C':'#CE93D8';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(6,31,5.5,0,6.28);ctx.fillStyle='#FFE0B2';ctx.fill();
+  ctx.restore();
+  // HEAD
+  ctx.save();ctx.rotate(headTilt);
+  ctx.beginPath();ctx.moveTo(-19,2);ctx.quadraticCurveTo(-28,32,-22,60);ctx.strokeStyle='#2C2C2C';ctx.lineWidth=14;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(19,2);ctx.quadraticCurveTo(28,32,22,60);ctx.strokeStyle='#2C2C2C';ctx.lineWidth=14;ctx.stroke();
+  ctx.beginPath();ctx.arc(0,-5,23,0,6.28);ctx.fillStyle='#FFE0B2';ctx.fill();ctx.strokeStyle='#E0A87C';ctx.lineWidth=1.5;ctx.stroke();
+  drawExpression(ctx,0,-5,expression);
+  if(hatOn){ctx.save();ctx.rotate(Math.sin(Date.now()*.002)*.06);
+    ctx.beginPath();ctx.ellipse(0,-24,26,11,0,Math.PI,0);ctx.fillStyle='#5C6BC0';ctx.fill();ctx.strokeStyle='#3F51B5';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.ellipse(0,-19,32,8,0,0,6.28);ctx.fillStyle='#5C6BC0';ctx.fill();ctx.strokeStyle='#3F51B5';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.ellipse(0,-22,26,3.5,0,0,6.28);ctx.fillStyle='#3F51B5';ctx.fill();
+    for(let i=-22;i<22;i+=7){ctx.beginPath();ctx.moveTo(i,-28);ctx.lineTo(i,-18);ctx.strokeStyle='rgba(63,81,181,0.25)';ctx.lineWidth=.5;ctx.stroke();}
+    for(let j=-27;j<-18;j+=7){ctx.beginPath();ctx.moveTo(-24,j);ctx.lineTo(24,j);ctx.stroke();}
+    drawHeart(ctx,9,-28,5,'#F48FB1');
+    ctx.restore();}
+  ctx.beginPath();ctx.moveTo(-16,-16);ctx.quadraticCurveTo(-20,8,-17,18);ctx.strokeStyle='#2C2C2C';ctx.lineWidth=5;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(16,-16);ctx.quadraticCurveTo(20,8,17,18);ctx.strokeStyle='#2C2C2C';ctx.lineWidth=5;ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+function drawHeart(ctx,x,y,s,c){ctx.save();ctx.translate(x,y);ctx.beginPath();ctx.moveTo(0,s*.3);ctx.bezierCurveTo(-s,-s*.3,-s*.5,-s,0,-s*.4);ctx.bezierCurveTo(s*.5,-s,s,-s*.3,0,s*.3);ctx.fillStyle=c;ctx.fill();ctx.restore();}
+function drawExpression(ctx,cx,cy,expr){
+  ctx.save();let ex=cx,ey=cy;
+  switch(expr){
+    case 'scared':
+      ctx.beginPath();ctx.arc(ex-8,ey-2,4.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-2,4.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex-7,ey-3,2,0,6.28);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+9,ey-3,2,0,6.28);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.moveTo(ex-13,ey-10);ctx.lineTo(ex-3,ey-7);ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+13,ey-10);ctx.lineTo(ex+3,ey-7);ctx.stroke();
+      ctx.beginPath();ctx.ellipse(ex,ey+9,4,5.5,0,0,6.28);ctx.fillStyle='#E57373';ctx.fill();
+      ctx.beginPath();ctx.arc(ex-13,ey+5,4.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+13,ey+5,4.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      ctx.beginPath();ctx.ellipse(ex-12,ey+2,2,3,0,0,6.28);ctx.fillStyle='rgba(79,195,247,0.6)';ctx.fill();
+      break;
+    case 'struggling':
+      ctx.beginPath();ctx.moveTo(ex-12,ey-1);ctx.quadraticCurveTo(ex-7,ey-5,ex-3,ey-1);ctx.strokeStyle='#333';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+3,ey-1);ctx.quadraticCurveTo(ex+7,ey-5,ex+12,ey-1);ctx.stroke();
+      ctx.beginPath();ctx.ellipse(ex,ey+9,7,9,0,0,6.28);ctx.fillStyle='#E57373';ctx.fill();ctx.strokeStyle='#C62828';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#4FC3F7';ctx.beginPath();ctx.ellipse(ex+16,ey-6,2,3.5,.3,0,6.28);ctx.fill();
+      break;
+    case 'focused':
+      ctx.beginPath();ctx.arc(ex-8,ey-1,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-1,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.moveTo(ex-12,ey-8);ctx.lineTo(ex-3,ey-6);ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+12,ey-8);ctx.lineTo(ex+3,ey-6);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex-5,ey+8);ctx.lineTo(ex+5,ey+8);ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(ex-13,ey+4,3.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.35)';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+13,ey+4,3.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.35)';ctx.fill();
+      break;
+    case 'surprised':
+      ctx.beginPath();ctx.arc(ex-8,ey-1,5.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-1,5.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex-7,ey-2,2.5,0,6.28);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+9,ey-2,2.5,0,6.28);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.arc(ex,ey+9,4.5,0,6.28);ctx.fillStyle='#E57373';ctx.fill();
+      ctx.beginPath();ctx.arc(ex-14,ey+4,5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+14,ey+4,5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      break;
+    case 'proud':
+      ctx.beginPath();ctx.moveTo(ex-12,ey);ctx.quadraticCurveTo(ex-7,ey+4,ex-3,ey);ctx.strokeStyle='#333';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+3,ey);ctx.quadraticCurveTo(ex+7,ey+4,ex+12,ey);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex-5,ey+8);ctx.quadraticCurveTo(ex,ey+12,ex+6,ey+8);ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.arc(ex-13,ey+4,4,0,6.28);ctx.fillStyle='rgba(255,138,128,0.4)';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+13,ey+4,4,0,6.28);ctx.fillStyle='rgba(255,138,128,0.4)';ctx.fill();
+      break;
+    case 'happy':default:
+      ctx.beginPath();ctx.moveTo(ex-12,ey);ctx.quadraticCurveTo(ex-7,ey+5,ex-3,ey);ctx.strokeStyle='#333';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+3,ey);ctx.quadraticCurveTo(ex+7,ey+5,ex+12,ey);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex-7,ey+7);ctx.quadraticCurveTo(ex,ey+14,ex+7,ey+7);ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#E57373';ctx.fill();
+      ctx.beginPath();ctx.arc(ex-13,ey+5,4.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+13,ey+5,4.5,0,6.28);ctx.fillStyle='rgba(255,138,128,0.5)';ctx.fill();
+      break;
+  }
+  ctx.restore();
+}
+
+// ========== LAO CAI DRAWING ==========
+function drawLaoCai(ctx,x,y,scale,opts){
+  opts=opts||{};
+  let{action='idle_standing',expression='confident',swimMode=false,bodyAngle=0,armLAngle=0,armRAngle=0,legLAngle=0,legRAngle=0,headTilt=0,talkPhase=0}=opts;
+  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+  ctx.rotate(bodyAngle);
+  let t=Date.now()*.001;
+  // LEGS
+  ctx.save();
+  ctx.save();ctx.translate(-13,58);ctx.rotate(legLAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-4,42);ctx.strokeStyle='#6D4C41';ctx.lineWidth=9;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.ellipse(-5,46,8,4,.2,0,6.28);ctx.fillStyle='#8D6E63';ctx.fill();ctx.strokeStyle='#6D4C41';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  ctx.save();ctx.translate(13,58);ctx.rotate(legRAngle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(4,42);ctx.strokeStyle='#6D4C41';ctx.lineWidth=9;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.ellipse(5,46,8,4,-.2,0,6.28);ctx.fillStyle='#8D6E63';ctx.fill();ctx.strokeStyle='#6D4C41';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+  // BODY - skin upper + flower swim trunks
+  ctx.beginPath();ctx.moveTo(-19,0);ctx.lineTo(-17,42);ctx.lineTo(17,42);ctx.lineTo(19,0);ctx.closePath();
+  ctx.fillStyle='#8D6E63';ctx.fill();ctx.strokeStyle='#6D4C41';ctx.lineWidth=1.5;ctx.stroke();
+  // Flower swim trunks
+  ctx.beginPath();ctx.moveTo(-17,38);ctx.lineTo(-20,68);ctx.lineTo(20,68);ctx.lineTo(17,38);ctx.closePath();
+  ctx.fillStyle='#E53935';ctx.fill();ctx.strokeStyle='#C62828';ctx.lineWidth=1.5;ctx.stroke();
+  // Flower pattern on trunks
+  for(let f of [{x:-6,y:48,r:4,c:'#FFEB3B'},{x:4,y:55,r:3,c:'#4FC3F7'},{x:-10,y:60,r:3,c:'#FF9800'},{x:8,y:46,r:3.5,c:'#E040FB'},{x:0,y:62,r:2.5,c:'#76FF03'},{x:-4,y:55,r:2,c:'#FF5722'}]){
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,6.28);ctx.fillStyle=f.c;ctx.fill();
+    // Petals around center
+    for(let p=0;p<5;p++){let pa=p*Math.PI*2/5;ctx.beginPath();ctx.ellipse(f.x+Math.cos(pa)*f.r*.7,f.y+Math.sin(pa)*f.r*.7,f.r*.5,f.r*.3,pa,0,6.28);ctx.fillStyle=f.c;ctx.globalAlpha=.6;ctx.fill();ctx.globalAlpha=1;}
+  }
+  // Whistle on neck
+  let whistleSwing=Math.sin(t*3+talkPhase)*.15;
+  ctx.save();ctx.translate(0,5);ctx.rotate(whistleSwing);
+  // Rope
+  ctx.beginPath();ctx.moveTo(-8,-2);ctx.quadraticCurveTo(0,8,8,-2);ctx.strokeStyle='#9E9E9E';ctx.lineWidth=1.5;ctx.stroke();
+  // Whistle body
+  ctx.beginPath();ctx.ellipse(0,8,5,3,0,0,6.28);ctx.fillStyle='#FFD54F';ctx.fill();ctx.strokeStyle='#F9A825';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  // ARMS
+  let gestureAngle=0;
+  if(action==='cooking'||action==='coaching')gestureAngle=Math.sin(t*6+talkPhase)*.6;
+  ctx.save();ctx.translate(-21,10);ctx.rotate(armLAngle+gestureAngle*.3);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-6,28);ctx.strokeStyle=swimMode?'#6D4C41':'#8D6E63';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(-6,31,5.5,0,6.28);ctx.fillStyle='#8D6E63';ctx.fill();
+  ctx.restore();
+  ctx.save();ctx.translate(21,10);ctx.rotate(armRAngle-gestureAngle*.3);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(6,28);ctx.strokeStyle=swimMode?'#6D4C41':'#8D6E63';ctx.lineWidth=8;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(6,31,5.5,0,6.28);ctx.fillStyle='#8D6E63';ctx.fill();
+  ctx.restore();
+  // HEAD
+  ctx.save();ctx.rotate(headTilt);
+  // Head
+  ctx.beginPath();ctx.arc(0,-5,23,0,6.28);ctx.fillStyle='#8D6E63';ctx.fill();ctx.strokeStyle='#6D4C41';ctx.lineWidth=1.5;ctx.stroke();
+  // Short hair - buzz cut
+  ctx.beginPath();ctx.arc(0,-8,23,Math.PI+.3,-.3);ctx.fillStyle='#4E342E';ctx.fill();
+  // Goggle mark on forehead
+  ctx.beginPath();ctx.moveTo(-18,-18);ctx.lineTo(18,-18);ctx.strokeStyle='rgba(78,52,46,0.3)';ctx.lineWidth=2;ctx.stroke();
+  // Goggles pushed up on forehead
+  ctx.save();ctx.translate(0,-20);
+  // Goggle strap
+  ctx.beginPath();ctx.moveTo(-22,0);ctx.lineTo(22,0);ctx.strokeStyle='#37474F';ctx.lineWidth=2;ctx.stroke();
+  // Left lens
+  ctx.beginPath();ctx.ellipse(-9,3,9,6,0,0,6.28);ctx.fillStyle='#263238';ctx.fill();ctx.strokeStyle='#37474F';ctx.lineWidth=1.5;ctx.stroke();
+  // Fog effect on left lens
+  ctx.beginPath();ctx.ellipse(-9,3,8,5,0,0,6.28);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+  // Right lens
+  ctx.beginPath();ctx.ellipse(9,3,9,6,0,0,6.28);ctx.fillStyle='#263238';ctx.fill();ctx.strokeStyle='#37474F';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.ellipse(9,3,8,5,0,0,6.28);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+  // Bridge
+  ctx.beginPath();ctx.moveTo(-1,2);ctx.quadraticCurveTo(0,5,1,2);ctx.strokeStyle='#37474F';ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+  // Lao Cai expression
+  drawLaoCaiExpression(ctx,0,-5,expression,talkPhase);
+  ctx.restore(); // head
+  // Self-confidence aura (when demonstrating)
+  if(action==='demonstrating'){
+    ctx.save();
+    let auraT=t*2;
+    for(let i=0;i<8;i++){
+      let a=auraT+i*Math.PI/4;
+      let ax=Math.cos(a)*45,ay=Math.sin(a)*45;
+      ctx.save();ctx.translate(ax,ay);ctx.rotate(a);
+      drawStar(ctx,0,0,6,2.5,5);
+      ctx.fillStyle='#FFD54F';ctx.globalAlpha=.5+Math.sin(auraT+i)*.3;ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  ctx.restore(); // main
+}
+
+function drawLaoCaiExpression(ctx,cx,cy,expr,talkPhase){
+  ctx.save();let ex=cx,ey=cy,t=Date.now()*.001;
+  let mouthOpen=0;
+  if(talkPhase>0)mouthOpen=Math.abs(Math.sin(t*8+talkPhase))*.5;
+  switch(expr){
+    case 'confident':
+      ctx.beginPath();ctx.arc(ex-8,ey-2,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-2,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      // Raised eyebrow
+      ctx.beginPath();ctx.moveTo(ex-13,ey-8);ctx.quadraticCurveTo(ex-8,ey-12,ex-3,ey-8);ctx.strokeStyle='#4E342E';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+3,ey-8);ctx.quadraticCurveTo(ex+8,ey-12,ex+13,ey-8);ctx.stroke();
+      // Confident smile
+      if(mouthOpen>0){
+        ctx.beginPath();ctx.ellipse(ex,ey+8,6+mouthOpen*4,5+mouthOpen*6,0,0,6.28);ctx.fillStyle='#5D4037';ctx.fill();
+      }else{
+        ctx.beginPath();ctx.moveTo(ex-8,ey+6);ctx.quadraticCurveTo(ex,ey+14,ex+8,ey+6);ctx.strokeStyle='#4E342E';ctx.lineWidth=2;ctx.stroke();
+      }
+      break;
+    case 'talking':
+      ctx.beginPath();ctx.arc(ex-8,ey-2,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-2,3.5,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.moveTo(ex-13,ey-9);ctx.quadraticCurveTo(ex-8,ey-13,ex-3,ey-9);ctx.strokeStyle='#4E342E';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ex+3,ey-9);ctx.quadraticCurveTo(ex+8,ey-13,ex+13,ey-9);ctx.stroke();
+      // Big open mouth - talking!
+      let mo=.5+Math.sin(t*10)*.5;
+      ctx.beginPath();ctx.ellipse(ex,ey+8,7+mo*3,6+mo*8,0,0,6.28);ctx.fillStyle='#5D4037';ctx.fill();
+      // Teeth
+      ctx.fillStyle='#fff';ctx.fillRect(ex-5,ey+4,10,3);
+      break;
+    case 'embarrassed':
+      ctx.beginPath();ctx.arc(ex-8,ey-2,3,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-2,3,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      // Sweat drop
+      ctx.beginPath();ctx.ellipse(ex+16,ey-4,2,4,0,0,6.28);ctx.fillStyle='rgba(79,195,247,0.7)';ctx.fill();
+      // Wavy mouth
+      ctx.beginPath();ctx.moveTo(ex-7,ey+8);ctx.quadraticCurveTo(ex-3,ey+5,ex,ey+8);ctx.quadraticCurveTo(ex+3,ey+11,ex+7,ey+8);ctx.strokeStyle='#4E342E';ctx.lineWidth=2;ctx.stroke();
+      break;
+    case 'quiet':
+      ctx.beginPath();ctx.arc(ex-8,ey-1,3,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-1,3,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.moveTo(ex-6,ey+7);ctx.lineTo(ex+6,ey+7);ctx.strokeStyle='#4E342E';ctx.lineWidth=1.5;ctx.stroke();
+      break;
+    case 'cheering':
+      ctx.beginPath();ctx.arc(ex-8,ey-2,4,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.arc(ex+8,ey-2,4,0,6.28);ctx.fillStyle='#333';ctx.fill();
+      ctx.beginPath();ctx.moveTo(ex-8,ey+5);ctx.quadraticCurveTo(ex,ey+15,ex+8,ey+5);ctx.strokeStyle='#4E342E';ctx.lineWidth=2.5;ctx.stroke();
+      break;
+  }
+  ctx.restore();
+}
+
+// ========== TOUCH SYSTEM ==========
+const touch={isDown:false,downTime:0,x:0,y:0,startX:0,startY:0,lastX:0,lastY:0,prevX:0,prevY:0,history:[]};
+function tpos(e){let t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}
+C.addEventListener('touchstart',function(e){e.preventDefault();let p=tpos(e);touch.isDown=true;touch.downTime=Date.now();touch.x=p.x;touch.y=p.y;touch.startX=p.x;touch.startY=p.y;touch.lastX=p.x;touch.lastY=p.y;touch.prevX=p.x;touch.prevY=p.y;touch.history=[{x:p.x,y:p.y,t:Date.now()}];if(game.onTouchStart)game.onTouchStart(touch);},{passive:false});
+C.addEventListener('touchmove',function(e){e.preventDefault();let p=tpos(e);touch.prevX=touch.lastX;touch.prevY=touch.lastY;touch.x=p.x;touch.y=p.y;touch.lastX=p.x;touch.lastY=p.y;touch.history.push({x:p.x,y:p.y,t:Date.now()});if(touch.history.length>30)touch.history.shift();if(game.onTouchMove)game.onTouchMove(touch);},{passive:false});
+C.addEventListener('touchend',function(e){e.preventDefault();if(game.onTouchEnd)game.onTouchEnd(touch);touch.isDown=false;},{passive:false});
+C.addEventListener('mousedown',function(e){touch.isDown=true;touch.downTime=Date.now();touch.x=e.clientX;touch.y=e.clientY;touch.startX=e.clientX;touch.startY=e.clientY;touch.lastX=e.clientX;touch.lastY=e.clientY;touch.prevX=e.clientX;touch.prevY=e.clientY;touch.history=[{x:e.clientX,y:e.clientY,t:Date.now()}];if(game.onTouchStart)game.onTouchStart(touch);});
+C.addEventListener('mousemove',function(e){if(!touch.isDown)return;touch.prevX=touch.lastX;touch.prevY=touch.lastY;touch.x=e.clientX;touch.y=e.clientY;touch.lastX=e.clientX;touch.lastY=e.clientY;touch.history.push({x:e.clientX,y:e.clientY,t:Date.now()});if(touch.history.length>30)touch.history.shift();if(game.onTouchMove)game.onTouchMove(touch);});
+C.addEventListener('mouseup',function(e){if(game.onTouchEnd)game.onTouchEnd(touch);touch.isDown=false;});
+
+// ========== GAME STATE ==========
+const TOTAL_LEVELS=13; // 0-9 main + 10-12 bonus
+const game={scene:'title',currentLevel:0,levelPhase:'demo',levelTimer:0,phaseTimer:0,totalMistakes:0,levelStars:new Array(TOTAL_LEVELS).fill(0),time:0,onTouchStart:null,onTouchMove:null,onTouchEnd:null,transition:null,L:{},_ui:{},bonusUnlocked:{laoCaiChallenge:false,hatBattle:false,laocaiChase:false}};
+
+function saveGame(){try{localStorage.setItem('feifei_swim_lk',JSON.stringify({currentLevel:game.currentLevel,levelStars:game.levelStars,totalMistakes:game.totalMistakes,bonusUnlocked:game.bonusUnlocked}));}catch(e){}}
+function loadGame(){try{let d=JSON.parse(localStorage.getItem('feifei_swim_lk'));if(d){game.currentLevel=d.currentLevel||0;game.levelStars=d.levelStars||new Array(TOTAL_LEVELS).fill(0);game.totalMistakes=d.totalMistakes||0;if(d.bonusUnlocked){game.bonusUnlocked=d.bonusUnlocked;if(d.bonusUnlocked.socialFear&&!d.bonusUnlocked.laocaiChase)game.bonusUnlocked.laocaiChase=true;}}}catch(e){}}
+loadGame();
+
+// ========== UI HELPERS ==========
+function drawRR(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+function drawBtn(ctx,x,y,w,h,text,bg,fg){ctx.save();drawRR(ctx,x,y,w,h,10);ctx.fillStyle=bg||'#FFB74D';ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=fg||'#333';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x+w/2,y+h/2);ctx.restore();}
+function inRect(px,py,r){return px>=r.x&&px<=r.x+r.w&&py>=r.y&&py<=r.y+r.h;}
+function drawBubble(ctx,x,y,text,mw){mw=mw||180;ctx.save();ctx.font='13px sans-serif';let lines=wrapT(ctx,text,mw-20);let lh=19,bh=lines.length*lh+16,bw=mw;let bx=x-bw/2,by=y-bh;drawRR(ctx,bx,by,bw,bh,12);ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fill();ctx.strokeStyle='#e0e0e0';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();ctx.moveTo(x-8,by+bh);ctx.lineTo(x,by+bh+10);ctx.lineTo(x+8,by+bh);ctx.fillStyle='rgba(255,255,255,0.92)';ctx.fill();ctx.beginPath();ctx.moveTo(x-8,by+bh);ctx.lineTo(x,by+bh+10);ctx.lineTo(x+8,by+bh);ctx.strokeStyle='#e0e0e0';ctx.stroke();ctx.fillStyle='#333';ctx.textAlign='center';ctx.textBaseline='top';lines.forEach((l,i)=>ctx.fillText(l,x,by+8+i*lh));ctx.restore();}
+function wrapT(ctx,text,mw){let chars=text.split(''),lines=[],line='';for(let c of chars){if(ctx.measureText(line+c).width>mw){lines.push(line);line=c;}else line+=c;}if(line)lines.push(line);return lines;}
+function drawProgress(ctx,x,y,w,h,p,col){ctx.save();drawRR(ctx,x,y,w,h,h/2);ctx.fillStyle='rgba(0,0,0,0.2)';ctx.fill();if(p>0){drawRR(ctx,x,y,Math.max(h,w*clamp(p,0,1)),h,h/2);ctx.fillStyle=col||'#4FC3F7';ctx.fill();}ctx.restore();}
+
+// ========== KNOWLEDGE ==========
+const KNOWLEDGE=[
+  "下水前必做两件事：\n1. 简单热身5分钟，活动颈肩腰膝踝\n2. 先冲淋浴适应水温\n⚠️ 绝对不要跳水！浅水区跳水=头撞池底=非常危险",
+  "渐进式入水，旱鸭子的生命线：\n• 脚踝→感受水的阻力和温度\n• 膝盖→走路变费力\n• 腰部→明显感觉浮力\n• 胸口→呼吸有轻微压力\n每到新水位，停下来站一会儿！",
+  "游泳呼吸三定律：\n1. 嘴巴是唯一指定呼吸器官！\n   水下嘴吐气，水面嘴吸气\n2. 水下吐气是关键——不在水下把气吐完，抬头就来不及吸新空气\n3. 节奏比深度重要——吐-吸-吐-吸",
+  "水母漂——旱鸭子的第一个浮起时刻：\n1. 深吸气（用嘴！）\n2. 蹲下抱膝\n3. 低头脸埋入水里\n4. 放松！放松！放松！\n99%浮不起来的人是因为紧张\n💡 小窍门：数自己的呼吸，像冥想一样慢慢松弛下来。不是一步到位，是一口气一口气地放松",
+  "仰漂——旱鸭子的终极安全感：\n• 从水母漂过渡，不要直接倒\n• 目光看天花板，头是方向盘\n• 收腹挺胯，身体成一条直线\n• 手臂微张帮助平衡\n慌了就抱膝回到水母漂！",
+  "蹬壁滑行——感受速度的第一步：\n• 双手重叠前伸贴耳=箭头\n• 头夹两臂间看池底=流线\n• 单脚蹬壁另一脚跟上=发射\n• 不要抬头！不要划手！=坠毁",
+  "翻脚掌——蛙泳最容易被忽略的关键动作：\n• 90%旱鸭子做蛙泳腿时脚掌是绷直的\n• 翻脚掌：脚尖朝外，脚掌像企鹅脚一样朝两侧翻开\n• 翻了脚掌再蹬，推力直接起飞\n💡 检验方法：坐凳子上双脚悬空，让脚尖朝外翻",
+  "蛙泳腿四步诀——收翻蹬夹：\n🐸 收：脚跟靠臀，膝盖与肩同宽\n🐸 翻：脚掌朝外翻！\n🐸 蹬：沿弧线向外向后画半圆\n🐸 夹：双腿并拢伸直！加速器！\n💡 最重要：别人的节奏不一定适合你。找到自己舒服的频率比追别人的速度重要得多",
+  "怕水是正常的：\n• 即使游了十几年的人，每次下水前的那一秒也会有一丝犹豫\n• 怕水不是弱点，是本能——你的身体在保护你\n• 你不需要\"克服恐惧\"，你只需要带着恐惧下水\n• 最怕的永远不是水里，是站在岸边的那一秒\n💡 如果你今天不想下水——没关系。明天再试",
+  "完整蛙泳配合口诀：\n划手→抬头吸气→收腿→蹬夹→滑行\n记住：手脚不同时！\n划手时腿伸直，蹬腿时手前伸\n节奏对了，水就带着你走！",
+  "控速是高级技巧：\n• 初学者总觉得\"游得快=游得好\"，其实控速才是真正的高级技能\n• 能慢速游的人，说明对水的掌控力极强\n💡 练习方法：试着用30秒游完25米，全程不停，匀速——你会发现这比使劲游难多了",
+  "蛙泳同时做别的事？很正常：\n• 蛙泳是最\"从容\"的泳姿，抬头换气时完全可以观察周围\n• 生活中蛙泳主要用于：救生、潜水观察、水面移动\n💡 但初学者不建议单手操作！先把基本动作练到不用想",
+  "游泳逃生指南——被老蔡追的时候：\n• 蛙泳是最适合逃生的泳姿：省力、可观察、可持续\n• 关键是不要慌！一慌动作就变形，速度骤降\n• 蛙泳换气时回头看——确认追兵距离\n💡 实战技巧：保持节奏比拼命划更重要\n  拼命划50米就废了，匀速蛙泳可以游500米\n  老蔡追你的时候记住：节奏是命！"
+];
+
+// ========== LEVEL NAMES & QUOTES ==========
+const LEVEL_NAMES=['下水前的仪式感','跟水谈判','嘴巴的觉醒','变水母','躺平的艺术','发射！！！','爹味教学者出现','蛙蛙出击','老蔡的真心话','终极组合','慢速大作战','帽子保卫战','逃离魔爪'];
+const LEVEL_QUOTES=["就这？就这？……好吧其实有点慌","看见没！这叫天赋！虽然迟到了二十年","我学会在水里呼吸了！","我变成水母了！","原来躺平真的是一门艺术","这感觉也太爽了吧！！","……谢谢啊，虽然你说了二十句废话","我是一只真正的蛙了！","……谢了，老蔡","我会游泳了！！！","旱鸭子的春天！慢就是赢！","帽子保住了！代价是狗刨……","清白保住了！下次老蔡再敢追，游到太平洋去！"];
+
+// ========== LAO CAI CAMEO SYSTEM ==========
+function drawLaoCaiCameo(ctx,wy,t,level){
+  let cx=0,cy=0,visible=false,action='swimming',dur=4;
+  if(level===1){cx=W*.82;cy=wy-15;visible=true;action='swimming';}// L2: back floating in deep end
+  else if(level===2){cx=W*.75;cy=wy+10;visible=true;action='swimming';}// L3: swimming by
+  else if(level===4){cx=W*.78;cy=wy-5;visible=true;action='swimming';}// L5: back float demo
+  else if(level===5){cx=W*.7;cy=H*.46;visible=true;action='swimming';}// L6: glide comparison
+  else if(level===9){cx=W*.85;cy=H*.33;visible=true;action='cheering';}// L8: cheering
+  if(!visible)return;
+  let sway=Math.sin(t*1.5)*8;
+  if(level===1){
+    drawLaoCai(ctx,cx+sway,cy,.45,{action:'idle_standing',expression:'confident',swimMode:true,bodyAngle:Math.PI*.48,armLAngle:-.8,armRAngle:.8,legLAngle:.2,legRAngle:-.2});
+  }else if(level===2){
+    drawLaoCai(ctx,cx+sway,cy,.45,{action:'swimming',expression:'confident',swimMode:true,bodyAngle:.1,armLAngle:Math.sin(t*3)*.3,legRAngle:Math.sin(t*3+1)*.3});
+    if(Math.random()<.03)spawnP(cx+sway+10,cy-20,'bubble',1);
+  }else if(level===4){
+    drawLaoCai(ctx,cx+sway,cy,.45,{action:'demonstrating',expression:'confident',swimMode:true,bodyAngle:Math.PI*.47,armLAngle:-.6,armRAngle:.6,legLAngle:.15,legRAngle:-.15});
+  }else if(level===5){
+    drawLaoCai(ctx,cx+sway,cy,.45,{action:'swimming',expression:'confident',swimMode:true,bodyAngle:0,armLAngle:-.8,armRAngle:-.8,legLAngle:0,legRAngle:0});
+    if(Math.random()<.05)spawnP(cx+sway-15,cy+30,'bubble',1);
+  }else if(level===9){
+    drawLaoCai(ctx,cx,H*.33,.5,{action:'cheering',expression:'cheering',swimMode:false,armLAngle:-1.2,armRAngle:-1.2,legLAngle:0,legRAngle:0});
+  }
+}
+
+// ========== LAO CAI HARASSMENT SYSTEM ==========
+function drawLaoCaiHarass(ctx,text,t){
+  let cycle=8,show=3;
+  let phase=t%cycle;
+  if(phase>show)return;
+  let alpha=phase<.3?phase/.3:phase>show-.3?(show-phase)/.3:1;
+  ctx.save();ctx.globalAlpha=alpha;
+  let lx=W-38,ly=H*.22;
+  drawLaoCai(ctx,lx,ly,.3,{action:'coaching',expression:'talking',swimMode:false,armLAngle:Math.sin(t*5)*.5,armRAngle:-Math.sin(t*5)*.5,talkPhase:t});
+  drawBubble(ctx,lx-60,ly-15,text,150);
+  ctx.restore();
+}
+
+// ========== LEVEL 1: WARM-UP ==========
+function initL1(){game.L={phase:'demo',demoStep:0,demoTimer:0,step:0,clicks:[0,0,0],btns:[],showerOn:false,showerTimer:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL1(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>3){L.demoTimer=0;L.demoStep++;if(L.demoStep>=3)L.phase='play';}}else if(L.phase==='success'){game.phaseTimer+=dt;}if(L.showerOn)L.showerTimer+=dt;}
+function drawL1(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.5,'#BBDEFB');g.addColorStop(1,'#90CAF9');X.fillStyle=g;X.fillRect(0,0,W,H);
+  X.fillStyle='#F5F5F5';X.fillRect(0,0,W,H*.55);for(let i=0;i<W;i+=40){X.strokeStyle='#E8E8E8';X.lineWidth=.5;X.beginPath();X.moveTo(i,0);X.lineTo(i,H*.55);X.stroke();}for(let j=0;j<H*.55;j+=40){X.beginPath();X.moveTo(0,j);X.lineTo(W,j);X.stroke();}
+  X.fillStyle='#E0E0E0';X.fillRect(0,H*.53,W,6);
+  drawWater(X,H*.56,t);
+  if(L.phase==='demo'){
+    let fx=W*.4,fy=H*.36;
+    if(L.demoStep===0){let p=clamp(L.demoTimer/2,0,1);drawFeifei(X,lerp(fx,W*.5,p),lerp(fy,H*.6,Math.sin(p*Math.PI)),.75,{expression:p>.5?'struggling':'scared',hatOn:true,bodyAngle:p>.5?.3:0});if(p>.7)spawnP(W*.5,H*.6,'splash',2);X.fillStyle='rgba(0,0,0,0.7)';X.font='bold 15px sans-serif';X.textAlign='center';X.fillText('❌ 直接跳=头撞池底=非常非常危险',W/2,H*.16);}
+    else if(L.demoStep===1){let ang=Math.sin(t*8)*.5;drawFeifei(X,fx,fy,.75,{expression:'focused',hatOn:true,armLAngle:ang,armRAngle:-ang,legLAngle:Math.sin(t*6)*.3,legRAngle:-Math.sin(t*6)*.3});X.fillStyle='rgba(0,0,0,0.7)';X.font='bold 15px sans-serif';X.textAlign='center';X.fillText('❌ 过度热身=你不是来开运动会的',W/2,H*.16);}
+    else{drawFeifei(X,fx,fy,.75,{expression:'struggling',hatOn:true,shivering:true});X.fillStyle='rgba(0,0,0,0.7)';X.font='bold 15px sans-serif';X.textAlign='center';X.fillText('❌ 不适应水温=抽筋警告',W/2,H*.16);}
+    for(let i=0;i<3;i++){X.beginPath();X.arc(W/2-20+i*20,H*.21,5,0,6.28);X.fillStyle=i<=L.demoStep?'#EF5350':'#ccc';X.fill();}
+  }else if(L.phase==='play'){
+    let fx=W*.35,fy=H*.36;let expr=L.step>=3?'happy':L.step>0?'focused':'scared';
+    drawFeifei(X,fx,fy,.8,{expression:expr,hatOn:true,shivering:L.step===0});
+    let sp=["我考虑一下……考虑完了，不下去","不错，关节活动开了","嘶——这水好凉！但还行","好像……准备好了？"];
+    drawBubble(X,fx+10,fy-65,sp[L.step],180);
+    if(L.showerOn){X.save();X.globalAlpha=.5;for(let i=0;i<10;i++){let sx=fx-25+i*6;X.beginPath();X.moveTo(sx,fy-85);X.lineTo(sx-1,fy-85+8+Math.random()*40);X.strokeStyle='#4FC3F7';X.lineWidth=2;X.stroke();}X.restore();}
+    let labels=['🤸 转脖子','🦶 转脚踝','🚿 冲水'],cols=['#FF8A65','#81C784','#4FC3F7'];
+    let bw=95,bh=52,gap=12,tw=bw*3+gap*2,sx=(W-tw)/2,by=H*.78;
+    for(let i=0;i<3;i++){let bx=sx+i*(bw+gap);L.btns[i]={x:bx,y:by,w:bw,h:bh};drawBtn(X,bx,by,bw,bh,labels[i],L.clicks[i]?'#BDBDBD':cols[i],L.clicks[i]?'#999':'#333');if(L.clicks[i]){X.fillStyle='#4CAF50';X.font='bold 22px sans-serif';X.textAlign='center';X.fillText('✓',bx+bw/2,by-10);}}
+    X.fillStyle='rgba(0,0,0,0.5)';X.font='13px sans-serif';X.textAlign='center';X.fillText('👆 点击帮菲菲热身！',W/2,H*.73);
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.36,.9,{expression:'proud',hatOn:true,armRAngle:-.9});
+    drawBubble(X,W*.5,H*.36-75,'热身完毕！虽然看起来像在跳广场舞，但关节确实活动开了！',200);
+    if(game.phaseTimer<.5)spawnP(W*.5,H*.36,'star',5);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL1;initL1=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'){for(let i=0;i<3;i++){if(L.clicks[i]===0&&L.btns[i]&&inRect(t.x,t.y,L.btns[i])){L.clicks[i]=1;L.step++;if(i===2)L.showerOn=true;spawnP(t.x,t.y,'star',5);break;}}if(L.step>=3)setTimeout(()=>{L.phase='success';game.phaseTimer=0;},800);}};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 2: ENTER WATER ==========
+function initL2(){game.L={phase:'demo',demoStep:0,demoTimer:0,waterLevel:0,targetLevel:0,stage:0,stageTimer:0,canSwipe:false,settled:true,cameoT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL2(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){L.waterLevel=lerp(L.waterLevel,L.targetLevel,.04);if(L.settled){L.stageTimer+=dt;if(L.stageTimer>1.5&&L.stage<4)L.canSwipe=true;}L.cameoT+=dt;}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL2(){let L=game.L,t=game.time;
+  X.fillStyle='#E3F2FD';X.fillRect(0,0,W,H);
+  let poolTop=H*.4;
+  for(let i=0;i<4;i++){X.fillStyle='#E8E8E8';X.fillRect(10,poolTop+i*18+i*14,75-i*10,16);X.strokeStyle='#ccc';X.lineWidth=1;X.strokeRect(10,poolTop+i*18+i*14,75-i*10,16);}
+  let marks=[H*.67,H*.57,H*.49,H*.43],mlabels=['脚踝','膝盖','腰部','胸口'];
+  X.font='11px sans-serif';X.textAlign='right';
+  for(let i=0;i<4;i++){X.fillStyle=i===L.stage?'#FF8A65':'rgba(0,0,0,0.3)';X.fillText(mlabels[i],W-12,marks[i]+4);X.beginPath();X.moveTo(W-55,marks[i]);X.lineTo(W-18,marks[i]);X.strokeStyle=i===L.stage?'#FF8A65':'rgba(0,0,0,0.15)';X.lineWidth=i===L.stage?2:1;X.stroke();}
+  let kx=W*.72,ky=poolTop+22;X.save();X.translate(kx,ky);X.scale(.35,.35);X.beginPath();X.arc(0,-12,13,0,6.28);X.fillStyle='#FFE0B2';X.fill();X.beginPath();X.arc(-4,-14,2.5,0,6.28);X.fillStyle='#333';X.fill();X.beginPath();X.arc(4,-14,2.5,0,6.28);X.fill();X.beginPath();X.arc(0,-7,3,0,Math.PI);X.strokeStyle='#333';X.lineWidth=1;X.stroke();X.fillStyle='#4FC3F7';X.fillRect(-9,2,18,22);X.restore();
+  if(L.phase==='play'&&Math.random()<.1)spawnP(kx+rand(-8,8),ky-10,'splash',1);
+  let wy=poolTop+(H-poolTop)*(1-L.waterLevel);
+  drawWater(X,wy,t);
+  // Lao Cai cameo: back floating in deep end
+  if(L.phase==='play'&&L.cameoT>2)drawLaoCaiCameo(X,wy,t,1);
+  let fX=W*.4,fBaseY=H*.35,fY=lerp(fBaseY,wy+20,L.waterLevel);
+  if(L.phase==='demo'){
+    if(L.demoStep===0){let p=clamp(L.demoTimer/2,0,1);drawFeifei(X,lerp(W*.3,W*.55,p),lerp(H*.35,H*.6,easeOut(p)),.7,{expression:p>.5?'struggling':'scared',hatOn:true,bodyAngle:p*.5});if(p>.7)spawnP(W*.55,H*.6,'splash',2);X.fillStyle='rgba(0,0,0,0.7)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 一步到位？= 一步到窒息',W/2,H*.13);}
+    else{let p=clamp(L.demoTimer/2,0,1);drawFeifei(X,fX,fY+20*p,.7,{expression:'struggling',hatOn:true,headTilt:p*.5});if(Math.random()<.1)spawnP(fX+10,fY-10,'splash',1);X.fillStyle='rgba(0,0,0,0.7)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 直接埋脸？= 鼻子进水 = 恐惧加倍',W/2,H*.13);}
+  }else if(L.phase==='play'){
+    let speeches=["它好像在诱惑我……不，是威胁我。","嘶——凉的。但还行？","有点奇怪，水在推我……","我好像变轻了？","水在托我！像……床垫？"];
+    let expr=L.stage===0?'scared':L.stage===1?'focused':L.stage===2?'surprised':'happy';
+    drawFeifei(X,fX,fY,.75,{expression:expr,hatOn:true,swimMode:L.stage>=2,shivering:L.stage===0});
+    drawBubble(X,fX+30,fY-55,speeches[L.stage],160);
+    if(L.canSwipe&&L.stage<4){X.fillStyle='rgba(0,0,0,0.5)';X.font='14px sans-serif';X.textAlign='center';X.fillText('👆 向上滑动，让菲菲入水',W/2,H*.9);}
+    drawProgress(X,W*.08,H*.05,W*.84,8,L.stage/4);
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.35,.9,{expression:'surprised',hatOn:true,swimMode:true});
+    drawBubble(X,W*.5,H*.35-70,'原来水不是敌人……它是床垫！',180);
+    if(game.phaseTimer<.5)spawnP(W*.5,H*.35,'star',4);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL2;initL2=function(){_i();let sy=0;game.onTouchStart=function(t){sy=t.y;};game.onTouchMove=function(t){let L=game.L;if(L.phase!=='play'||!L.canSwipe)return;let dy=sy-t.y;if(dy>35&&L.stage<4){L.stage++;L.targetLevel=L.stage/4;L.canSwipe=false;L.settled=true;L.stageTimer=0;sy=t.y;spawnP(t.x,t.y,'splash',5);if(L.stage>=4)setTimeout(()=>{game.L.phase='success';game.phaseTimer=0;},2000);}};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 3: BREATHING ==========
+function initL3(){game.L={phase:'demo',demoStep:0,demoTimer:0,holdTime:0,breathCycles:0,isHolding:false,maxHold:3.5,feedback:'',fbTimer:0,bubT:0,cameoT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL3(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){if(L.isHolding){L.holdTime+=dt;L.bubT+=dt;if(L.bubT>.12){L.bubT=0;spawnP(W*.45+rand(-10,10),H*.45,'bubble',1);}if(L.holdTime>L.maxHold+1.5){L.isHolding=false;L.holdTime=0;L.feedback='呛水了！气吐完了还在水里！';L.fbTimer=2;spawnP(W*.45,H*.4,'splash',5);game.totalMistakes++;}}L.cameoT+=dt;if(L.fbTimer>0)L.fbTimer-=dt;if(L.breathCycles>=4&&L.phase==='play'){L.phase='success';game.phaseTimer=0;}}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL3(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#B3E5FC');g.addColorStop(.3,'#4FC3F7');g.addColorStop(1,'#0288D1');X.fillStyle=g;X.fillRect(0,0,W,H);
+  drawWater(X,H*.13,t,.5);drawLightRays(X,H*.13);
+  // Lao Cai cameo: swimming by with big bubble
+  if(L.phase==='play'&&L.cameoT>3&&L.cameoT<8){
+    let lcx=W*.8-((L.cameoT-3)/5)*W*.3;
+    drawLaoCai(X,lcx,H*.35,.4,{action:'swimming',expression:'confident',swimMode:true,bodyAngle:.1,armLAngle:Math.sin(t*3)*.3,legRAngle:Math.sin(t*3+1)*.3});
+    if(L.cameoT>4.5&&L.cameoT<5)spawnP(lcx+10,H*.25,'bubble',2);
+  }
+  let fx=W*.4,fy=H*.45;
+  if(L.phase==='demo'){
+    if(L.demoStep===0){let p=clamp(L.demoTimer/2,0,1);drawFeifei(X,fx,fy,.75,{expression:p>.6?'struggling':'focused',hatOn:true,swimMode:true});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 憋到灵魂出窍=看见太奶奶在招手',W/2,H*.08);}
+    else{drawFeifei(X,fx,fy,.75,{expression:'struggling',hatOn:true,swimMode:true,headTilt:.3});spawnP(fx+5,fy-15,'splash',1);X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 鼻子呼吸=鼻子进水=天灵盖酸痛',W/2,H*.08);}
+  }else if(L.phase==='play'){
+    let expr=L.isHolding?'focused':L.feedback==='完美！咕噜咕噜~'?'surprised':'happy';
+    drawFeifei(X,fx,fy,.75,{expression:expr,hatOn:true,swimMode:true});
+    drawBubble(X,fx+30,fy-60,'吐泡泡？？？我又不是鱼！',150);
+    let bW=W*.72,bH=32,bX=(W-bW)/2,bY=H*.07;
+    drawRR(X,bX,bY,bW,bH,16);X.fillStyle='rgba(0,0,0,0.3)';X.fill();
+    if(L.isHolding){let p=clamp(L.holdTime/L.maxHold,0,1);let col=p<.55?'#4CAF50':p<.8?'#FFB74D':'#EF5350';drawRR(X,bX,bY,Math.max(bH,bW*p),bH,16);X.fillStyle=col;X.fill();}
+    X.fillStyle='#fff';X.font='bold 13px sans-serif';X.textAlign='center';X.textBaseline='middle';
+    X.fillText(L.isHolding?'咕噜咕噜~ 吐气中':'👆 按住吐气，松开吸气',W/2,bY+bH/2);
+    for(let i=0;i<4;i++){X.beginPath();X.arc(W/2-28+i*20,H*.16,9,0,6.28);X.fillStyle=i<L.breathCycles?'#4CAF50':'rgba(255,255,255,0.25)';X.fill();if(i<L.breathCycles){X.fillStyle='#fff';X.font='bold 10px sans-serif';X.textAlign='center';X.fillText('✓',W/2-28+i*20,H*.16+1);}}
+    if(L.fbTimer>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.textAlign='center';X.textBaseline='alphabetic';X.fillText(L.feedback,W/2,H*.24);}
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.4,.9,{expression:'proud',hatOn:true,swimMode:true,armRAngle:-.9});
+    drawBubble(X,W*.5,H*.4-70,'我学会在水里呼吸了！虽然只呼了没吸……但这是游泳呼吸第一步！',200);
+    if(game.phaseTimer<1)spawnP(W*.5,H*.35,'bubble',4);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL3;initL3=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'&&!L.isHolding)L.isHolding=true;};game.onTouchEnd=function(){let L=game.L;if(L.phase==='play'&&L.isHolding){L.isHolding=false;if(L.holdTime>=1.5&&L.holdTime<=L.maxHold){L.breathCycles++;L.feedback='完美！咕噜咕噜~';L.fbTimer=1.5;spawnP(W*.45,H*.35,'star',5);}else if(L.holdTime<1.5){L.feedback='太快了！多吐一会儿';L.fbTimer=1;game.totalMistakes++;}L.holdTime=0;}};game.onTouchMove=function(){};};})();
+
+// ========== LEVEL 4: JELLYFISH (OPTIMIZED: LONG-PRESS) ==========
+function initL4(){game.L={phase:'demo',demoStep:0,demoTimer:0,relaxVal:0,isHolding:false,holdDur:0,floatY:.5,feedback:'',fbTimer:0,maxVal:false,maxTimer:0,spasmT:0,cameoT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL4(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){
+  if(L.isHolding){L.holdDur+=dt;let speed=L.relaxVal>.7?2:3.3;L.relaxVal+=dt*(10/speed);if(L.holdDur>5){L.relaxVal=Math.max(0,L.relaxVal-10);L.holdDur=0;L.feedback='得换口气！';L.fbTimer=1;spawnP(W*.5,H*.3,'bubble',5);}}else{
+    L.relaxVal=Math.max(0,L.relaxVal-dt*2);L.holdDur=0;}
+  // Random spasm when very tense
+  if(L.relaxVal<30){L.spasmT+=dt;if(L.spasmT>4+Math.random()*3){L.relaxVal=Math.max(0,L.relaxVal-5);L.spasmT=0;L.feedback='紧张抽搐！';L.fbTimer=.8;}}
+  else L.spasmT=0;
+  if(L.relaxVal>=100){L.maxTimer+=dt;if(L.maxTimer>=3){L.phase='success';game.phaseTimer=0;}}else L.maxTimer=0;
+  L.floatY=lerp(1,.15,L.relaxVal/100);
+  if(L.fbTimer>0)L.fbTimer-=dt;
+  if(L.relaxVal<30&&L.phase==='play'){/* struggling */}
+}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL4(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#4FC3F7');g.addColorStop(1,'#01579B');X.fillStyle=g;X.fillRect(0,0,W,H);
+  drawWater(X,H*.1,t,.4);drawLightRays(X,H*.1);
+  let fx=W*.5,fy=H*.22+L.floatY*H*.35;
+  if(L.phase==='demo'){
+    drawFeifei(X,W*.4,H*.5,.65,{expression:L.demoStep===0?'struggling':'focused',hatOn:true,swimMode:true,legLAngle:L.demoStep===0?.3:0,legRAngle:L.demoStep===0?-.3:0});
+    X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';
+    X.fillText(L.demoStep===0?'❌ 身体绷紧=密度变大=沉=物理学不支持你努力':'❌ 河豚式漂浮=有保质期的浮力',W/2,H*.08);
+  }else if(L.phase==='play'){
+    let expr=L.relaxVal<30?'scared':L.relaxVal<70?'focused':'happy';
+    let curl=1-L.relaxVal/100;
+    drawFeifei(X,fx,fy,.65,{expression:expr,hatOn:true,swimMode:true,legLAngle:curl*.5,legRAngle:-curl*.5,armLAngle:curl*.4,armRAngle:-curl*.4,bodyAngle:L.floatY<.3?.08:0});
+    if(L.relaxVal>=70)drawBubble(X,fx+20,fy-55,'我……好像浮起来了……',160);
+    else if(L.relaxVal<30)drawBubble(X,fx+20,fy-55,'我放松不了！我一放松就怕！',160);
+    else drawBubble(X,fx+20,fy-55,'让我把自己交给水？',140);
+    // Relaxation meter (vertical)
+    let mW=35,mH=H*.45,mX=W*.88,mY=H*.15;
+    X.fillStyle='rgba(0,0,0,0.3)';X.fillRect(mX,mY,mW,mH);
+    // Zones: 0-30% blue, 30-70% yellow, 70-100% green
+    let zH=mH;
+    // Green zone 70-100%
+    X.fillStyle='rgba(76,175,80,0.3)';X.fillRect(mX,mY,mW,zH*.3);
+    // Yellow zone 30-70%
+    X.fillStyle='rgba(255,183,77,0.3)';X.fillRect(mX,mY+zH*.3,mW,zH*.4);
+    // Blue zone 0-30%
+    X.fillStyle='rgba(33,150,243,0.3)';X.fillRect(mX,mY+zH*.7,mW,zH*.3);
+    // Fill bar
+    let fillH=zH*L.relaxVal/100;
+    let col=L.relaxVal<30?'#2196F3':L.relaxVal<70?'#FFB74D':'#4CAF50';
+    X.fillStyle=col;X.fillRect(mX,mY+zH-fillH,mW,fillH);
+    X.strokeStyle='rgba(255,255,255,0.5)';X.lineWidth=1;X.strokeRect(mX,mY,mW,zH);
+    // Zone labels
+    X.fillStyle='#fff';X.font='9px sans-serif';X.textAlign='center';
+    X.fillText('放松🪼',mX+mW/2,mY+12);
+    X.fillText('紧张🧊',mX+mW/2,mY+zH-5);
+    // 30% and 70% marks
+    X.strokeStyle='rgba(255,255,255,0.6)';X.lineWidth=1;
+    X.beginPath();X.moveTo(mX,mY+zH*.7);X.lineTo(mX+mW,mY+zH*.7);X.stroke();
+    X.beginPath();X.moveTo(mX,mY+zH*.3);X.lineTo(mX+mW,mY+zH*.3);X.stroke();
+    // Percentage
+    X.fillStyle='#fff';X.font='bold 14px sans-serif';X.textAlign='center';
+    X.fillText(Math.round(L.relaxVal)+'%',mX+mW/2,mY+zH/2);
+    // Lao Cai harassment
+    drawLaoCaiHarass(X,'你看你这个水母漂，我奶奶都比你标准！',t);
+    // Hold indicator
+    if(L.isHolding){X.fillStyle='rgba(76,175,80,0.6)';X.font='12px sans-serif';X.textAlign='center';X.fillText('深呼吸中…',W/2,H*.75);}
+    else if(L.relaxVal<100){X.fillStyle='rgba(255,255,255,0.7)';X.font='14px sans-serif';X.textAlign='center';X.fillText('按住屏幕=深呼吸放松',W/2,H*.75);}
+    if(L.maxTimer>0){X.fillStyle='#4CAF50';X.font='bold 18px sans-serif';X.textAlign='center';X.fillText('保持！'+(3-L.maxTimer).toFixed(1)+'s',W/2,H*.82);}
+    if(L.fbTimer>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.textAlign='center';X.fillText(L.feedback,W/2,H*.65);}
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.35,.8,{expression:'happy',hatOn:true,swimMode:true,legLAngle:.5,legRAngle:-.5,armLAngle:.5,armRAngle:-.5,bodyAngle:.1});
+    drawBubble(X,W*.5,H*.35-70,'我变成水母了！一只快乐的旱鸭子水母！',180);
+    if(game.phaseTimer<1)spawnP(W*.5,H*.35,'bubble',3);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL4;initL4=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'&&!L.isHolding){L.isHolding=true;L.holdDur=0;}};game.onTouchEnd=function(){let L=game.L;if(L.phase==='play')L.isHolding=false;};game.onTouchMove=function(){};};})();
+
+
+// ========== LEVEL 5: BACK FLOAT ==========
+function initL5(){game.L={phase:'demo',demoStep:0,demoTimer:0,tilt:0,targetTilt:0,balanceTime:0,expandProg:0,wobT:0,wobCount:0,failed:false,fbTimer:0,feedback:'',cameoT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL5(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){L.tilt=lerp(L.tilt,L.targetTilt,.08);L.cameoT+=dt;if(L.expandProg>.2){L.wobT+=dt;if(L.wobT>rand(1.8,3.5)&&L.wobCount<4){L.targetTilt+=(Math.random()>.5?1:-1)*rand(.2,.35);L.wobT=0;L.wobCount++;}}if(Math.abs(L.tilt)<.15){L.balanceTime+=dt;if(L.balanceTime>.3)L.expandProg=clamp(L.expandProg+.008,0,1);}else L.balanceTime=0;if(L.expandProg>=1){L.phase='success';game.phaseTimer=0;}if(Math.abs(L.tilt)>.6&&!L.failed){L.failed=true;L.feedback='翻车了！鼻子进水！';L.fbTimer=2;game.totalMistakes++;setTimeout(()=>{L.failed=false;L.tilt=0;L.targetTilt=0;L.expandProg=Math.max(0,L.expandProg-.2);},1500);}if(L.fbTimer>0)L.fbTimer-=dt;}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL5(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E8EAF6');g.addColorStop(.4,'#C5CAE9');g.addColorStop(1,'#0288D1');X.fillStyle=g;X.fillRect(0,0,W,H);
+  drawWater(X,H*.42,t,.65);
+  // Lao Cai cameo: back float demo
+  if(L.phase==='play'&&L.cameoT>4&&L.cameoT<9)drawLaoCaiCameo(X,H*.42,t,4);
+  if(L.phase==='demo'){
+    if(L.demoStep===0){drawFeifei(X,W*.4,H*.45,.7,{expression:'struggling',hatOn:true,swimMode:true,bodyAngle:.8});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 直接倒≠躺平，是翻车',W/2,H*.1);}
+    else{drawFeifei(X,W*.4,H*.45,.7,{expression:'struggling',hatOn:true,swimMode:true,bodyAngle:-.3,headTilt:-.5});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 仰头太高=翘翘板=腿沉',W/2,H*.1);}
+  }else if(L.phase==='play'){
+    let fx=W*.5,fy=H*.4;let expr=L.failed?'struggling':Math.abs(L.tilt)<.15?'happy':'focused';
+    drawFeifei(X,fx,fy,.8,{expression:expr,hatOn:true,swimMode:true,bodyAngle:L.tilt,legLAngle:L.expandProg*.3,legRAngle:-L.expandProg*.3,armLAngle:-L.expandProg*.5,armRAngle:L.expandProg*.5});
+    drawBubble(X,fx,fy-70,Math.abs(L.tilt)<.15?'我浮起来了！天呐……天花板好近':'保持平衡！左右滑动！',160);
+    let bW=W*.62,bH=22,bX=(W-bW)/2,bY=H*.82;
+    drawRR(X,bX,bY,bW,bH,11);X.fillStyle='rgba(0,0,0,0.3)';X.fill();
+    let dotX=bX+bW/2+L.tilt/.6*bW/2;dotX=clamp(dotX,bX+10,bX+bW-10);
+    X.beginPath();X.arc(dotX,bY+bH/2,9,0,6.28);X.fillStyle=Math.abs(L.tilt)<.15?'#4CAF50':'#FFB74D';X.fill();
+    X.beginPath();X.moveTo(bX+bW/2,bY);X.lineTo(bX+bW/2,bY+bH);X.strokeStyle='#4CAF50';X.lineWidth=2;X.stroke();
+    drawProgress(X,W*.08,H*.05,W*.84,8,L.expandProg);
+    X.fillStyle='#fff';X.font='12px sans-serif';X.textAlign='center';X.fillText('← 左右滑动保持平衡 →',W/2,H*.9);
+    if(L.fbTimer>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.fillText(L.feedback,W/2,H*.72);}
+    // Lao Cai harassment
+    drawLaoCaiHarass(X,'躺平？你这是躺尸！腰给我挺起来！',t);
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.35,.9,{expression:'proud',hatOn:true,swimMode:true,armLAngle:-.5,armRAngle:.5,legLAngle:.3,legRAngle:-.3});
+    drawBubble(X,W*.5,H*.35-70,'原来躺平真的是一门艺术……我之前只是躺在了错误的地方。',200);
+    if(game.phaseTimer<.5)spawnP(W*.5,H*.35,'star',4);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL5;initL5=function(){_i();game.onTouchStart=function(){};game.onTouchMove=function(t){let L=game.L;if(L.phase!=='play'||L.failed)return;let dx=t.x-t.prevX;L.targetTilt+=dx*.003;L.targetTilt=clamp(L.targetTilt,-.6,.6);if(L.expandProg===0&&Math.abs(L.targetTilt)>.05)L.expandProg=.05;};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 6: GLIDE ==========
+function initL6(){game.L={phase:'demo',demoStep:0,demoTimer:0,charging:false,chargeP:0,chargeDir:1,launched:false,glideDist:0,glideSpd:0,touchAfter:false,cameoT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL6(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){L.cameoT+=dt;if(L.charging){L.chargeP+=L.chargeDir*dt*.7;if(L.chargeP>=1){L.chargeP=1;L.chargeDir=-1;}if(L.chargeP<=0){L.chargeP=0;L.chargeDir=1;}}if(L.launched){L.glideDist+=L.glideSpd*dt;L.glideSpd*=.986;if(L.touchAfter)L.glideSpd*=.88;if(L.glideSpd<.08&&L.glideDist>0){if(L.glideDist>=3){L.phase='success';game.phaseTimer=0;}else{L.launched=false;L.glideDist=0;L.glideSpd=0;L.charging=false;L.chargeP=0;game.totalMistakes++;}}}}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL6(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.4,'#BBDEFB');g.addColorStop(1,'#0288D1');X.fillStyle=g;X.fillRect(0,0,W,H);
+  X.fillStyle='#90A4AE';X.fillRect(0,H*.33,30,H*.42);X.fillStyle='#78909C';X.fillRect(0,H*.33,30,5);
+  for(let i=0;i<5;i++){X.beginPath();X.moveTo(40,H*.48+i*18);X.lineTo(W,H*.48+i*18);X.strokeStyle='rgba(255,255,255,0.12)';X.lineWidth=1;X.stroke();}
+  let wy=H*.4;drawWater(X,wy,t);
+  X.fillStyle='rgba(255,255,255,0.45)';X.font='10px sans-serif';X.textAlign='center';
+  for(let m=1;m<=8;m++){let mx=40+m*(W-60)/8;X.fillText(m+'m',mx,H*.9);X.beginPath();X.moveTo(mx,wy);X.lineTo(mx,H*.87);X.strokeStyle='rgba(255,255,255,0.08)';X.stroke();}
+  // Lao Cai cameo: 15m glide comparison
+  if(L.phase==='play'&&L.launched&&L.cameoT>3){
+    let lcx=52+L.glideDist*3*(W-60)/8;// Lao Cai goes 3x further
+    if(lcx<W){drawLaoCai(X,lcx,H*.38,.4,{action:'swimming',expression:'confident',swimMode:true,armLAngle:-.8,armRAngle:-.8,bodyAngle:-.1});}
+  }
+  let fx,fy=H*.46;
+  if(L.phase==='demo'){
+    if(L.demoStep===0){drawFeifei(X,W*.3,fy,.6,{expression:'struggling',hatOn:true,swimMode:true,armLAngle:Math.sin(t*10)*.8,armRAngle:-Math.sin(t*10)*.8});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 划手=刹车=反向发射',W/2,H*.1);}
+    else{let p=clamp(L.demoTimer/1.5,0,1);drawFeifei(X,lerp(W*.3,W*.5,p),fy,.6,{expression:'struggling',hatOn:true,swimMode:true,headTilt:-.5});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 抬头=急刹车=从箭变石头',W/2,H*.1);}
+  }else if(L.phase==='play'){
+    if(!L.launched){
+      fx=52;drawFeifei(X,fx,fy,.65,{expression:L.charging?'focused':'happy',hatOn:true,swimMode:true,legLAngle:L.charging?.5*L.chargeP:0,legRAngle:-L.charging?.5*L.chargeP:0,armLAngle:-.3,armRAngle:-.3});
+      drawBubble(X,fx+40,fy-60,'发射！这听起来好酷！像火箭！',150);
+      let bW=28,bH=H*.38,bX=W-55,bY=H*.28;
+      X.fillStyle='rgba(0,0,0,0.3)';X.fillRect(bX,bY,bW,bH);
+      let p=clamp(L.chargeP,0,1),ch=bH*p;let col=p<.4?'#4CAF50':p<.7?'#FFB74D':'#EF5350';
+      X.fillStyle=col;X.fillRect(bX,bY+bH-ch,bW,ch);
+      X.strokeStyle='rgba(255,255,255,0.5)';X.lineWidth=1;X.strokeRect(bX,bY,bW,bH);
+      let gzTop=bY+bH*(1-.5),gzBot=bY+bH*(1-.3);X.strokeStyle='#4CAF50';X.lineWidth=2;X.strokeRect(bX-2,gzTop,bW+4,gzBot-gzTop);
+      X.fillStyle='rgba(255,255,255,0.5)';X.font='9px sans-serif';X.textAlign='center';X.fillText('完美',bX+bW/2,gzTop-5);
+      if(!L.charging){X.fillStyle='rgba(255,255,255,0.7)';X.font='14px sans-serif';X.textAlign='center';X.fillText('👆 按住蓄力，松手发射！',W/2,H*.88);}
+    }else{
+      fx=52+L.glideDist*(W-60)/8;drawFeifei(X,fx,fy,.65,{expression:L.glideSpd>2?'surprised':'happy',hatOn:true,swimMode:true,armLAngle:-.8,armRAngle:-.8,bodyAngle:-.1,legLAngle:.1,legRAngle:-.1});
+      if(L.glideSpd>1)spawnP(fx-20,fy+20,'bubble',1);
+      X.fillStyle='#FFD54F';X.font='bold 22px sans-serif';X.textAlign='center';X.fillText(L.glideDist.toFixed(1)+'m',W/2,H*.15);
+      if(L.touchAfter){X.fillStyle='rgba(255,100,100,0.8)';X.font='bold 14px sans-serif';X.fillText('别碰！会刹车！',W/2,H*.22);}
+      else if(L.glideSpd>1){X.fillStyle='rgba(255,255,255,0.7)';X.font='14px sans-serif';X.fillText('什么都别做！让水带着你！',W/2,H*.22);}
+    // Lao Cai harassment
+    drawLaoCaiHarass(X,'就你这蹬壁？蜗牛都比你快！再用力点！',t);
+    }
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.35,.9,{expression:'happy',hatOn:true,swimMode:true,armRAngle:-1});
+    drawBubble(X,W*.5,H*.35-70,'这感觉也太爽了吧！！不用划不用蹬，水带着你飞！',200);
+    if(game.phaseTimer<.5)spawnP(W*.5,H*.35,'star',5);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL6;initL6=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'){if(!L.launched&&!L.charging){L.charging=true;L.chargeP=0;L.chargeDir=1;}else if(L.launched)L.touchAfter=true;}};game.onTouchEnd=function(){let L=game.L;if(L.phase==='play'&&L.charging){L.charging=false;L.launched=true;L.touchAfter=false;L.glideSpd=L.chargeP*4.5+1;L.glideDist=0;L.cameoT=0;spawnP(60,H*.46,'splash',10);}};game.onTouchMove=function(){};};})();
+
+// ========== LEVEL 6.5: LAO CAI INTRODUCTION ==========
+function initL6_5(){game.L={phase:'intro',introTimer:0,showStep:0,bubbles:[],choicePhase:false,choiceIdx:-1,choiceResult:'',resultTimer:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL6_5(dt){let L=game.L;
+  if(L.phase==='intro'){
+    // Dialogue advances on tap only, no auto-advance
+  }else if(L.phase==='choice'){
+    // Waiting for player choice
+  }else if(L.phase==='result'){L.resultTimer+=dt;
+    if(L.resultTimer>3){if(L.choiceIdx===1)L.phase='success';else L.phase='choice';L.choiceIdx=-1;L.resultTimer=0;}
+  }else if(L.phase==='success'){game.phaseTimer+=dt;}
+}
+function drawL6_5(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.4,'#B3E5FC');g.addColorStop(1,'#0288D1');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.4;drawWater(X,wy,t);
+  // Pool wall
+  X.fillStyle='#78909C';X.fillRect(W-20,H*.3,20,H*.45);
+  let fx=W*.35,fy=H*.42;
+  // Feifei by pool wall
+  drawFeifei(X,fx,fy,.65,{expression:L.phase==='success'?'happy':'surprised',hatOn:true,swimMode:true});
+  // Lao Cai
+  let lcx=W*.65,lcy=H*.4;
+  if(L.showStep>=0){
+    let laoExpr=L.showStep<6?'talking':'confident';
+    let laoAction=L.showStep===2?'demonstrating':L.showStep>=3?'coaching':'idle_standing';
+    drawLaoCai(X,lcx+Math.sin(t*1.2)*5,lcy,.65,{action:laoAction,expression:laoExpr,swimMode:true,bodyAngle:.05,armLAngle:L.showStep>=3?Math.sin(t*4)*.4:0,armRAngle:L.showStep>=3?-Math.sin(t*4)*.4:-.3,talkPhase:L.showStep*.7});
+  }
+  // Dialogue bubbles
+  if(L.phase==='intro'){
+    let dialogues=[
+      {who:'feifei',text:'这谁啊？蝶泳？在这？'},
+      {who:'laocai',text:'哟，学蛙泳呢？我看你腿不太对。我跟你说啊——'},
+      {who:'laocai',text:'蛙泳这个东西，关键在腿！'},
+      {who:'laocai',text:'收，很简单——翻脚掌！蹬！夹！看！简单吧？'},
+      {who:'feifei',text:'太快了！！'},
+      {who:'laocai',text:'然后你可以加一个转身——我当年跟鹅一起游的时候，鹅都学会了——'},
+      {who:'feifei',text:'……鹅？？'}
+    ];
+    let d=dialogues[Math.min(L.showStep,dialogues.length-1)];
+    let bx=d.who==='feifei'?fx+20:lcx-20;
+    let by=d.who==='feifei'?fy-60:lcy-65;
+    drawBubble(X,bx,by,d.text,170);
+    X.fillStyle='rgba(255,255,255,0.5)';X.font='12px sans-serif';X.textAlign='center';X.fillText('👆 点击推进对话',W/2,H*.92);
+  }else if(L.phase==='choice'){
+    drawBubble(X,fx+20,fy-70,'等一下！你说了一大堆，我到底该听哪句？？',190);
+    // Three choices
+    let choices=['A: 膝盖往外拐','B: 翻脚掌！','C: 先学蝶泳转身'];
+    let cols=['#FF8A65','#4CAF50','#FF8A65'];
+    let bw=W*.8,bh=42,gap=8,sx=(W-bw)/2,by=H*.72;
+    L._choiceBtns=[];
+    for(let i=0;i<3;i++){
+      let bby=by+i*(bh+gap);
+      L._choiceBtns.push({x:sx,y:bby,w:bw,h:bh});
+      drawBtn(X,sx,bby,bw,bh,choices[i],cols[i],'#fff');
+    }
+  }else if(L.phase==='result'){
+    if(L.choiceIdx===1){
+      drawFeifei(X,fx,fy,.65,{expression:'surprised',hatOn:true,swimMode:true});
+      drawBubble(X,fx+20,fy-65,'咦？？翻脚掌……好像有用？',170);
+      drawLaoCai(X,lcx,lcy,.65,{action:'cheering',expression:'talking',swimMode:true,talkPhase:1});
+      drawBubble(X,lcx-20,lcy-70,'翻脚掌！就是这个！',140);
+    }else{
+      drawFeifei(X,fx,fy,.65,{expression:'struggling',hatOn:true,swimMode:true});
+      drawBubble(X,fx+20,fy-65,'你说的不对你让我重来？？',170);
+      drawLaoCai(X,lcx,lcy,.65,{action:'coaching',expression:'embarrassed',swimMode:true,talkPhase:2});
+    }
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.4,H*.38,.75,{expression:'happy',hatOn:true,swimMode:true});
+    drawBubble(X,W*.4+25,H*.38-70,'……谢谢啊。虽然你说了二十句废话，但翻脚掌那一句确实有用。',200);
+    drawLaoCai(X,W*.65,H*.4,.55,{action:'idle_standing',expression:'confident',swimMode:true,armRAngle:-1.2});
+    if(game.phaseTimer<.5)spawnP(W*.4,H*.35,'star',4);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL6_5;initL6_5=function(){_i();game.onTouchStart=function(t){let L=game.L;
+  if(L.phase==='intro'){L.showStep++;if(L.showStep>=7)L.phase='choice';}// Tap to advance
+  else if(L.phase==='choice'&&L._choiceBtns){
+    for(let i=0;i<3;i++){if(inRect(t.x,t.y,L._choiceBtns[i])){L.choiceIdx=i;L.phase='result';L.resultTimer=0;
+      if(i!==1){game.totalMistakes++;L.choiceResult='wrong';}else{L.choiceResult='correct';spawnP(t.x,t.y,'star',5);}break;}}
+  }
+};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 7: FROG KICK (OPTIMIZED WITH LAO CAI) ==========
+function initL7(){game.L={phase:'demo',demoStep:0,demoTimer:0,beats:['收','翻','蹬','夹'],curBt:0,btTimer:0,btWindow:1.2,btHit:false,dist:0,target:10,combo:0,fb:'',fbT:0,
+  round:0,twoBeatMode:true,twoBeatRounds:0,showBtns:true,
+  // Dialogue pause system - pause for chat every N rounds
+  dialoguePause:false,dialoguePauseTimer:0,roundsSinceLastChat:0,chatInterval:6,
+  // Lao Cai mechanics
+  laoCaiPhase:0,laoCaiShushCount:0,laoCaiQuiet:false,laoCaiQuietTimer:0,laoCaiSpeedMul:1,
+  // Heartbeat track
+  heartbeatBeats:[],hbScrollX:0,
+  // Frog quack
+  quackTimer:0,
+  // Post-LaoCai phase
+  laoCaiLeft:false,laoCaiLeaveTimer:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL7(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){
+  // During dialogue pause, freeze beat timer
+  if(L.dialoguePause){
+    L.dialoguePauseTimer+=dt;
+    // Don't advance beat timer during pause
+  }else{
+    L.btTimer+=dt*L.laoCaiSpeedMul;
+  }
+  // Frog quack timer
+  L.quackTimer+=dt;
+  // Lao Cai mechanics
+  if(!L.laoCaiLeft){
+    L.laoCaiPhase+=dt;
+    if(!L.laoCaiQuiet){
+      // Lao Cai getting faster
+      if(L.laoCaiPhase>8)L.laoCaiSpeedMul=1.3;
+      if(L.laoCaiPhase>16)L.laoCaiSpeedMul=1.7;
+      if(L.laoCaiPhase>24)L.laoCaiSpeedMul=2.2;
+    }else{
+      L.laoCaiQuietTimer-=dt;
+      if(L.laoCaiQuietTimer<=0){L.laoCaiQuiet=false;L.laoCaiSpeedMul=1+L.laoCaiShushCount*.2;}
+    }
+    // Lao Cai leaves after 35s
+    if(L.laoCaiPhase>35){L.laoCaiLeft=true;L.laoCaiSpeedMul=1;L.laoCaiLeaveTimer=0;}
+  }else{
+    L.laoCaiLeaveTimer+=dt;
+    L.laoCaiSpeedMul=lerp(L.laoCaiSpeedMul,1,.02);
+  }
+  // Beat logic
+  let window=L.twoBeatMode?1.5:L.btWindow/L.laoCaiSpeedMul;
+  if(L.btTimer>window&&!L.btHit){
+    L.fb='错过了！';L.fbT=.8;L.combo=0;game.totalMistakes++;advBt7();
+  }
+  if(L.dist>=L.target){L.phase='success';game.phaseTimer=0;}
+  if(L.fbT>0)L.fbT-=dt;
+  if(L.combo>=3&&!L.twoBeatMode)L.showBtns=false;
+}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function advBt7(){let L=game.L;if(L.twoBeatMode){L.curBt=(L.curBt+1)%2;if(L.curBt===0){L.twoBeatRounds++;L.roundsSinceLastChat++;}}else{L.curBt=(L.curBt+1)%4;if(L.curBt===0){L.round++;L.roundsSinceLastChat++;}}L.btTimer=0;L.btHit=false;
+  // Trigger dialogue pause every chatInterval complete rounds
+  if(L.roundsSinceLastChat>=L.chatInterval&&!L.dialoguePause&&!L.laoCaiLeft){L.dialoguePause=true;L.dialoguePauseTimer=0;L.roundsSinceLastChat=0;}}
+function drawL7(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.3,'#B3E5FC');g.addColorStop(1,'#0277BD');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.36;drawWater(X,wy,t);
+  X.fillStyle='rgba(255,255,255,0.4)';X.font='11px sans-serif';X.textAlign='right';X.fillText('距离: '+L.dist.toFixed(1)+'m / '+L.target+'m',W-12,H*.055);
+  drawProgress(X,W*.08,H*.07,W*.84,8,L.dist/L.target,'#4CAF50');
+  let fx=W*.3,fy=H*.4;
+  if(L.phase==='demo'){
+    if(L.demoStep===0){drawFeifei(X,fx,fy,.6,{expression:'struggling',hatOn:true,swimMode:true,legLAngle:Math.sin(t*10)*.6,legRAngle:Math.sin(t*10+3)*.6});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 自行车腿=消耗200大卡前进0米',W/2,H*.12);}
+    else{drawFeifei(X,fx,fy,.6,{expression:'struggling',hatOn:true,swimMode:true,legLAngle:-.8,legRAngle:.8});spawnP(fx+30,fy+40,'splash',1);X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 大劈叉+收腿后退=净前进5厘米',W/2,H*.12);}
+  }else if(L.phase==='play'){
+    let la,la2;
+    if(L.twoBeatMode){la=L.curBt===1?-.5:.2;la2=L.curBt===1?.5:-.2;}
+    else{la=L.curBt===2?-.5:L.curBt===3?0:.2;la2=L.curBt===2?.5:L.curBt===3?0:-.2;}
+    let expr=L.curBt===(L.twoBeatMode?1:3)?'happy':'focused';
+    drawFeifei(X,fx,fy,.6,{expression:expr,hatOn:true,swimMode:true,legLAngle:la,legRAngle:la2,armLAngle:-.3,armRAngle:-.3});
+    // Lao Cai in adjacent lane
+    if(!L.laoCaiLeft){
+      let lcx=W*.72,lcy=H*.38;
+      let lcExpr=L.laoCaiQuiet?'embarrassed':L.laoCaiPhase>8?'talking':'coaching';
+      let lcAction=L.laoCaiQuiet?'idle_standing':'coaching';
+      drawLaoCai(X,lcx+Math.sin(t*1.5)*5,lcy,.5,{action:lcAction,expression:lcExpr,swimMode:true,bodyAngle:.05,armLAngle:L.laoCaiQuiet?0:Math.sin(t*5)*.5,armRAngle:L.laoCaiQuiet?0:-Math.sin(t*5)*.5,talkPhase:L.laoCaiPhase});
+      // Shush button
+      if(!L.laoCaiQuiet&&L.laoCaiPhase>5){
+        let sbx=lcx-25,sby=lcy-70;
+        drawBtn(X,sbx,sby,50,28,'🤫','#E57373','#fff');
+        L._shushBtn={x:sbx,y:sby,w:50,h:28};
+      }else L._shushBtn=null;
+      // Lao Cai speech - only during dialogue pause
+      if(L.dialoguePause&&!L.laoCaiQuiet){
+        let speeches=['收翻蹬夹！','快快快！跟上！','加蝶泳转身！','收翻蹬夹收翻蹬夹！','你这蛙腿跟蛤蟆似的！','没吃饭吗！'];
+        let si=Math.floor(L.laoCaiPhase/4)%speeches.length;
+        drawBubble(X,lcx+10,lcy-75,speeches[si],120);
+      }
+    }else if(L.laoCaiLeaveTimer<3){
+      // Lao Cai leaving animation
+      let lcx=W*.72+L.laoCaiLeaveTimer*W*.15;
+      drawLaoCai(X,lcx,H*.38,.45,{action:'swimming',expression:'embarrassed',swimMode:true,bodyAngle:0,armLAngle:Math.sin(t*6)*.4,armRAngle:-Math.sin(t*6)*.4});
+    }
+    // Feifei speech - only during dialogue pause
+    if(L.dialoguePause){
+      if(L.laoCaiLeft&&L.laoCaiLeaveTimer<2)drawBubble(X,fx+20,fy-60,'终于走了……现在就剩我了。',160);
+      else if(!L.laoCaiLeft)drawBubble(X,fx+20,fy-60,'你闭嘴！！我听不清节奏！',160);
+    }
+    // Heartbeat track
+    let hbY=H*.68,hbH=25,hbW=W*.84,hbX=(W-hbW)/2;
+    X.save();
+    X.beginPath();X.rect(hbX,hbY-20,hbW,40);X.clip();
+    // Baseline
+    X.beginPath();X.moveTo(hbX,hbY);X.lineTo(hbX+hbW,hbY);X.strokeStyle='rgba(255,255,255,0.2)';X.lineWidth=1;X.stroke();
+    // Hit zone
+    X.fillStyle='rgba(76,175,80,0.15)';X.fillRect(hbX,hbY-18,40,36);
+    // Draw beat peaks
+    let beatLabels=L.twoBeatMode?['收翻','蹬夹']:L.beats;
+    let beatColors=L.twoBeatMode?['#FF8A65','#81C784']:['#FF8A65','#4FC3F7','#81C784','#FFB74D'];
+    let beatWidths=L.twoBeatMode?[hbW*.35,hbW*.25]:[hbW*.2,hbW*.2,hbW*.12,hbW*.08];
+    let totalBW=beatWidths.reduce((a,b)=>a+b,0);
+    let scrollOff=(L.btTimer/window)*totalBW;
+    for(let i=0;i<beatLabels.length;i++){
+      let peakX=hbX+40-scrollOff;
+      for(let j=0;j<i;j++)peakX+=beatWidths[j];
+      if(peakX>hbX-50&&peakX<hbX+hbW+50){
+        let isCur=i===(L.twoBeatMode?L.curBt:L.curBt);
+        let isTall=L.twoBeatMode?(i===1):(i>=2);
+        let ph=isTall?20:12;
+        X.beginPath();X.moveTo(peakX-8,hbY);X.lineTo(peakX,hbY-ph);X.lineTo(peakX+8,hbY);X.strokeStyle=beatColors[i];X.lineWidth=isCur?3:2;X.stroke();
+        if(isCur){X.save();X.globalAlpha=.3+Math.sin(t*8)*.15;X.beginPath();X.arc(peakX,hbY-ph,8,0,6.28);X.fillStyle=beatColors[i];X.fill();X.restore();}
+        X.fillStyle=beatColors[i];X.font='bold 10px sans-serif';X.textAlign='center';X.fillText(beatLabels[i],peakX,hbY+14);
+      }
+    }
+    X.restore();
+    // Frog quack
+    if(L.quackTimer>.8/L.laoCaiSpeedMul&&L.phase==='play'){
+      L.quackTimer=0;
+      spawnP(W*.3+rand(-20,20),H*.55,'frogQuack',1);
+    }
+    // Mode indicator
+    if(L.twoBeatMode){X.fillStyle='rgba(255,255,255,0.6)';X.font='12px sans-serif';X.textAlign='center';X.fillText('两拍模式: 收翻 → 蹬夹 ('+L.twoBeatRounds+'/3)',W/2,H*.62);}
+    else if(L.showBtns){X.fillStyle='rgba(255,255,255,0.6)';X.font='12px sans-serif';X.textAlign='center';X.fillText('四拍模式: 收 → 翻 → 蹬 → 夹',W/2,H*.62);}
+    // Buttons
+    if(L.twoBeatMode){
+      let bw=100,bh=52,gap=15,tw=bw*2+gap,sx=(W-tw)/2,by=H*.8;
+      let cols=['#FF8A65','#81C784'];game._l7btns=[];
+      for(let i=0;i<2;i++){let bx=sx+i*(bw+gap);game._l7btns.push({x:bx,y:by,w:bw,h:bh});let act=i===L.curBt;drawBtn(X,bx,by,bw,bh,beatLabels[i],act?cols[i]:'#BDBDBD',act?'#fff':'#999');if(act){X.save();X.globalAlpha=.3+Math.sin(t*8)*.15;drawRR(X,bx-2,by-2,bw+4,bh+4,12);X.strokeStyle=cols[i];X.lineWidth=2;X.stroke();X.restore();}}
+    }else if(L.showBtns){
+      let bw=72,bh=52,gap=10,tw=bw*4+gap*3,sx=(W-tw)/2,by=H*.78;
+      let cols=['#FF8A65','#4FC3F7','#81C784','#FFB74D'];game._l7btns=[];
+      for(let i=0;i<4;i++){let bx=sx+i*(bw+gap);game._l7btns.push({x:bx,y:by,w:bw,h:bh});let act=i===L.curBt;drawBtn(X,bx,by,bw,bh,L.beats[i],act?cols[i]:'#BDBDBD',act?'#fff':'#999');if(act){X.save();X.globalAlpha=.3+Math.sin(t*8)*.15;drawRR(X,bx-2,by-2,bw+4,bh+4,12);X.strokeStyle=cols[i];X.lineWidth=2;X.stroke();X.restore();}}
+    }else{
+      X.fillStyle='rgba(255,255,255,0.7)';X.font='13px sans-serif';X.textAlign='center';X.fillText('凭节奏点击！收→翻→蹬→夹',W/2,H*.82);
+    }
+    X.fillStyle='#fff';X.font='bold 12px sans-serif';X.textAlign='center';X.fillText('连击: '+L.combo,W/2,H*.93);
+    // Dialogue pause overlay
+    if(L.dialoguePause){
+      X.fillStyle='rgba(0,0,0,0.15)';X.fillRect(0,0,W,H);
+      if(L.dialoguePauseTimer<2){
+        X.fillStyle='rgba(255,255,255,0.6)';X.font='12px sans-serif';X.textAlign='center';X.fillText('💬 …',W/2,H*.95);
+      }else{
+        X.fillStyle='rgba(255,255,255,0.8)';X.font='12px sans-serif';X.textAlign='center';X.fillText('👆 点击继续',W/2,H*.95);
+      }
+    }
+    if(L.fbT>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.fillText(L.fb,W/2,H*.75);}
+  }else if(L.phase==='success'){
+    drawFeifei(X,W*.5,H*.35,.9,{expression:'proud',hatOn:true,swimMode:true,armRAngle:-.8});
+    drawBubble(X,W*.5,H*.35-70,'我是一只真正的蛙了！而且再也不要老蔡喊节奏了。',200);
+    if(game.phaseTimer<.5)spawnP(W*.5,H*.35,'star',3);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL7;initL7=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'){
+  // If dialogue is paused, wait at least 2s before allowing resume
+  if(L.dialoguePause){if(L.dialoguePauseTimer>=2)L.dialoguePause=false;return;}
+  // Check shush button first
+  if(L._shushBtn&&inRect(t.x,t.y,L._shushBtn)){L.laoCaiQuiet=true;L.laoCaiQuietTimer=Math.max(1,3-L.laoCaiShushCount*.5);L.laoCaiShushCount++;L.laoCaiSpeedMul=1;return;}
+  // Check beat buttons
+  let btns=game._l7btns||[];
+  let maxBtn=L.twoBeatMode?2:4;
+  let hit=false;
+  for(let i=0;i<btns.length&&i<maxBtn;i++){let b=btns[i];if(inRect(t.x,t.y,b)){
+    if(i===L.curBt){L.btHit=true;let d=L.twoBeatMode?(L.curBt===1?1.5:.5):(L.curBt===3?1.5:.5);L.dist+=d;L.fb=L.curBt===(L.twoBeatMode?1:3)?'完美！':'不错！';L.fbT=.5;spawnP(t.x,t.y,'star',3);hit=true;
+      // Check two-beat completion
+      if(L.twoBeatMode&&L.twoBeatRounds>=3){L.twoBeatMode=false;L.curBt=0;L.btTimer=0;L.btHit=false;L.fb='拆开四拍试试！';L.fbT=1.5;}
+    }else{L.fb='顺序错了！';L.fbT=.5;L.combo=0;game.totalMistakes++;hit=true;}
+    advBt7();break;}}
+  if(!hit&&!L.showBtns&&L.btTimer<=L.btWindow){
+    L.btHit=true;let d=L.twoBeatMode?(L.curBt===1?1.5:.5):(L.curBt===3?1.5:.5);L.dist+=d;L.fb='不错！';L.fbT=.5;spawnP(t.x,t.y,'star',2);advBt7();
+  }
+}};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 7.5: LAO CAI'S TRUE WORDS ==========
+function initL7_5(){game.L={phase:'dialogue',showStep:0,
+  // Breath exercise
+  breathPhase:'idle',breathTimer:0,breathCount:0,breathHolding:false,breathProgress:0,
+  fb:'',fbT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL7_5(dt){let L=game.L;
+  if(L.phase==='dialogue'){
+    // Click to advance
+  }else if(L.phase==='breathe'){
+    L.breathTimer+=dt;
+    if(L.breathHolding){
+      L.breathProgress+=dt/2; // 2 seconds to fill
+      if(L.breathProgress>=1){L.breathProgress=1;L.breathHolding=false;L.fb='呼……';L.fbT=1;L.breathCount++;
+        if(L.breathCount>=3){L.phase='after';L.showStep=0;L.fb='';L.fbT=0;}
+      }
+    }else{
+      L.breathProgress-=dt*1.5; // Exhale faster
+      if(L.breathProgress<0)L.breathProgress=0;
+    }
+  }else if(L.phase==='after'){
+    // Click to advance
+  }else if(L.phase==='success'){game.phaseTimer+=dt;}
+  if(L.fbT>0)L.fbT-=dt;
+}
+function drawL7_5(){let L=game.L,t=game.time;
+  // Warm sunset pool side
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#FFF8E1');g.addColorStop(.3,'#FFE0B2');g.addColorStop(.6,'#FFAB91');g.addColorStop(1,'#4FC3F7');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.65;drawWater(X,wy,t,.5);
+  // Sunset glow
+  X.save();X.globalAlpha=.15;let sg=X.createRadialGradient(W*.7,H*.1,0,W*.7,H*.1,H*.6);sg.addColorStop(0,'#FFD54F');sg.addColorStop(1,'rgba(255,213,79,0)');X.fillStyle=sg;X.fillRect(0,0,W,H);X.restore();
+  // Two people sitting on pool edge
+  let fx=W*.3,fy=H*.48;
+  let lcx=W*.65,lcy=H*.48;
+  // Feifei sitting
+  drawFeifei(X,fx,fy,.7,{expression:L.phase==='breathe'?'focused':L.breathCount>=3?'happy':'focused',hatOn:true,swimMode:false,legLAngle:.3,legRAngle:-.1});
+  // Lao Cai sitting - quiet and calm
+  let lcExpr=L.phase==='breathe'?'quiet':'quiet';
+  drawLaoCai(X,lcx,lcy,.7,{action:'idle_standing',expression:lcExpr,swimMode:false,headTilt:-.1,armLAngle:.1,armRAngle:.1});
+
+  if(L.phase==='dialogue'){
+    let lines=[
+      {who:'none',text:'（安静。只有水声。）'},
+      {who:'laocai',text:'……刚才我话多了。'},
+      {who:'feifei',text:'……'},
+      {who:'laocai',text:'我以前也怕水。蹲在池边死活不肯下去。'},
+      {who:'feifei',text:'你？？怕水？'},
+      {who:'laocai',text:'怕了三年。后来有个人跟我说：你不用克服恐惧，你就带着它下水就行。'},
+      {who:'laocai',text:'来，我教你一个办法。每次紧张的时候——深呼吸。'},
+      {who:'laocai',text:'按住屏幕吸气，松开呼气。来三次。'}
+    ];
+    let l=lines[Math.min(L.showStep,lines.length-1)];
+    let bx=l.who==='feifei'?fx+20:lcx-20;
+    let by=l.who==='feifei'?fy-65:lcy-70;
+    if(l.who==='none'){
+      X.fillStyle='rgba(0,0,0,0.3)';X.font='14px sans-serif';X.textAlign='center';X.fillText(l.text,W/2,H*.3);
+    }else{
+      drawBubble(X,bx,by,l.text,l.text.length>12?190:140);
+    }
+    X.fillStyle='rgba(255,255,255,0.5)';X.font='12px sans-serif';X.textAlign='center';X.fillText('👆 点击推进',W/2,H*.92);
+  }else if(L.phase==='breathe'){
+    // Breath exercise UI
+    // Breath circle
+    let cx=W*.5,cy=H*.3,r=35;
+    let breathR=r+L.breathProgress*25;
+    // Outer circle (target)
+    X.beginPath();X.arc(cx,cy,r+25,0,6.28);X.strokeStyle='rgba(255,255,255,0.2)';X.lineWidth=2;X.stroke();
+    // Inner circle (current)
+    let breathCol=L.breathHolding?'#4FC3F7':'#81C784';
+    X.beginPath();X.arc(cx,cy,breathR,0,6.28);X.fillStyle=breathCol;X.globalAlpha=.3;X.fill();X.globalAlpha=1;X.strokeStyle=breathCol;X.lineWidth=3;X.stroke();
+    // Center text
+    X.fillStyle='#fff';X.font='bold 14px sans-serif';X.textAlign='center';
+    if(L.breathHolding){X.fillText('吸——',cx,cy+5);}
+    else if(L.breathProgress>0.1){X.fillText('呼——',cx,cy+5);}
+    else{X.fillText('按住',cx,cy+5);}
+    // Count
+    X.font='11px sans-serif';X.fillText(L.breathCount+'/3',cx,cy+r+40);
+    // Lao Cai instruction
+    drawBubble(X,lcx-20,lcy-75,'按住吸气，松开呼气。慢慢来。',170);
+    // Instruction
+    X.fillStyle='rgba(255,255,255,0.7)';X.font='13px sans-serif';X.textAlign='center';
+    X.fillText('👇 按住屏幕深呼吸',W/2,H*.88);
+    if(L.fbT>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.textAlign='center';X.fillText(L.fb,W/2,H*.82);}
+  }else if(L.phase==='after'){
+    let lines2=[
+      {who:'laocai',text:'看，没那么难吧？'},
+      {who:'laocai',text:'最难的其实不是水里。是站在岸边的那一秒。'},
+      {who:'laocai',text:'你已经过了最怕的那一秒了。'},
+      {who:'feifei',text:'……谢了，老蔡。'}
+    ];
+    let l=lines2[Math.min(L.showStep,lines2.length-1)];
+    let bx=l.who==='feifei'?fx+20:lcx-20;
+    let by=l.who==='feifei'?fy-65:lcy-70;
+    drawBubble(X,bx,by,l.text,l.text.length>12?190:140);
+    X.fillStyle='rgba(255,255,255,0.5)';X.font='12px sans-serif';X.textAlign='center';X.fillText('👆 点击推进',W/2,H*.92);
+  }else if(L.phase==='success'){
+    drawFeifei(X,fx,fy,.7,{expression:'happy',hatOn:true});
+    drawLaoCai(X,lcx,lcy,.7,{action:'idle_standing',expression:'quiet',swimMode:false});
+    if(game.phaseTimer>2)showComplete();
+  }
+}
+(function(){let _i=initL7_5;initL7_5=function(){_i();game.onTouchStart=function(t){let L=game.L;
+  if(L.phase==='dialogue'){L.showStep++;if(L.showStep>=8){L.phase='breathe';L.breathTimer=0;L.breathHolding=false;L.breathProgress=0;L.breathCount=0;}}
+  else if(L.phase==='breathe'){L.breathHolding=true;L.breathProgress=Math.max(0,L.breathProgress);}
+  else if(L.phase==='after'){L.showStep++;if(L.showStep>=4)L.phase='success';}
+};game.onTouchMove=function(){};game.onTouchEnd=function(){
+  let L=game.L;if(L.phase==='breathe'&&L.breathHolding){L.breathHolding=false;L.fb='呼——';L.fbT=.5;L.breathCount++;
+    if(L.breathCount>=3){L.phase='after';L.showStep=0;L.fb='';L.fbT=0;}
+  }
+};};})();
+
+
+// ========== LEVEL 8: FINAL COMBO ==========
+function initL8(){game.L={phase:'demo',demoStep:0,demoTimer:0,seq:['划手','吸气','收腿','蹬夹','滑行'],curSt:0,stTimer:0,stWindow:2.5,stHit:false,dist:0,target:25,fb:'',fbT:0,showGuide:true,round:0,sprint:false,guideRounds:6};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL8(dt){let L=game.L;if(L.phase==='demo'){L.demoTimer+=dt;if(L.demoTimer>2.5){L.demoTimer=0;L.demoStep++;if(L.demoStep>=2)L.phase='play';}}else if(L.phase==='play'){L.stTimer+=dt;if(L.curSt===4&&L.stTimer>1){advSt8();}else if(L.stTimer>L.stWindow&&!L.stHit&&L.curSt!==4){L.fb='太慢了！';L.fbT=.5;game.totalMistakes++;advSt8();}if(L.dist>=20&&!L.sprint)L.sprint=true;if(L.dist>=L.target){L.phase='success';game.phaseTimer=0;}if(L.fbT>0)L.fbT-=dt;if(L.round>=L.guideRounds)L.showGuide=false;}else if(L.phase==='success'){game.phaseTimer+=dt;if(game.phaseTimer>3)showComplete();}}
+function advSt8(){let L=game.L;L.curSt=(L.curSt+1)%5;L.stTimer=0;L.stHit=false;if(L.curSt===0)L.round++;}
+function drawL8(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#B3E5FC');g.addColorStop(.3,'#4FC3F7');g.addColorStop(1,'#01579B');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.3;drawWater(X,wy,t);
+  for(let i=0;i<2;i++){let ly=H*.33+i*H*.14;for(let x=0;x<W;x+=18){X.beginPath();X.arc(x+Math.sin(t+x*.01)*2,ly,3,0,6.28);X.fillStyle=i===0?'#FFB74D':'#4FC3F7';X.fill();}}
+  drawProgress(X,W*.04,H*.03,W*.92,12,L.dist/L.target,L.sprint?'#FF6B6B':'#4CAF50');
+  X.fillStyle='#fff';X.font='bold 12px sans-serif';X.textAlign='center';X.fillText(Math.floor(L.dist)+'m / 25m',W/2,H*.03+8);
+  // Lao Cai cheering at pool side
+  if(L.phase==='play'){drawLaoCaiCameo(X,wy,t,9);drawLaoCaiHarass(X,'动作不协调！手脚配合！我教你多少遍了！',t);}
+  let fx=W*.35,fy=H*.4;
+  if(L.phase==='demo'){
+    if(L.demoStep===0){drawFeifei(X,fx,fy,.6,{expression:'struggling',hatOn:true,swimMode:true,armLAngle:Math.sin(t*8)*.5,armRAngle:-Math.sin(t*8)*.5,legLAngle:Math.sin(t*6)*.3,legRAngle:-Math.sin(t*6)*.3});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ 手脚同时动=互相打架=游泳界内卷',W/2,H*.12);}
+    else{drawFeifei(X,fx,fy,.6,{expression:'struggling',hatOn:true,swimMode:true,headTilt:Math.sin(t*7)*.5,armLAngle:Math.sin(t*5)*.7,legLAngle:Math.cos(t*6)*.4});X.fillStyle='rgba(255,255,255,0.85)';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('❌ CPU过载=单核处理器跑多线程=死机',W/2,H*.12);}
+  }else if(L.phase==='play'){
+    let expr=L.sprint?'happy':L.curSt<=1?'focused':'happy';
+    let aa=L.curSt===0?.6:L.curSt===4?-.8:0,la=L.curSt===3?-.5:L.curSt===4?0:.2;
+    drawFeifei(X,fx,fy,.6,{expression:expr,hatOn:true,swimMode:true,armLAngle:aa,armRAngle:-aa,legLAngle:la,legRAngle:-la,headTilt:L.curSt===1?-.3:0});
+    drawBubble(X,fx+20,fy-60,'来吧。这次我是——水鸭子！',175);
+    if(L.showGuide){
+      let stepW=W*.17,tw=stepW*5,sx=(W-tw)/2,ty=H*.74,th=38;
+      let cols=['#FF8A65','#4FC3F7','#81C784','#FFB74D','#CE93D8'];
+      for(let i=0;i<5;i++){let bx=sx+i*stepW;let act=i===L.curSt;drawRR(X,bx+2,ty,stepW-4,th,8);X.fillStyle=act?cols[i]:'rgba(255,255,255,0.12)';X.fill();if(act){X.save();X.globalAlpha=.25+Math.sin(t*8)*.15;drawRR(X,bx-1,ty-3,stepW+2,th+6,10);X.strokeStyle=cols[i];X.lineWidth=2;X.stroke();X.restore();}X.fillStyle=act?'#fff':'rgba(255,255,255,0.4)';X.font='bold 12px sans-serif';X.textAlign='center';X.fillText(L.seq[i],bx+stepW/2,ty+th/2+4);}
+    }else{X.fillStyle='rgba(255,255,255,0.55)';X.font='12px sans-serif';X.textAlign='center';X.fillText('凭节奏操作！',W/2,H*.77);}
+    // Current step maps to zone: 0→0, 1→1, 2→0, 3→2, 4→skip
+    let activeZone=L.curSt===4?-1:L.curSt===0?0:L.curSt===1?1:L.curSt===2?0:2;
+    let zoneLabels=['👆 划手/收腿','👆 吸气','👆 蹬夹'];
+    let zoneColors=['#FF8A65','#4FC3F7','#FFB74D'];
+    let zy=H*.84,zh=48;
+    let zones=[{x:W*.03,w:W*.3},{x:W*.35,w:W*.3},{x:W*.67,w:W*.3}];
+    game._l8zones=zones.map(z=>({x:z.x,y:zy,w:z.w,h:zh}));
+    zones.forEach((z,i)=>{
+      let isActive=i===activeZone;
+      drawRR(X,z.x,zy,z.w,zh,8);
+      X.fillStyle=isActive?zoneColors[i]:'rgba(255,255,255,0.08)';X.fill();
+      if(isActive){X.save();X.globalAlpha=.3+Math.sin(t*6)*.15;drawRR(X,z.x-2,zy-2,z.w+4,zh+4,10);X.strokeStyle=zoneColors[i];X.lineWidth=2.5;X.stroke();X.restore();}
+      else{X.strokeStyle='rgba(255,255,255,0.25)';X.lineWidth=1;X.stroke();}
+      X.fillStyle=isActive?'#fff':'rgba(255,255,255,0.45)';X.font=isActive?'bold 13px sans-serif':'12px sans-serif';X.textAlign='center';X.fillText(zoneLabels[i],z.x+z.w/2,zy+zh/2+4);
+    });
+    // Show current action name big
+    if(L.curSt!==4){
+      X.fillStyle='rgba(255,255,255,0.95)';X.font='bold 18px sans-serif';X.textAlign='center';
+      X.fillText('→ '+L.seq[L.curSt]+' ←',W/2,H*.8);
+    }else{
+      X.fillStyle='rgba(255,255,255,0.7)';X.font='16px sans-serif';X.textAlign='center';
+      X.fillText('✨ 滑行中…',W/2,H*.8);
+    }
+    if(L.fbT>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.textAlign='center';X.fillText(L.fb,W/2,H*.67);}
+    if(L.sprint){X.save();X.globalAlpha=.06+Math.sin(t*4)*.03;X.fillStyle='#FFD54F';X.fillRect(0,0,W,H);X.restore();}
+  }else if(L.phase==='success'){
+    if(game.phaseTimer<3){
+      drawFeifei(X,W*.5,H*.4,1,{expression:'happy',hatOn:true,swimMode:true,armLAngle:-1,armRAngle:-1});
+      spawnP(rand(0,W),rand(0,H*.5),'confetti',2);spawnP(rand(0,W),rand(0,H*.5),'star',1);
+      X.fillStyle='#FFD54F';X.font='bold 30px sans-serif';X.textAlign='center';X.fillText('我会游泳了！！！',W/2,H*.14);
+    }else{
+      let g2=X.createLinearGradient(0,0,0,H);g2.addColorStop(0,'#E8EAF6');g2.addColorStop(.5,'#C5CAE9');g2.addColorStop(1,'#9FA8DA');X.fillStyle=g2;X.fillRect(0,0,W,H);
+      drawWater(X,H*.68,t,.3);
+      if(Math.random()<.08)spawnP(rand(0,W),rand(0,H*.3),'confetti',1);
+      drawFeifei(X,W*.5,H*.42,1.2,{expression:'happy',hatOn:true});
+      X.fillStyle='#333';X.font='14px sans-serif';X.textAlign='center';
+      let msg=['谢谢你没有在我每次犯蠢的时候放弃我。','说实话，我最怕的不是水，是觉得自己学不会。','但现在我知道了——','学不会不是因为笨，是因为没人让你笑着学。','','所以如果你也是旱鸭子——','下次去泳池的时候，想想我菲菲。','连我都能学会，你一定也行。'];
+      let sy=H*.06;msg.forEach((l,i)=>X.fillText(l,W/2,sy+i*20));
+      let bx=(W-110)/2,by=H*.88;drawBtn(X,bx,by,110,40,'再玩一次','#FF8A65','#fff');
+      game._replayBtn={x:bx,y:by,w:110,h:40};
+    }
+  }
+}
+(function(){let _i=initL8;initL8=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'){if(L.curSt===4)return;let hz=-1;if(game._l8zones){for(let i=0;i<3;i++){if(inRect(t.x,t.y,game._l8zones[i])){hz=i;break;}}}else{hz=Math.floor((t.x-W*.03)/(W*.33));hz=clamp(hz,0,2);}
+      let ok=false;let st=L.curSt;
+      if(st===0&&hz===0)ok=true;if(st===1&&hz===1)ok=true;if(st===2&&hz===0)ok=true;if(st===3&&hz===2)ok=true;
+      if(ok){L.stHit=true;let d=st===3?2.5:st===4?0:1.2;L.dist+=d;L.fb=['完美划手！','好呼吸！','收腿！','漂亮蹬夹！','滑行~'][st];L.fbT=.5;spawnP(t.x,t.y,'star',3);if(st===3)spawnP(W*.35+20,H*.5,'splash',8);advSt8();}else{L.fb='节奏乱了！';L.fbT=.5;game.totalMistakes++;}}else if(L.phase==='success'&&game.phaseTimer>3&&game._replayBtn&&inRect(t.x,t.y,game._replayBtn)){game.scene='title';game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 10: LAO CAI CHALLENGE (BONUS) ==========
+function initL10(){game.L={phase:'play',timer:0,feifeiX:50,laoCaiX:50,feifeiSpd:0,laoCaiSpd:0,isHolding:false,feifeiDist:0,laoCaiDist:0,finished:false,winner:'',speedZone:'snail',score:0,totalScore:0,fb:'',fbT:0};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL10(dt){let L=game.L;if(L.phase==='play'){
+  L.timer+=dt;
+  // Feifei: holding = slow down, release = speed up
+  if(L.isHolding){L.feifeiSpd=lerp(L.feifeiSpd,.3,.05);}else{L.feifeiSpd=lerp(L.feifeiSpd,2.5,.03);}
+  L.feifeiDist+=L.feifeiSpd*dt;
+  // Speed zone
+  if(L.feifeiSpd<.5)L.speedZone='snail';else if(L.feifeiSpd<1.2)L.speedZone='frog';else if(L.feifeiSpd<2)L.speedZone='dolphin';else L.speedZone='torpedo';
+  // Score
+  if(L.speedZone==='snail')L.totalScore+=2*dt;else if(L.speedZone==='frog')L.totalScore+=1*dt;else if(L.speedZone==='dolphin')L.totalScore-=.5*dt;else L.totalScore-=2*dt;
+  // Lao Cai AI: can't slow down!
+  let laoPhase=L.timer;
+  if(laoPhase<5)L.laoCaiSpd=lerp(L.laoCaiSpd,1.5,.02);
+  else if(laoPhase<10)L.laoCaiSpd=lerp(L.laoCaiSpd,2,.03);
+  else if(laoPhase<15)L.laoCaiSpd=lerp(L.laoCaiSpd,2.5,.04);
+  else L.laoCaiSpd=lerp(L.laoCaiSpd,3,.05);
+  L.laoCaiDist+=L.laoCaiSpd*dt;
+  // Check finish
+  if(L.laoCaiDist>=25&&!L.finished){L.winner='feifei';L.finished=true;}
+  if(L.feifeiDist>=25&&!L.finished){L.winner='feifei';L.finished=true;L.phase='success';game.phaseTimer=0;}
+  if(L.laoCaiDist>=25&&L.feifeiDist>=25){L.phase='success';game.phaseTimer=0;}
+  if(L.fbT>0)L.fbT-=dt;
+}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL10(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.3,'#B3E5FC');g.addColorStop(1,'#0277BD');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.38;drawWater(X,wy,t);
+if(L.phase==='play'){
+  // Title
+  X.fillStyle='#FFD54F';X.font='bold 16px sans-serif';X.textAlign='center';X.fillText('🏆 旱鸭子锦标赛——谁游得慢谁赢！',W/2,H*.06);
+  // Distance markers
+  for(let m=5;m<=25;m+=5){let mx=40+m*(W-80)/25;X.fillStyle='rgba(255,255,255,0.3)';X.font='9px sans-serif';X.textAlign='center';X.fillText(m+'m',mx,H*.92);}
+  // Feifei
+  let ffx=40+L.feifeiDist*(W-80)/25;
+  drawFeifei(X,clamp(ffx,40,W-40),H*.42,.5,{expression:L.speedZone==='snail'?'happy':'struggling',hatOn:true,swimMode:true,armLAngle:-.3,armRAngle:-.3,legLAngle:L.feifeiSpd<1?.1:Math.sin(t*8)*.4,legRAngle:L.feifeiSpd<1?-.1:Math.sin(t*8+2)*.4});
+  // Lao Cai
+  let lcx=40+L.laoCaiDist*(W-80)/25;
+  drawLaoCai(X,clamp(lcx,40,W-40),H*.52,.5,{action:'swimming',expression:L.laoCaiSpd>2?'embarrassed':'confident',swimMode:true,bodyAngle:0,armLAngle:Math.sin(t*4)*.3,armRAngle:-Math.sin(t*4)*.3,talkPhase:L.timer});
+  // Speed bar
+  let sbW=W*.7,sbH=20,sbX=(W-sbW)/2,sbY=H*.72;
+  drawRR(X,sbX,sbY,sbW,sbH,10);X.fillStyle='rgba(0,0,0,0.3)';X.fill();
+  // Zones
+  let zw=sbW*.25;
+  X.fillStyle='rgba(76,175,80,0.3)';X.fillRect(sbX,sbY,zw,sbH);
+  X.fillStyle='rgba(255,183,77,0.3)';X.fillRect(sbX+zw,sbY,zw,sbH);
+  X.fillStyle='rgba(239,83,80,0.3)';X.fillRect(sbX+zw*2,sbY,zw,sbH);
+  X.fillStyle='rgba(0,0,0,0.3)';X.fillRect(sbX+zw*3,sbY,zw,sbH);
+  // Feifei speed indicator
+  let spdPct=clamp(L.feifeiSpd/3,0,1);
+  let dotX2=sbX+spdPct*sbW;
+  X.beginPath();X.arc(dotX2,sbY+sbH/2,8,0,6.28);X.fillStyle=L.speedZone==='snail'?'#4CAF50':L.speedZone==='frog'?'#FFB74D':L.speedZone==='dolphin'?'#EF5350':'#333';X.fill();
+  // Labels
+  X.fillStyle='#fff';X.font='9px sans-serif';X.textAlign='center';
+  X.fillText('🐌',sbX+zw*.5,sbY+sbH/2+3);X.fillText('🐸',sbX+zw*1.5,sbY+sbH/2+3);X.fillText('🐬',sbX+zw*2.5,sbY+sbH/2+3);X.fillText('🚀',sbX+zw*3.5,sbY+sbH/2+3);
+  // Instructions
+  X.fillStyle='rgba(255,255,255,0.7)';X.font='13px sans-serif';X.textAlign='center';
+  X.fillText(L.isHolding?'控速中……越慢越好！':'👆 按住减速！松手会加速！',W/2,H*.82);
+  // Lao Cai speech
+  if(L.timer<5)drawBubble(X,clamp(lcx,70,W-70),H*.28,'慢……慢……我可以慢……',140);
+  else if(L.timer<10)drawBubble(X,clamp(lcx,70,W-70),H*.28,'啊！我怎么又快了！',130);
+  else if(L.timer<15)drawBubble(X,clamp(lcx,70,W-70),H*.28,'我换个姿势……不对更快了！',150);
+  else drawBubble(X,clamp(lcx,70,W-70),H*.28,'我控制不了！！',120);
+  // Score
+  X.fillStyle='#FFD54F';X.font='bold 14px sans-serif';X.textAlign='center';X.fillText('得分: '+Math.floor(L.totalScore),W/2,H*.88);
+  // Distance
+  X.fillStyle='rgba(255,255,255,0.5)';X.font='10px sans-serif';X.textAlign='left';X.fillText('菲菲: '+L.feifeiDist.toFixed(1)+'m',10,H*.35);X.fillText('老蔡: '+L.laoCaiDist.toFixed(1)+'m',10,H*.55);
+}else if(L.phase==='success'){
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.3,'#B3E5FC');g.addColorStop(1,'#0277BD');X.fillStyle=g;X.fillRect(0,0,W,H);drawWater(X,H*.38,t);
+  drawFeifei(X,W*.35,H*.4,.8,{expression:'proud',hatOn:true,swimMode:true,armRAngle:-1});
+  drawLaoCai(X,W*.65,H*.4,.7,{action:'idle_standing',expression:'embarrassed',swimMode:true});
+  drawBubble(X,W*.35,H*.4-70,'看见没！这叫天赋！虽然迟到了二十年！',180);
+  drawBubble(X,W*.65,H*.4-70,'我怎么就慢不下来！',140);
+  if(game.phaseTimer<.5)spawnP(W*.35,H*.35,'star',5);
+  if(game.phaseTimer>2.5)showComplete();
+}}
+(function(){let _i=initL10;initL10=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play')L.isHolding=true;};game.onTouchEnd=function(){let L=game.L;if(L.phase==='play')L.isHolding=false;};game.onTouchMove=function(){};};})();
+
+// ========== LEVEL 11: HAT BATTLE (MINI) ==========
+function initL11(){game.L={phase:'play',timer:0,feifeiX:W*.25,hatX:W*.52,hatY:H*.38,hatSpeed:.3,legPhase:0,legTimer:0,legHit:false,armTimer:0,armHit:false,hatProgress:0,fb:'',fbT:0,hatCaught:false};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL11(dt){let L=game.L;if(L.phase==='play'){
+  L.timer+=dt;
+  // Hat drifting - hat moves toward feifei slowly, and bobs near her
+  let targetHatX=L.feifeiX+W*.15;
+  L.hatX=lerp(L.hatX,targetHatX,.008)+Math.sin(L.timer*1.2)*8;
+  L.hatY=H*.36+Math.cos(L.timer*.9)*12;
+  // Leg rhythm timer
+  L.legTimer+=dt;
+  if(L.legTimer>1.2&&!L.legHit){L.legHit=false;L.legPhase=(L.legPhase+1)%2;L.legTimer=0;}
+  // Hat closeness - much more forgiving distance
+  let dx=L.hatX-L.feifeiX,dy=L.hatY-H*.42;
+  L.hatProgress=clamp(1-Math.sqrt(dx*dx+dy*dy)/120,0,1);
+  if(L.hatProgress>.5&&L.armHit)L.hatCaught=true;
+  if(L.hatCaught){L.phase='success';game.phaseTimer=0;}
+  if(L.fbT>0)L.fbT-=dt;
+}else if(L.phase==='success'){game.phaseTimer+=dt;}}
+function drawL11(){let L=game.L,t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.3,'#B3E5FC');g.addColorStop(1,'#0277BD');X.fillStyle=g;X.fillRect(0,0,W,H);
+  let wy=H*.36;drawWater(X,wy,t);
+if(L.phase==='play'){
+  // Hat floating
+  X.save();X.translate(L.hatX,L.hatY);X.rotate(Math.sin(t*2)*.2);
+  X.beginPath();X.ellipse(0,0,20,8,0,0,6.28);X.fillStyle='#5C6BC0';X.fill();X.strokeStyle='#3F51B5';X.lineWidth=1;X.stroke();
+  X.beginPath();X.ellipse(0,-5,24,7,0,Math.PI,0);X.fillStyle='#5C6BC0';X.fill();X.stroke();
+  X.restore();
+  // Feifei swimming
+  let legAngle=L.legPhase===1?-.5:.2;
+  drawFeifei(X,L.feifeiX,H*.42,.6,{expression:L.hatCaught?'happy':'focused',hatOn:false,swimMode:true,legLAngle:legAngle,legRAngle:-legAngle,armLAngle:-.3,armRAngle:L.armHit?-.8:0});
+  // Hat proximity indicator
+  drawProgress(X,W*.1,H*.05,W*.8,8,L.hatProgress);
+  // Two zones
+  let lzW=W*.4,lzH=50,lzY=H*.8;
+  drawRR(X,W*.03,lzY,lzW,lzH,8);X.fillStyle='rgba(76,175,80,0.15)';X.fill();X.strokeStyle='rgba(76,175,80,0.4)';X.lineWidth=1;X.stroke();
+  X.fillStyle='rgba(255,255,255,0.6)';X.font='11px sans-serif';X.textAlign='center';X.fillText('🐸 蛙泳腿',W*.03+lzW/2,lzY+lzH/2+4);
+  drawRR(X,W*.55,lzY,lzW,lzH,8);X.fillStyle='rgba(255,183,77,0.15)';X.fill();X.strokeStyle='rgba(255,183,77,0.4)';X.lineWidth=1;X.stroke();
+  X.fillStyle='rgba(255,255,255,0.6)';X.font='11px sans-serif';X.textAlign='center';X.fillText('🎩 捞帽子',W*.55+lzW/2,lzY+lzH/2+4);
+  L._legZone={x:W*.03,y:lzY,w:lzW,h:lzH};L._armZone={x:W*.55,y:lzY,w:lzW,h:lzH};
+  if(L.fbT>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.textAlign='center';X.fillText(L.fb,W/2,H*.7);}
+  drawBubble(X,L.feifeiX+20,H*.35,'我的帽子！！！',130);
+}else if(L.phase==='success'){
+  let g2=X.createLinearGradient(0,0,0,H);g2.addColorStop(0,'#E3F2FD');g2.addColorStop(.3,'#B3E5FC');g2.addColorStop(1,'#0277BD');X.fillStyle=g2;X.fillRect(0,0,W,H);drawWater(X,H*.36,t);
+  drawFeifei(X,W*.5,H*.38,.8,{expression:'happy',hatOn:true,swimMode:true});
+  drawBubble(X,W*.5,H*.38-70,'帽子保住了！代价是狗刨……但帽子保住了！',200);
+  if(game.phaseTimer<.5)spawnP(W*.5,H*.35,'star',4);
+  if(game.phaseTimer>2.5)showComplete();
+}}
+(function(){let _i=initL11;initL11=function(){_i();game.onTouchStart=function(t){let L=game.L;if(L.phase==='play'){
+  if(L._legZone&&inRect(t.x,t.y,L._legZone)){L.legHit=true;if(L.legTimer<1.2){L.feifeiX+=15;L.fb='蹬腿前进！';L.fbT=.5;spawnP(L.feifeiX,H*.5,'splash',3);}L.legPhase=(L.legPhase+1)%2;L.legTimer=0;}
+  else if(L._armZone&&inRect(t.x,t.y,L._armZone)){L.armHit=true;L.fb='伸手够帽子！';L.fbT=.5;spawnP(t.x,t.y,'star',3);
+    if(L.hatProgress>.3){L.hatCaught=true;L.fb='帽子拿回来了！戴！上！';L.fbT=.8;}
+    else{L.fb='还差一点，再蹬近一些！';L.fbT=.5;}
+    setTimeout(()=>{L.armHit=false;},500);}
+}};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+// ========== LEVEL 12: LAO CAI CHASE (MINI) ==========
+function initL12(){game.L={phase:'intro',introTimer:0,introStep:0,feifeiDist:0,laoCaiDist:0,tapCount:0,feifeiDrift:0,failed:false,failTimer:0,fb:'',fbT:0,splashT:0,lastTapSpeed:0,tapTimes:[],mode:'hard'};game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;}
+function updateL12(dt){let L=game.L;
+  if(L.phase==='intro'){L.introTimer+=dt;}
+  else if(L.phase==='play'){
+    // Feifei slow auto-drift
+    L.feifeiDrift+=dt;
+    L.feifeiDist+=6*dt;
+    // Lao Cai chases - like a real person: bursts of energy then fatigue, avg ~25
+    let progress=clamp(L.feifeiDist/500,0,1);
+    let isEasy=L.mode==='easy';
+    let lcTired=isEasy?19:25;
+    let burstCycle=6; // same rhythm for both
+    let burstPhase=(L.feifeiDrift+2)%burstCycle;
+    let burstMul=1;
+    // Same burst pattern for both modes - only base speed differs
+    if(burstPhase<1){burstMul=5;}
+    else if(burstPhase<3){let p=(burstPhase-1)/2;burstMul=5-p*2;} // 5->3
+    else if(burstPhase<4.5){burstMul=1;}
+    else{burstMul=1+((burstPhase-4.5)/1.5)*0.3;}
+    L.laoCaiDist+=lcTired*burstMul*dt;
+    // Splash timer
+    L.splashT+=dt;
+    // Check if Lao Cai caught Feifei
+    if(L.laoCaiDist>=L.feifeiDist&&!L.failed){L.failed=true;L.failTimer=0;L.phase='fail';}
+    // Check if Feifei escaped - gap large enough that Lao Cai is off screen
+    if(L.feifeiDist-L.laoCaiDist>=200&&L.feifeiDist>100){L.phase='success';game.phaseTimer=0;}
+    if(L.fbT>0)L.fbT-=dt;
+    // Speed decay
+    L.lastTapSpeed*=0.95;
+  }else if(L.phase==='fail'){
+    L.failTimer+=dt;
+  }else if(L.phase==='success'){game.phaseTimer+=dt;}
+}
+function drawL12(){let L=game.L,t=game.time;
+  // Pool background with lane lines
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#4FC3F7');g.addColorStop(.5,'#0288D1');g.addColorStop(1,'#01579B');X.fillStyle=g;X.fillRect(0,0,W,H);
+  // Speed-based visuals
+  let speed=L.lastTapSpeed||0; // taps per second estimate
+  let speedNorm=clamp(speed/8,0,1); // 0=stopped, 1=max speed
+  // Lane line spacing gets tighter when fast
+  let laneSpacing=lerp(60,25,speedNorm);
+  let scrollOff=L.feifeiDist%laneSpacing;
+  for(let i=-1;i<8;i++){let ly=H*.25+i*H*.09;
+    for(let x=-scrollOff;x<W;x+=lerp(30,15,speedNorm)){X.beginPath();X.arc(x,ly,lerp(2.5,1.5,speedNorm),0,6.28);X.fillStyle='rgba(255,255,255,'+lerp(.15,.35,speedNorm)+')';X.fill();}}
+  // Water intensity scales with speed
+  drawWater(X,H*.35,t,lerp(.3,.7,speedNorm));
+  // Speed streaks when going fast
+  if(speedNorm>.4){
+    X.save();X.globalAlpha=speedNorm*.3;
+    for(let i=0;i<Math.floor(speedNorm*6);i++){
+      let sy=rand(H*.2,H*.7),sx=rand(0,W),sw=rand(20,60)*speedNorm;
+      X.beginPath();X.moveTo(sx,sy);X.lineTo(sx+sw,sy);X.strokeStyle='rgba(255,255,255,0.6)';X.lineWidth=1;X.stroke();
+    }
+    X.restore();
+  }
+  // Background tint shifts with speed - calm blue to intense deep
+  if(speedNorm>.3){
+    X.save();X.globalAlpha=(speedNorm-.3)*.3;
+    X.fillStyle='#01579B';X.fillRect(0,0,W,H);
+    X.restore();
+  }
+
+  if(L.phase==='intro'){
+    // Poolside scene - Feifei and Lao Cai
+    let fx=W*.35,fy=H*.42;
+    let lcx=W*.65,lcy=H*.42;
+    drawFeifei(X,fx,fy,.65,{expression:L.introStep>=2?'scared':'surprised',hatOn:true,swimMode:false});
+    drawLaoCai(X,lcx,lcy,.65,{action:'coaching',expression:'talking',swimMode:false,armLAngle:Math.sin(t*4)*.4,armRAngle:-Math.sin(t*4)*.4,talkPhase:t});
+    // Dialogue
+    if(L.introStep===0){
+      drawBubble(X,lcx-20,lcy-70,'我都教会你游泳了，你该嫁给我！',180);
+    }else if(L.introStep===1){
+      drawBubble(X,lcx-20,lcy-70,'我追上你的话你就要嫁给我咯！',170);
+    }else if(L.introStep>=2){
+      drawBubble(X,fx+20,fy-60,'呸！做梦！',100);
+      drawLaoCai(X,lcx,lcy,.65,{action:'coaching',expression:'confident',swimMode:false,armRAngle:-1,talkPhase:t});
+    }
+    X.fillStyle='rgba(255,255,255,0.5)';X.font='12px sans-serif';X.textAlign='center';X.fillText('👆 点击推进',W/2,H*.92);
+  }else if(L.phase==='modeSelect'){
+    // Mode selection screen
+    drawFeifei(X,W*.3,H*.25,.5,{expression:'determined',hatOn:true,swimMode:false});
+    X.fillStyle='#fff';X.font='bold 18px sans-serif';X.textAlign='center';
+    X.fillText('选择难度',W/2,H*.15);
+    X.font='12px sans-serif';X.fillStyle='rgba(255,255,255,0.6)';
+    X.fillText('他不会追太紧……大概吧',W/2,H*.2);
+    let bw2=W*.75,bh2=48,sx2=(W-bw2)/2;
+    let by1=H*.42,by2=H*.42+58;
+    drawBtn(X,sx2,by1,bw2,bh2,'🏊 简单模式 · 半速追','#4CAF50','#fff');
+    drawBtn(X,sx2,by2,bw2,bh2,'💨 极限模式 · 手抽筋','#E53935','#fff');
+    X.fillStyle='rgba(255,255,255,0.4)';X.font='10px sans-serif';
+    X.fillText('简单：老蔡半速、节奏慢、适合新手',W/2,by1+bh2+10);
+    X.fillText('极限：老蔡全速、冲刺猛、全程高压',W/2,by2+bh2+10);
+  }else if(L.phase==='play'){
+    // Camera tracks Feifei - she's always at 30% from left
+    let fx=W*.3,fy=H*.45;
+    let legAngle=Math.sin(t*6)*.4;
+    drawFeifei(X,fx,fy,.6,{expression:'focused',hatOn:true,swimMode:true,legLAngle:legAngle,legRAngle:-legAngle,armLAngle:-.5,armRAngle:.3,bodyAngle:0});
+    // Lao Cai position based on actual gap
+    let gap=L.feifeiDist-L.laoCaiDist;
+    let lcx=fx+gap*2; // 2 pixels per unit gap
+    let lcy=H*.45;
+    // Dynamic expression based on burst phase
+    let burstCycle=6,burstPhase=(L.feifeiDrift+2)%burstCycle;
+    let isBursting=burstPhase<1.5,isTired=burstPhase>=2.5&&burstPhase<4.5;
+    let lcExpr=isBursting?'confident':isTired?'embarrassed':'talking';
+    let lcArmSpd=isBursting?8:isTired?3:5;
+    // Only draw Lao Cai if he's on screen
+    if(lcx>0&&lcx<W+50){
+      drawLaoCai(X,lcx,lcy,.55,{action:'swimming',expression:lcExpr,swimMode:true,bodyAngle:isBursting?-.1:0,armLAngle:Math.sin(t*lcArmSpd)*.4,armRAngle:-Math.sin(t*lcArmSpd)*.4,legLAngle:Math.sin(t*lcArmSpd+1)*.3,legRAngle:-Math.sin(t*lcArmSpd+1)*.3,talkPhase:t});
+      if(isBursting&&L.splashT>.15){spawnP(lcx-15,lcy+20,'splash',2);}
+      else if(L.splashT>.3){spawnP(lcx-15,lcy+20,'bubble',1);}
+      // Lao Cai speech
+      if(isTired)drawBubble(X,lcx-10,lcy-65,'呼……呼……等等我……',120);
+      else if(isBursting)drawBubble(X,lcx-10,lcy-65,'嘿嘿！我要追上了！',120);
+      else if(gap<50)drawBubble(X,lcx-10,lcy-65,'嘿嘿！嫁给我吧！',120);
+      else drawBubble(X,lcx-10,lcy-65,'你跑不掉的！',110);
+    }
+    // Danger indicator when Lao Cai near screen edge
+    if(lcx>=W*.7&&lcx<=W+50){
+      X.save();X.globalAlpha=.5+Math.sin(t*8)*.3;
+      X.fillStyle='#E53935';X.font='bold 14px sans-serif';X.textAlign='right';
+      X.fillText('⚠️ 他来了！',W-15,H*.4);X.restore();
+    }else if(lcx>W+50){
+      X.fillStyle='rgba(76,175,80,0.5)';X.font='12px sans-serif';X.textAlign='right';
+      X.fillText('暂时安全……',W-15,H*.4);
+    }
+    // Feifei speech
+    if(gap<30)drawBubble(X,fx+20,fy-55,'他要追上来了！！快快快！',140);
+    else if(gap>120)drawBubble(X,fx+20,fy-55,'哈哈哈甩掉他了！',120);
+    else drawBubble(X,fx+20,fy-55,'别过来！！',100);
+    // Gap distance
+    let gapCol=gap<30?'#E53935':gap<80?'#FFB74D':'#4CAF50';
+    X.fillStyle=gapCol;X.font='bold 12px sans-serif';X.textAlign='left';
+    X.fillText('距离: '+Math.round(gap)+'m',10,H*.06);
+    // Bottom instruction
+    X.fillStyle='rgba(255,255,255,0.8)';X.font='bold 15px sans-serif';X.textAlign='center';
+    X.fillText('👆 疯狂点击！甩开他！',W/2,H*.85);
+    X.fillStyle='rgba(255,255,255,0.5)';X.font='11px sans-serif';X.fillText('连击: '+L.tapCount,W/2,H*.9);
+    if(L.fbT>0){X.fillStyle='rgba(255,255,255,0.9)';X.font='bold 16px sans-serif';X.fillText(L.fb,W/2,H*.78);}
+  }else if(L.phase==='fail'){
+    // Lao Cai caught Feifei
+    let fx=W*.4,fy=H*.42;
+    let lcx=W*.55,lcy=H*.42;
+    drawLaoCai(X,lcx,lcy,.7,{action:'cheering',expression:'confident',swimMode:false,armRAngle:-1,talkPhase:t});
+    drawFeifei(X,fx,fy,.6,{expression:'scared',hatOn:true,swimMode:false});
+    drawBubble(X,lcx-10,lcy-70,'嘿嘿，嫁给我吧！',130);
+    drawBubble(X,fx+20,fy-55,'呸！',80);
+    // Retry button
+    if(L.failTimer>1.5){
+      let bw=120,bh=42,bx=(W-bw)/2,by=H*.78;
+      drawBtn(X,bx,by,bw,bh,'再试一次！','#FF8A65','#fff');
+      L._retryBtn={x:bx,y:by,w:bw,h:bh};
+    }else L._retryBtn=null;
+  }else if(L.phase==='success'){
+    // Feifei escaped!
+    drawFeifei(X,W*.4,H*.4,.8,{expression:'proud',hatOn:true,swimMode:true,armRAngle:-1});
+    drawBubble(X,W*.4+25,H*.4-70,'清白保住了！下次老蔡再敢追，游到太平洋去！',200);
+    if(game.phaseTimer<.5)spawnP(W*.4,H*.35,'confetti',10);
+    if(game.phaseTimer>2.5)showComplete();
+  }
+}
+(function(){let _i=initL12;initL12=function(){_i();game.onTouchStart=function(t){let L=game.L;
+  if(L.phase==='intro'){L.introStep++;if(L.introStep>=3){L.phase='modeSelect';}}
+  else if(L.phase==='modeSelect'){
+    let bw2=W*.75,bh2=48,sx2=(W-bw2)/2;
+    let by1=H*.42,by2=H*.42+58;
+    if(inRect(t.x,t.y,{x:sx2,y:by1,w:bw2,h:bh2})){L.mode='easy';L.phase='play';L.feifeiDist=0;L.laoCaiDist=-80;L.tapCount=0;L.tapTimes=[];L.lastTapSpeed=0;}
+    else if(inRect(t.x,t.y,{x:sx2,y:by2,w:bw2,h:bh2})){L.mode='hard';L.phase='play';L.feifeiDist=0;L.laoCaiDist=-80;L.tapCount=0;L.tapTimes=[];L.lastTapSpeed=0;}
+  }
+  else if(L.phase==='play'){
+    L.tapCount++;L.feifeiDist+=8;
+    // Track tap speed
+    let now=Date.now();L.tapTimes.push(now);
+    // Keep only last 10 taps
+    if(L.tapTimes.length>10)L.tapTimes.shift();
+    if(L.tapTimes.length>=2){
+      let span=(L.tapTimes[L.tapTimes.length-1]-L.tapTimes[0])/1000;
+      L.lastTapSpeed=L.tapTimes.length/span;
+    }
+    spawnP(W*.25,H*.5,'splash',2);
+    if(L.tapCount%10===0){L.fb='加速！';L.fbT=.5;spawnP(W*.25,H*.45,'star',3);}
+    // Check win after each tap
+    if(L.feifeiDist-L.laoCaiDist>=200&&L.feifeiDist>100){L.phase='success';game.phaseTimer=0;}
+  }
+  else if(L.phase==='fail'&&L._retryBtn&&inRect(t.x,t.y,L._retryBtn)){
+    L.phase='play';L.feifeiDist=0;L.laoCaiDist=-80;L.tapCount=0;L.failed=false;L.fb='';L.fbT=0;L.feifeiDrift=0;L.splashT=0;L.tapTimes=[];L.lastTapSpeed=0;
+  }
+};game.onTouchMove=function(){};game.onTouchEnd=function(){};};})();
+
+
+// ========== LEVEL MANAGER ==========
+const L_INIT=[initL1,initL2,initL3,initL4,initL5,initL6,initL6_5,initL7,initL7_5,initL8,initL10,initL11,initL12];
+const L_UPD=[updateL1,updateL2,updateL3,updateL4,updateL5,updateL6,updateL6_5,updateL7,updateL7_5,updateL8,updateL10,updateL11,updateL12];
+const L_DRW=[drawL1,drawL2,drawL3,drawL4,drawL5,drawL6,drawL6_5,drawL7,drawL7_5,drawL8,drawL10,drawL11,drawL12];
+
+function startLevel(i){game.currentLevel=i;game.scene='level';game.levelPhase='demo';game.phaseTimer=0;game.L={};L_INIT[i]();}
+
+function showComplete(){
+  if(game.scene!=='level')return;
+  let ms=game.totalMistakes,stars=ms<3?3:ms<6?2:1;
+  game.levelStars[game.currentLevel]=Math.max(game.levelStars[game.currentLevel]||0,stars);
+  // Unlock bonus levels - all unlock after completing level 8 (final level)
+  if(game.currentLevel===9){game.bonusUnlocked.laoCaiChallenge=true;game.bonusUnlocked.hatBattle=true;game.bonusUnlocked.laocaiChase=true;}
+  saveGame();game.scene='levelComplete';game.phaseTimer=0;
+  game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;
+  spawnP(W/2,H/2,'confetti',25);spawnP(W/2,H/2,'star',12);
+}
+
+// ========== SCENES ==========
+function drawTitle(){
+  let t=game.time;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E3F2FD');g.addColorStop(.5,'#B3E5FC');g.addColorStop(1,'#4FC3F7');X.fillStyle=g;X.fillRect(0,0,W,H);
+  drawWater(X,H*.63,t,.5);
+  if(Math.random()<.04)spawnP(rand(0,W),H*.65,'bubble',1);
+  X.save();X.fillStyle='#0277BD';X.font='bold 30px sans-serif';X.textAlign='center';
+  X.fillText('🏊 菲菲学游泳2',W/2,H*.14+Math.sin(t*2)*4);
+  X.font='13px sans-serif';X.fillStyle='#0288D1';X.fillText('"笑着操作，玩着就会"',W/2,H*.14+30);
+  X.restore();
+  drawFeifei(X,W*.4,H*.47,1,{expression:'happy',hatOn:true});
+  drawLaoCai(X,W*.6,H*.47,1,{action:'idle_standing',expression:'confident',swimMode:false,armRAngle:-.5});
+  let bw=155,bh=48,bx=(W-bw)/2,by=H*.71;
+  drawBtn(X,bx,by,bw,bh,'开始游戏','#FF8A65','#fff');
+  game._titleBtn={x:bx,y:by,w:bw,h:bh};
+  game.onTouchStart=function(t){if(game._titleBtn&&inRect(t.x,t.y,game._titleBtn)){game.scene='levelSelect';game.onTouchStart=null;}};
+}
+
+function drawLevelSel(){
+  X.fillStyle='#E8EAF6';X.fillRect(0,0,W,H);
+  X.fillStyle='#3F51B5';X.font='bold 18px sans-serif';X.textAlign='center';X.fillText('选择关卡',W/2,H*.04);
+  // Main levels: 0-9, 3 columns to save vertical space
+  let cols=3,bw=(W-60)/cols,bh=42,gap=5,sy=H*.065;
+  game._lvBtns=[];
+  for(let i=0;i<10;i++){let col=i%cols,row=Math.floor(i/cols);let bx=18+col*(bw+gap),by=sy+row*(bh+gap);
+    let ok=i===0||(game.levelStars[i-1]&&game.levelStars[i-1]>0);
+    let st=game.levelStars[i]||0;
+    drawRR(X,bx,by,bw,bh,8);X.fillStyle=ok?'#fff':'#BDBDBD';X.fill();X.strokeStyle=ok?'#7986CB':'#9E9E9E';X.lineWidth=1.5;X.stroke();
+    X.fillStyle=ok?'#333':'#999';X.font='bold 10px sans-serif';X.textAlign='center';
+    let num=i<6?(i+1):i===6?'6.5':i===7?'7':i===8?'7.5':'8';
+    X.fillText('第'+num+'关',bx+bw/2,by+15);
+    X.font='9px sans-serif';X.fillText(LEVEL_NAMES[i],bx+bw/2,by+28);
+    let ss='';for(let s=0;s<3;s++)ss+=s<st?'⭐':'☆';X.font='8px sans-serif';X.fillText(ss,bx+bw/2,by+39);
+    if(!ok){X.fillStyle='rgba(0,0,0,0.25)';X.font='14px sans-serif';X.fillText('🔒',bx+bw/2,by+17);}
+    game._lvBtns.push({x:bx,y:by,w:bw,h:bh,idx:i,ok});
+  }
+  // Bonus levels
+  let bonusY=sy+4*(bh+gap)+8;
+  X.fillStyle='#FF8A65';X.font='bold 12px sans-serif';X.textAlign='center';X.fillText('🥚 彩蛋 & 迷你关卡',W/2,bonusY);
+  bonusY+=18;
+  let bonusInfo=[
+    {idx:10,name:'🏆慢速大作战',unlock:game.bonusUnlocked.laoCaiChallenge},
+    {idx:11,name:'🎩帽子保卫战',unlock:game.bonusUnlocked.hatBattle},
+    {idx:12,name:'🏃逃离魔爪',unlock:game.bonusUnlocked.laocaiChase}
+  ];
+  let bbw=bw,bbh=36;
+  for(let i=0;i<3;i++){let bx=18+i*(bbw+gap),by=bonusY;
+    let bi=bonusInfo[i];
+    drawRR(X,bx,by,bbw,bbh,8);X.fillStyle=bi.unlock?'#FFF8E1':'#BDBDBD';X.fill();X.strokeStyle=bi.unlock?'#FF8A65':'#9E9E9E';X.lineWidth=1.5;X.stroke();
+    X.fillStyle=bi.unlock?'#333':'#999';X.font='10px sans-serif';X.textAlign='center';
+    X.fillText(bi.name,bx+bbw/2,by+bbh/2+3);
+    if(!bi.unlock){X.fillStyle='rgba(0,0,0,0.25)';X.font='12px sans-serif';X.fillText('🔒',bx+bbw/2,by+15);}
+    game._lvBtns.push({x:bx,y:by,w:bbw,h:bbh,idx:bi.idx,ok:bi.unlock});
+  }
+  game.onTouchStart=function(t){for(let b of game._lvBtns){if(b.ok&&inRect(t.x,t.y,b)){startLevel(b.idx);break;}}};
+}
+
+function drawLevelScene(){
+  let i=game.currentLevel;if(L_UPD[i])L_UPD[i](0.016);if(L_DRW[i])L_DRW[i]();
+  // Top bar
+  X.save();X.fillStyle='rgba(0,0,0,0.35)';X.fillRect(0,0,W,28);
+  X.fillStyle='#fff';X.font='bold 12px sans-serif';X.textAlign='left';
+  let numTxt=i<6?'第'+(i+1)+'关':i===6?'第6.5关':i===7?'第7关':i===8?'第7.5关':i===9?'第8关':LEVEL_NAMES[i];
+  X.fillText(numTxt+': '+LEVEL_NAMES[i],10,18);
+  X.textAlign='right';X.fillText('返回 →',W-10,18);X.restore();
+  let origTS=game.onTouchStart;
+  game.onTouchStart=function(t){if(t.y<28&&t.x>W-55){game.scene='levelSelect';game.onTouchStart=null;game.onTouchMove=null;game.onTouchEnd=null;return;}if(origTS)origTS(t);};
+}
+
+function drawLevelComp(){
+  X.fillStyle='rgba(0,0,0,0.5)';X.fillRect(0,0,W,H);
+  let cw=W*.82,ch=H*.48,cx=(W-cw)/2,cy=(H-ch)/2;
+  drawRR(X,cx,cy,cw,ch,15);X.fillStyle='#fff';X.fill();
+  X.fillStyle='#FF8A65';X.font='bold 22px sans-serif';X.textAlign='center';X.fillText('🎉 过关！',W/2,cy+35);
+  X.fillStyle='#333';X.font='15px sans-serif';X.fillText(LEVEL_NAMES[game.currentLevel],W/2,cy+60);
+  let stars=game.levelStars[game.currentLevel]||0,ss='';for(let s=0;s<3;s++)ss+=s<stars?'⭐':'☆';
+  X.font='28px sans-serif';X.fillText(ss,W/2,cy+95);
+  drawFeifei(X,W/2,cy+150,.55,{expression:'happy',hatOn:true});
+  X.fillStyle='#666';X.font='12px sans-serif';X.fillText(LEVEL_QUOTES[game.currentLevel],W/2,cy+195);
+  let bw2=115,bh2=38,gap2=12,by2=cy+ch-50;
+  let b1x=W/2-bw2-gap2/2,b2x=W/2+gap2/2;
+  drawBtn(X,b1x,by2,bw2,bh2,'💡 小知识','#4FC3F7','#fff');
+  drawBtn(X,b2x,by2,bw2,bh2,'下一关 →','#FF8A65','#fff');
+  game.onTouchStart=function(t){if(inRect(t.x,t.y,{x:b1x,y:by2,w:bw2,h:bh2})){game.scene='knowledge';game.phaseTimer=0;game.onTouchStart=null;}else if(inRect(t.x,t.y,{x:b2x,y:by2,w:bw2,h:bh2})){
+    if(game.currentLevel<9)startLevel(game.currentLevel+1);
+    else{game.scene='ending';game.phaseTimer=0;game.onTouchStart=null;}
+  }};};
+
+function drawKnowledge(){
+  X.fillStyle='rgba(0,0,0,0.6)';X.fillRect(0,0,W,H);
+  let cw=W*.87,ch=H*.58,cx=(W-cw)/2,cy=(H-ch)/2;
+  drawRR(X,cx,cy,cw,ch,15);X.fillStyle='#FFF8E1';X.fill();X.strokeStyle='#FFB74D';X.lineWidth=2;X.stroke();
+  X.fillStyle='#FF8F00';X.font='bold 17px sans-serif';X.textAlign='center';X.fillText('🏊 游泳小知识',W/2,cy+30);
+  X.fillStyle='#333';X.font='13px sans-serif';X.textAlign='left';
+  let txt=KNOWLEDGE[game.currentLevel]||KNOWLEDGE[0],lines=txt.split('\n');
+  lines.forEach((l,i)=>X.fillText(l,cx+18,cy+55+i*22,cw-36));
+  let bw=95,bh=36,bx=(W-bw)/2,by=cy+ch-48;
+  drawBtn(X,bx,by,bw,bh,'知道了！','#FF8A65','#fff');
+  game.onTouchStart=function(t){if(inRect(t.x,t.y,{x:bx,y:by,w:bw,h:bh})){game.scene='levelSelect';game.onTouchStart=null;}};
+}
+
+function drawEnding(){
+  let t=game.time;game.phaseTimer+=.016;
+  let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#E8EAF6');g.addColorStop(.5,'#C5CAE9');g.addColorStop(1,'#9FA8DA');X.fillStyle=g;X.fillRect(0,0,W,H);
+  drawWater(X,H*.68,t,.3);
+  if(Math.random()<.06)spawnP(rand(0,W),rand(0,H*.3),'confetti',1);
+  drawFeifei(X,W*.5,H*.42,1.2,{expression:'happy',hatOn:true});
+  X.fillStyle='#333';X.font='14px sans-serif';X.textAlign='center';
+  let msg=['谢谢你没有在我每次犯蠢的时候放弃我。','说实话，我最怕的不是水，是觉得自己学不会。','但现在我知道了——','学不会不是因为笨，是因为没人让你笑着学。','','所以如果你也是旱鸭子——','下次去泳池的时候，想想我菲菲。','连我都能学会，你一定也行。','','毕竟，我可是那个以为','"用鼻子在水里呼吸"是可行方案的人。','还有老蔡——那个废话连篇但说了翻脚掌的人。'];
+  let sy=H*.06;msg.forEach((l,i)=>X.fillText(l,W/2,sy+i*19));
+  // Bonus level entry button - show after beating level 8
+  let bw1=130,bh1=36,bx1=(W-bw1)/2,by1=H*.84;
+  drawBtn(X,bx1,by1,bw1,bh1,'🥚 彩蛋关卡','#FF8A65','#fff');
+  let bw2=100,bh2=30,bx2=(W-bw2)/2,by2=H*.9;
+  drawBtn(X,bx2,by2,bw2,bh2,'再玩一次','#9FA8DA','#fff');
+  game.onTouchStart=function(t){
+    if(inRect(t.x,t.y,{x:bx1,y:by1,w:bw1,h:bh1})){game.scene='levelSelect';game.onTouchStart=null;}
+    else if(inRect(t.x,t.y,{x:bx2,y:by2,w:bw2,h:bh2})){game.scene='title';game.onTouchStart=null;}
+  };
+}
+
+// ========== GAME LOOP ==========
+let lastT=0;
+function loop(ts){
+  let dt=Math.min((ts-lastT)/1000,.05);lastT=ts;game.time=ts/1000;
+  particles.forEach(p=>p.update());particles=particles.filter(p=>!p.dead);
+  X.clearRect(0,0,W,H);
+  switch(game.scene){
+    case 'title':drawTitle();break;
+    case 'levelSelect':drawLevelSel();break;
+    case 'level':drawLevelScene();break;
+    case 'levelComplete':drawLevelComp();break;
+    case 'knowledge':drawKnowledge();break;
+    case 'ending':drawEnding();break;
+  }
+  particles.forEach(p=>p.draw(X));
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
