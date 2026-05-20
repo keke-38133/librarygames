@@ -893,6 +893,8 @@ function startGame(){
   // 检查是否有存档
   var saved=loadGame();
   if(saved&&!saved.f.over){
+    // 先隐藏标题页，否则modal被遮挡
+    $('titlescr').style.display='none';
     showModal('继续值班','检测到上次的进度，是否继续？<br><br>上次位置：'+sceneName(saved.scene),[
       ['继续值班',function(){$('modal').className='';resumeGame(saved);}],
       ['重新开始',function(){$('modal').className='';clearSave();newGame();}]
