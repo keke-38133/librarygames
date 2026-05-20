@@ -223,7 +223,7 @@ if(e.key==='F12'||(e.ctrlKey&&e.key==='u')||(e.ctrlKey&&e.shiftKey&&(e.key==='I'
 var S={
   scene:'lobby',inv:[],sel:null,
   f:{
-    readRecord:false,lampOn:true,
+    readRecord:false,lampOn:false,
     gotBook1:false,gotBook2:false,gotBook3:false,gotBook4:false,gotBook5:false,
     gotPwdA:false,gotPwdB:false,
     gotNote1:false,gotNote2:false,
@@ -466,6 +466,7 @@ function hReading(id){
     }
     break;
   case 'desk-notes':
+    if(!S.f.lampOn){showText('桌上','黑暗中，你隐约看到桌上有什么东西在微微反光。空气里飘着一股墨水的气味，像刚有人写过字。');break;}
     if(!S.f.gotNote1){
       S.f.gotNote1=true;
       showText('桌上的笔记','一张手写便笺，字迹苍劲有力：<br><br>"溢书现象日益严重。每本溢书都封存着一段执念，长期不归还会导致记忆外溢，侵蚀现实。<br><br>归还，是唯一的超度。<br><br>建馆之年，我亲手封存了第一本书。那本书至今仍在保险柜里——<span style="color:#a8c888">保险柜密码是建馆的年月</span>。"<br><br>——沈');
@@ -475,6 +476,7 @@ function hReading(id){
     }
     break;
   case 'bookshelf-a':
+    if(!S.f.lampOn){showText('书架','黑暗中，书架传来一阵细微的窸窣声，像有什么东西在书页间蠕动。你伸手探去，指尖触到的书脊温热得不像死物。');break;}
     if(!S.f.gotBook1){
       S.f.gotBook1=true;
       showText('书架A','书架上摆满了泛黄的旧书。你的手指划过书脊——<br><br>一本书的触感格外……温热。<br><br>你抽出那本书。封面上写着《回声》。<br><br>翻开的瞬间，你似乎听见了回声——<br>你自己的声音，来自很远很远的地方。');
