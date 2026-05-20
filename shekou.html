@@ -152,6 +152,32 @@ body.mobile-mode .result-info { font-size: 16px; }
 body.mobile-mode .pause-text { font-size: 30px; }
 body.mobile-mode .pause-btn { padding: 8px 22px; font-size: 14px; }
 body.mobile-mode .footer { font-size: 10px; }
+
+/* 规则说明 */
+.rules-btn {
+  margin-top: 15px; padding: 8px 24px; font-size: 15px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px; color: #aaa; cursor: pointer;
+  font-family: 'Microsoft YaHei', sans-serif; transition: all 0.2s;
+}
+.rules-btn:hover { color: #fff; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.15); }
+#rulesOverlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15,14,23,0.96); z-index: 25; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px; overflow-y: auto;
+}
+.rules-title { font-size: 28px; font-weight: bold; color: #4ECDC4; margin-bottom: 20px; }
+.rules-content { max-width: 500px; text-align: left; line-height: 1.9; font-size: 15px; color: #ccc; }
+.rules-content h3 { color: #FF8C42; margin: 14px 0 6px; font-size: 16px; }
+.rules-content ul { padding-left: 20px; }
+.rules-content li { margin-bottom: 4px; }
+.rules-close { margin-top: 24px; padding: 10px 36px; font-size: 17px;
+  background: linear-gradient(135deg, #4ECDC4, #44a08d); border: none;
+  border-radius: 20px; color: #fff; cursor: pointer; font-family: 'Microsoft YaHei', sans-serif;
+}
+body.mobile-mode .rules-content { font-size: 14px; }
+body.mobile-mode .rules-title { font-size: 22px; }
 </style>
 </head>
 <body>
@@ -167,8 +193,9 @@ body.mobile-mode .footer { font-size: 10px; }
   </div>
   <div id="titleScreen" class="hidden">
     <div class="title-text">人头蛇大战</div>
-    <div class="title-sub">选择你的角色，追吃所有对手！</div>
+    <div class="title-sub">先吃光身体，再击杀蛇头！</div>
     <button class="start-btn" id="startBtn">开始游戏</button>
+    <button class="rules-btn" id="rulesBtn">📖 游戏规则</button>
   </div>
   <div id="selectScreen" class="hidden">
     <div class="select-title">选择你的角色</div>
@@ -179,6 +206,38 @@ body.mobile-mode .footer { font-size: 10px; }
     <div class="result-info" id="resultInfo"></div>
     <button class="replay-btn" id="replayBtn" style="margin-right:12px;">再来一局</button>
     <button class="replay-btn" id="titleBtn" style="background:linear-gradient(135deg,#9B59B6,#8e44ad);">返回标题</button>
+  </div>
+  <div id="rulesOverlay" class="hidden">
+    <div class="rules-title">📖 游戏规则</div>
+    <div class="rules-content">
+      <h3>🎯 游戏目标</h3>
+      <ul>
+        <li>3分钟内吃掉所有对手蛇即获胜</li>
+      </ul>
+      <h3>🐍 吃蛇规则</h3>
+      <ul>
+        <li>碰到对方<b>身体</b>：从碰到处到尾部被你吃掉，吃掉的部分<b>长到你身上</b></li>
+        <li>碰到对方<b>头部</b>：如果对方还有身体 → <b>无伤害</b></li>
+        <li>碰到对方<b>头部</b>且对方<b>身体已被吃光</b>（只剩头） → <b>击杀！</b></li>
+        <li>蛇只剩头时，蛇头会<b>变大3倍</b>，更容易被击杀</li>
+      </ul>
+      <h3>⚔️ 被吃规则</h3>
+      <ul>
+        <li>AI碰到你的身体 → 从碰到处到尾部被吃掉</li>
+        <li>你只剩头时被碰头 → 游戏结束</li>
+      </ul>
+      <h3>🍎 果实效果</h3>
+      <ul>
+        <li>⚡ 加速果实：速度翻倍，持续5秒</li>
+        <li>❄️ 减速果实：速度减半，持续5秒</li>
+      </ul>
+      <h3>🎮 操作</h3>
+      <ul>
+        <li>电脑版：方向键/WASD 移动，空格暂停，R重开</li>
+        <li>手机版：虚拟方向键控制</li>
+      </ul>
+    </div>
+    <button class="rules-close" id="rulesCloseBtn">知道了</button>
   </div>
   <div id="pauseOverlay" class="hidden">
     <div class="pause-text">暂停中</div>
@@ -310,6 +369,12 @@ window.onload = function() {
   });
   
   // 标题画面 → 选角画面
+  document.getElementById('rulesBtn').addEventListener('click', function() {
+    document.getElementById('rulesOverlay').classList.remove('hidden');
+  });
+  document.getElementById('rulesCloseBtn').addEventListener('click', function() {
+    document.getElementById('rulesOverlay').classList.add('hidden');
+  });
   document.getElementById('startBtn').addEventListener('click', function() {
     gameState = 'select';
     document.getElementById('titleScreen').classList.add('hidden');
@@ -701,6 +766,7 @@ function gridDist(a, b) {
 }
 
 // === 碰撞检测 ===
+// 规则：必须吃完对方所有身体才算击杀，碰头时对方有身体则无伤害
 function checkCollisions() {
   var player = snakes[playerIdx];
   if (!player || !player.alive) return;
@@ -712,28 +778,28 @@ function checkCollisions() {
     var ai = snakes[i];
     var aiHead = ai.body[0];
     
-    // 头碰头: AI整条死亡，玩家大幅增长
+    // 头碰头: 如果AI只剩头(身体长度=1)，则击杀；否则无伤害
     if (pHead.x === aiHead.x && pHead.y === aiHead.y) {
-      var gainLen = ai.body.length;
-      spawnParticles(aiHead.x, aiHead.y, CHARACTERS[ai.charIdx].color, 30);
-      ai.alive = false;
-      ai.body = [];
-      growSnake(player, gainLen);
-      killCount++;
+      if (ai.body.length <= 1) {
+        // AI只剩头，击杀！
+        spawnParticles(aiHead.x, aiHead.y, CHARACTERS[ai.charIdx].color, 30);
+        ai.alive = false;
+        ai.body = [];
+        growSnake(player, 1); // 头也算1节
+        killCount++;
+      }
+      // AI还有身体，碰头无效
       continue;
     }
     
-    // 玩家蛇头碰AI蛇身体: 从碰到节到蛇尾被吃掉
+    // 玩家蛇头碰AI蛇身体: 从碰到节到蛇尾被吃掉，吃掉的都长到自己身上
     for (var j = 1; j < ai.body.length; j++) {
       if (pHead.x === ai.body[j].x && pHead.y === ai.body[j].y) {
         var eaten = ai.body.length - j;
         spawnParticles(ai.body[j].x, ai.body[j].y, CHARACTERS[ai.charIdx].color, 15);
         ai.body.splice(j); // 删掉被吃部分
-        if (ai.body.length === 0) {
-          ai.alive = false;
-          killCount++;
-        }
-        growSnake(player, eaten);
+        growSnake(player, eaten); // 吃掉的部分长到自己身上
+        // AI身体被吃光后只剩头，还没死，需要再碰头才能击杀
         break;
       }
     }
@@ -745,13 +811,23 @@ function checkCollisions() {
     var ai = snakes[i];
     var aiHead = ai.body[0];
     
-    // AI蛇头碰玩家蛇头 = 玩家优势，AI死(已在上面处理)
+    // AI蛇头碰玩家蛇头：如果玩家只剩头则玩家死，否则无伤害
+    if (aiHead.x === player.body[0].x && aiHead.y === player.body[0].y) {
+      if (player.body.length <= 1) {
+        player.alive = false;
+        endGame(false);
+        return;
+      }
+      continue;
+    }
+    
     // AI蛇头碰玩家身体(非头)
     for (var j = 1; j < player.body.length; j++) {
       if (aiHead.x === player.body[j].x && aiHead.y === player.body[j].y) {
         var lost = player.body.length - j;
         spawnParticles(player.body[j].x, player.body[j].y, CHARACTERS[player.charIdx].color, 15);
         player.body.splice(j); // 玩家丢失被碰节到尾部
+        growSnake(ai, lost); // AI吃掉的部分长到AI身上
         if (player.body.length === 0) {
           player.alive = false;
           endGame(false);
@@ -1107,7 +1183,7 @@ function drawSnake(snake) {
   
   // 绘制蛇头: 圆形裁剪 + 真实照片
   var head = body[0];
-  var headSize = CELL * 1.5;  // 蛇头是身体的1.5倍
+  var headSize = (body.length <= 1) ? CELL * 4.5 : CELL * 1.5;  // 只剩头时变大3倍
   var hx = head.x * CELL + CELL / 2;
   var hy = head.y * CELL + CELL / 2;
   var hr = headSize / 2;
