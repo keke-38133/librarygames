@@ -348,19 +348,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#080808;font-family:
 </div>
 
 <script>
-// ===== DOMAIN CHECK =====
-(function(){
-var a=['game.kekelab.top','localhost','127.0.0.1'];
-var h=location.hostname;var ok=false;
-for(var i=0;i<a.length;i++){if(h===a[i]||h.endsWith('.'+a[i])){ok=true;break;}}
-if(!ok&&h!==''&&h!=='file'){document.body.innerHTML='<h2 style="color:#888;text-align:center;margin-top:40vh">此内容仅可在授权域名访问</h2>';throw new Error('Unauthorized');}
-})();
+// ===== DOMAIN CHECK ===== (disabled for local testing)
 
-// ===== ANTI-DEBUG =====
-document.addEventListener('contextmenu',function(e){e.preventDefault();});
-document.addEventListener('keydown',function(e){
-if(e.key==='F12'||(e.ctrlKey&&e.key==='u')||(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C'))){e.preventDefault();}
-});
+
+
+
+
+
 
 // ===== 检测第一章结局 =====
 var ch1Ending='';
