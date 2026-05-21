@@ -342,7 +342,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#080808;font-family:
 <h1>闭馆日·页间</h1>
 <div class="sub">第二章</div>
 <div class="lore">你在书页之间的夜晚，<br>分不清是梦还是记忆。<br><br>你以为放下的东西，<br>发现还在你身上。</div>
-<button class="sbtn" id="start-btn">翻开书页</button>
+<button class="sbtn" id="start-btn" onclick="startGame()">翻开书页</button>
 <div class="cred">©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆</div>
 </div>
 </div>
@@ -484,9 +484,9 @@ function fade(cb){
 }
 
 // ===== BGM =====
-var bgm=new Audio("bgm-house.mp3");
+var bgm;try{bgm=new Audio("bgm-house.mp3");}catch(e){bgm={play:function(){return Promise.resolve()},pause:function(){},volume:0,muted:false,loop:false};}
 bgm.loop=true;bgm.volume=0.35;
-var bgmSp=new Audio("bgm-special.mp3");
+var bgmSp;try{bgmSp=new Audio("bgm-special.mp3");}catch(e){bgmSp={play:function(){return Promise.resolve()},pause:function(){},volume:0,muted:false,loop:false,playbackRate:1};}
 bgmSp.loop=true;bgmSp.volume=0.35;
 
 function updateBGM(scene){
