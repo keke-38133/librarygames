@@ -288,6 +288,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#080808;font-family:
 <div class="hotspot" data-id="right-door" style="left:84%;top:15%;width:14%;height:58%"></div>
 </div>
 
+<script>function startGame(){document.getElementById("titlescr").style.display="none";if(typeof newGame==="function")newGame();else document.getElementById("sc-corridor").className="scene active";}</script>
 </div><!-- scene-area -->
 
 <div id="merge-overlay">
@@ -343,11 +344,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#080808;font-family:
 <div class="sub">第二章</div>
 <div class="lore">你在书页之间的夜晚，<br>分不清是梦还是记忆。<br><br>你以为放下的东西，<br>发现还在你身上。</div>
 <button class="sbtn" id="start-btn" onclick="startGame()">翻开书页</button>
-<div class="cred">©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆</div>
+<div class="cred">©珂珂制作 | 龙岗区图书馆龙岗河碧道分馆</div><div style="font-size:9px;color:#252525;text-align:center;margin-top:4px">v5.3-noDomainCheck</div>
 </div>
 </div>
 
 <script>
+
+// ===== 后备启动函数 =====
+var _startGameBackup=function(){
+  document.getElementById('titlescr').style.display='none';
+  document.getElementById('scene-area').style.display='block';
+  var d=document.getElementById('scene-area');
+  d.innerHTML='<div style="color:#c8d8b8;padding:40px;text-align:center;line-height:2"><h2>⚠️ 游戏脚本加载异常</h2><p>部分功能可能缺失，点击下方继续</p><button onclick="location.reload()" style="margin-top:20px;padding:8px 20px;cursor:pointer">刷新重试</button></div>';
+};
+
 // ===== DOMAIN CHECK ===== (disabled for local testing)
 
 
@@ -1591,20 +1601,86 @@ function newGame(){
 }
 
 window.addEventListener('load',function(){
-  sizeAll();
-  // 绑定开始按钮（兼容CSP限制的环境）
+  // 最优先：绑定开始按钮
   var sb=document.getElementById('start-btn');
-  if(sb)sb.addEventListener('click',startGame);
+  if(sb){
+    sb.onclick=function(){
+      try{startGame();}catch(e){
+        document.getElementById('titlescr').style.display='none';
+        try{newGame();}catch(e2){
+          document.getElementById('scene-area').innerHTML='<div style="color:#c8d8b8;padding:40px;text-align:center">游戏加载出错<br>'+e2.message+'</div>';
+          document.getElementById('titlescr').style.display='none';
+        }
+      }
+    };
+  }
+  try{sizeAll();}catch(e){}
   // 调试用：如果有JS错误会在屏幕上显示
   window.onerror=function(msg,url,line){
-    var d=document.createElement('div');
-    d.style.cssText='position:fixed;top:0;left:0;background:red;color:#fff;padding:8px;z-index:99999;font-size:12px;max-width:100%';
+    var d=document.getElementById('debug-err');
+    if(!d){
+      d=document.createElement('div');
+      d.id='debug-err';
+      d.style.cssText='position:fixed;top:0;left:0;background:red;color:#fff;padding:8px;z-index:99999;font-size:12px;max-width:100%';
+      document.body.appendChild(d);
+    }
     d.textContent='Error:'+msg+' (line:'+line+')';
-    document.body.appendChild(d);
     return true;
   };
 });
 window.addEventListener('resize',function(){sizeAll();});
+</script>
+<script>
+// ===== 诊断脚本：无论如何确保按钮可点击 =====
+(function(){
+  var attempts = 0;
+  var bindBtn = function(){
+    var sb = document.getElementById("start-btn");
+    if(sb){
+      sb.addEventListener("click", function(){
+        if(typeof startGame === "function"){
+          startGame();
+        } else if(typeof _startGameBackup === "function"){
+          _startGameBackup();
+        } else {
+          document.getElementById("titlescr").innerHTML = '<div style="color:#c8d8b8;text-align:center;padding:40px">游戏脚本未能正确加载。<br>请尝试刷新页面。</div>';
+        }
+      });
+      // 也设置onclick
+      sb.onclick = function(){
+        if(typeof startGame === "function"){
+          startGame();
+        } else if(typeof _startGameBackup === "function"){
+          _startGameBackup();
+        }
+      };
+      console.log("[诊断] 按钮已绑定");
+    } else if(attempts < 20){
+      attempts++;
+      setTimeout(bindBtn, 100);
+    }
+  };
+  // DOM ready后立即绑定
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", bindBtn);
+  } else {
+    bindBtn();
+  }
+  // 也监听load事件
+  window.addEventListener("load", bindBtn);
+  // 全局错误捕获
+  window.onerror = function(msg, url, line){
+    var d = document.getElementById("diag-err");
+    if(!d){
+      d = document.createElement("div");
+      d.id = "diag-err";
+      d.style.cssText = "position:fixed;top:0;left:0;background:rgba(200,0,0,0.9);color:#fff;padding:10px;z-index:99999;font-size:12px;max-width:100%;word-break:break-all";
+      document.body.appendChild(d);
+    }
+    d.textContent += "[Err]" + msg + "@L" + line + " ";
+    return true;
+  };
+})();
 </script>
 </body>
 </html>
