@@ -567,8 +567,8 @@
 
         <!-- 游戏卡片列表 -->
         <main class="games-grid">
-            <!-- 游戏1：碧道喵游记 - 已上线 -->
-            <article class="game-card status-online" data-url="/mao.html">
+            <!-- 游戏1：碧道喵游记 - 链接维护中 -->
+            <article class="game-card status-online" data-no-link="true">
                 <div class="card-content">
                     <div class="card-info">
                         <span class="card-icon">🐱</span>
@@ -576,19 +576,19 @@
                         <p class="card-desc">跟随一只好奇的小猫，踏上图书馆的奇妙冒险之旅。互动闯关，解锁隐藏的书香秘密。</p>
                         <div class="card-tags">
                             <span class="tag tag-type">互动闯关</span>
-                            <span class="tag tag-online">已上线</span>
+                            <span class="tag tag-upcoming">链接维护中</span>
                         </div>
                     </div>
                     <div class="card-status">
                         <span class="status-dot"></span>
-                        <span class="status-text">可玩</span>
+                        <span class="status-text">链接维护中，还未推出</span>
                     </div>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow card-arrow-warning">🔧</span>
                 </div>
             </article>
 
-            <!-- 游戏2：中图法大冒险 - 已上线 -->
-            <article class="game-card status-online" data-url="/zhongtu.html">
+            <!-- 游戏2：中图法大冒险 - 链接维护中 -->
+            <article class="game-card status-online" data-no-link="true">
                 <div class="card-content">
                     <div class="card-info">
                         <span class="card-icon">📚</span>
@@ -596,14 +596,14 @@
                         <p class="card-desc">穿梭于A到Z的知识丛林，学习中图法22大类的趣味闯关游戏。成为图书分类小达人的必经之路！</p>
                         <div class="card-tags">
                             <span class="tag tag-type">知识问答闯关</span>
-                            <span class="tag tag-online">已上线</span>
+                            <span class="tag tag-upcoming">链接维护中</span>
                         </div>
                     </div>
                     <div class="card-status">
                         <span class="status-dot"></span>
-                        <span class="status-text">可玩</span>
+                        <span class="status-text">链接维护中，还未推出</span>
                     </div>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow card-arrow-warning">🔧</span>
                 </div>
             </article>
 
@@ -700,7 +700,7 @@
     <script>
         // 域名校验 - 优先执行
         (function(){
-          if (location.hostname !== 'game.kekelab.top' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+          if (location.hostname !== 'game.kekelab.top' && location.hostname !== 'librarygames.vercel.app' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
             document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f5f0e8;color:#4a4a4a;font-family:sans-serif;text-align:center;padding:2rem;"><div><h2 style="color:#8B6914;">⚠️ 非官方站点</h2><p>本游戏仅限 game.kekelab.top 运行</p><p style="margin-top:1rem;font-size:0.9em;color:#999;">当前页面为未经授权的转载</p></div></div>';
             document.body.style.margin = '0';
           }
